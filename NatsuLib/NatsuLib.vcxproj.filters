@@ -1,0 +1,141 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Extern">
+      <UniqueIdentifier>{d68055a8-2a80-47a9-ac66-0a37a14d44ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Extern\minizip">
+      <UniqueIdentifier>{f7289d52-2459-46f4-83cd-67939c301790}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natType.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natRefObj.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natStream.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natMultiThread.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natException.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natUtil.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natMath.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natVec.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natMat.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natTransform.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natEvent.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natLog.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natStopWatch.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\unzip\crypt.h">
+      <Filter>Extern\minizip</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\unzip\ioapi.h">
+      <Filter>Extern\minizip</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\unzip\iowin32.h">
+      <Filter>Extern\minizip</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\unzip\mztools.h">
+      <Filter>Extern\minizip</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\unzip\unzip.h">
+      <Filter>Extern\minizip</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\unzip\zip.h">
+      <Filter>Extern\minizip</Filter>
+    </ClInclude>
+    <ClInclude Include="natQuat.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natNode.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natNamedPipe.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natMisc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="natMultiThread.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="natStream.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="natUtil.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="natLog.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="natStopWatch.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\unzip\ioapi.c">
+      <Filter>Extern\minizip</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\unzip\iowin32.c">
+      <Filter>Extern\minizip</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\unzip\mztools.c">
+      <Filter>Extern\minizip</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\unzip\unzip.c">
+      <Filter>Extern\minizip</Filter>
+    </ClCompile>
+    <ClCompile Include="extern\unzip\zip.c">
+      <Filter>Extern\minizip</Filter>
+    </ClCompile>
+    <ClCompile Include="natNamedPipe.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
