@@ -2,6 +2,8 @@
 #include "natUtil.h"
 #include "natException.h"
 
+using namespace NatsuLib;
+
 namespace natUtil
 {
 

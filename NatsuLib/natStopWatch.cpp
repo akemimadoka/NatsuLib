@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "natStopWatch.h"
 
+using namespace NatsuLib;
+
 natStopWatch::natStopWatch()
 {
 	QueryPerformanceFrequency(&m_cFreq);

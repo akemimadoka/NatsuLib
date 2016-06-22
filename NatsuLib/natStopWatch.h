@@ -6,36 +6,39 @@
 
 #include <Windows.h>
 
-////////////////////////////////////////////////////////////////////////////////
-///	@addtogroup	杂项
-///	@{
-
-////////////////////////////////////////////////////////////////////////////////
-///	@brief	高精度停表类
-////////////////////////////////////////////////////////////////////////////////
-class natStopWatch final
+namespace NatsuLib
 {
-public:
-	natStopWatch();
-	~natStopWatch() = default;
+	////////////////////////////////////////////////////////////////////////////////
+	///	@addtogroup	杂项
+	///	@{
 
-	///	@brief	暂停
-	void Pause();
+	////////////////////////////////////////////////////////////////////////////////
+	///	@brief	高精度停表类
+	////////////////////////////////////////////////////////////////////////////////
+	class natStopWatch final
+	{
+	public:
+		natStopWatch();
+		~natStopWatch() = default;
 
-	///	@brief	继续
-	void Resume();
+		///	@brief	暂停
+		void Pause();
 
-	///	@brief	重设
-	void Reset();
+		///	@brief	继续
+		void Resume();
 
-	///	@brief	获得流逝时间
-	///	@note	单位为秒
-	nDouble GetElpased();
-private:
-	LARGE_INTEGER	m_cFreq,	///< @brief	cpu频率
-					m_cLast,	///< @brief	上一次时间
-					m_cFixStart,///< @brief	暂停时用于修复的参数
-					m_cFixAll;	///< @brief	暂停时用于修复的参数
-};
+		///	@brief	重设
+		void Reset();
 
-///	@}
+		///	@brief	获得流逝时间
+		///	@note	单位为秒
+		nDouble GetElpased();
+	private:
+		LARGE_INTEGER	m_cFreq,	///< @brief	cpu频率
+			m_cLast,	///< @brief	上一次时间
+			m_cFixStart,///< @brief	暂停时用于修复的参数
+			m_cFixAll;	///< @brief	暂停时用于修复的参数
+	};
+
+	///	@}
+}

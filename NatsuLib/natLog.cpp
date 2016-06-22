@@ -3,6 +3,8 @@
 
 #pragma warning (disable:4996) 
 
+using namespace NatsuLib;
+
 ///	@brief	全局变量
 namespace n2dGlobal
 {

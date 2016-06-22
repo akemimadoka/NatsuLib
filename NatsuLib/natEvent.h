@@ -16,21 +16,6 @@
 #include "natException.h"
 #include <typeindex>
 
-namespace Priority
-{
-	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	Event优先级
-	///	@note	为防止污染全局命名空间将其放置于Priority命名空间\n
-	///			EventHandle执行优先级顺序为高-普通-低
-	////////////////////////////////////////////////////////////////////////////////
-	enum Priority
-	{
-		High = 1,	///< @brief	高优先级
-		Normal = 2,	///< @brief	普通优先级
-		Low = 3		///< @brief	低优先级
-	};
-}
-
 namespace std
 {
 	template <typename Func>
@@ -55,108 +40,128 @@ namespace std
 	}
 }
 
-class natEventBase
+namespace NatsuLib
 {
-public:
-	natEventBase()
-		: m_Canceled(false)
+	namespace Priority
 	{
-	}
-	virtual ~natEventBase() = default;
-
-	virtual bool CanCancel() const noexcept
-	{
-		return false;
-	}
-
-	virtual void SetCancel(bool value) noexcept
-	{
-		if (CanCancel())
+		////////////////////////////////////////////////////////////////////////////////
+		///	@brief	Event优先级
+		///	@note	为防止污染全局命名空间将其放置于Priority命名空间\n
+		///			EventHandle执行优先级顺序为高-普通-低
+		////////////////////////////////////////////////////////////////////////////////
+		enum Priority
 		{
-			m_Canceled = value;
+			High = 1,	///< @brief	高优先级
+			Normal = 2,	///< @brief	普通优先级
+			Low = 3		///< @brief	低优先级
+		};
+	}
+
+
+
+	class natEventBase
+	{
+	public:
+		natEventBase()
+			: m_Canceled(false)
+		{
 		}
-	}
+		virtual ~natEventBase() = default;
 
-	virtual bool IsCanceled() const noexcept
-	{
-		return m_Canceled;
-	}
-
-private:
-	bool m_Canceled;
-};
-
-class natEventBus final
-{
-public:
-	typedef std::function<void(natEventBase&)> EventListenerFunc;
-
-	NATNOINLINE static natEventBus& GetInstance()
-	{
-		static natEventBus s_Instance;
-		return s_Instance;
-	}
-
-	template <typename EventClass>
-	std::enable_if_t<std::is_base_of<natEventBase, EventClass>::value, void> RegisterEvent()
-	{
-		m_EventHandlerMap.try_emplace(typeid(EventClass));
-	}
-
-	template <typename EventClass, typename EventListener>
-	nuInt RegisterEventListener(EventListener listener, int priority = Priority::Normal)
-	{
-		auto iter = m_EventHandlerMap.find(typeid(EventClass));
-		if (iter == m_EventHandlerMap.end())
+		virtual bool CanCancel() const noexcept
 		{
-			nat_Throw(natException, _T("Unregistered event."));
+			return false;
 		}
 
-		auto&& listeners = iter->second[priority];
-		auto ret = listeners.empty() ? 0u : listeners.rbegin()->first + 1u;
-		listeners[ret] = listener;
-		return ret;
-	}
-
-	template <typename EventClass>
-	void UnregisterEventListener(int priority, nuInt Handle)
-	{
-		auto iter = m_EventHandlerMap.find(typeid(EventClass));
-		if (iter == m_EventHandlerMap.end())
+		virtual void SetCancel(bool value) noexcept
 		{
-			nat_Throw(natException, _T("Unregistered event."));
-		}
-
-		auto listeneriter = iter->second.find(priority);
-		if (listeneriter != iter->second.end())
-		{
-			listeneriter->second.erase(Handle);
-		}
-	}
-
-	template <typename EventClass>
-	bool Post(EventClass& event)
-	{
-		auto iter = m_EventHandlerMap.find(typeid(EventClass));
-		if (iter == m_EventHandlerMap.end())
-		{
-			nat_Throw(natException, _T("Unregistered event."));
-		}
-
-		for (auto& listeners : iter->second)
-		{
-			for (auto& listener : listeners.second)
+			if (CanCancel())
 			{
-				listener.second(static_cast<natEventBase&>(event));
+				m_Canceled = value;
 			}
 		}
 
-		return event.IsCanceled();
-	}
+		virtual bool IsCanceled() const noexcept
+		{
+			return m_Canceled;
+		}
 
-private:
-	std::unordered_map<std::type_index, std::map<int, std::map<nuInt, std::function<void(natEventBase&)>>>> m_EventHandlerMap;
+	private:
+		bool m_Canceled;
+	};
 
-	natEventBus() = default;
-	~natEventBus() = default;
-};
+	class natEventBus final
+	{
+	public:
+		typedef std::function<void(natEventBase&)> EventListenerFunc;
+
+		NATNOINLINE static natEventBus& GetInstance()
+		{
+			static natEventBus s_Instance;
+			return s_Instance;
+		}
+
+		template <typename EventClass>
+		std::enable_if_t<std::is_base_of<natEventBase, EventClass>::value, void> RegisterEvent()
+		{
+			m_EventHandlerMap.try_emplace(typeid(EventClass));
+		}
+
+		template <typename EventClass, typename EventListener>
+		nuInt RegisterEventListener(EventListener listener, int priority = Priority::Normal)
+		{
+			auto iter = m_EventHandlerMap.find(typeid(EventClass));
+			if (iter == m_EventHandlerMap.end())
+			{
+				nat_Throw(natException, _T("Unregistered event."));
+			}
+
+			auto&& listeners = iter->second[priority];
+			auto ret = listeners.empty() ? 0u : listeners.rbegin()->first + 1u;
+			listeners[ret] = listener;
+			return ret;
+		}
+
+		template <typename EventClass>
+		void UnregisterEventListener(int priority, nuInt Handle)
+		{
+			auto iter = m_EventHandlerMap.find(typeid(EventClass));
+			if (iter == m_EventHandlerMap.end())
+			{
+				nat_Throw(natException, _T("Unregistered event."));
+			}
+
+			auto listeneriter = iter->second.find(priority);
+			if (listeneriter != iter->second.end())
+			{
+				listeneriter->second.erase(Handle);
+			}
+		}
+
+		template <typename EventClass>
+		bool Post(EventClass& event)
+		{
+			auto iter = m_EventHandlerMap.find(typeid(EventClass));
+			if (iter == m_EventHandlerMap.end())
+			{
+				nat_Throw(natException, _T("Unregistered event."));
+			}
+
+			for (auto& listeners : iter->second)
+			{
+				for (auto& listener : listeners.second)
+				{
+					listener.second(static_cast<natEventBase&>(event));
+				}
+			}
+
+			return event.IsCanceled();
+		}
+
+	private:
+		std::unordered_map<std::type_index, std::map<int, std::map<nuInt, std::function<void(natEventBase&)>>>> m_EventHandlerMap;
+
+		natEventBus() = default;
+		~natEventBus() = default;
+	};
+}
