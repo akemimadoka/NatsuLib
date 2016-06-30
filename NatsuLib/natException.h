@@ -26,8 +26,8 @@ namespace NatsuLib
 	{
 	public:
 		template <typename... Args>
-		natException(ncTStr Src, ncTStr Desc, Args&&... args) noexcept
-			: exception(natUtil::W2Cstr(natUtil::FormatString(Desc, std::forward<Args>(args)...)).c_str()), m_Time(GetTickCount()), m_Source(Src), m_Description(natUtil::C2Wstr(exception::what()))
+		natException(ncTStr Src, ncTStr File, nuInt Line, ncTStr Desc, Args&&... args) noexcept
+			: exception(natUtil::W2Cstr(natUtil::FormatString(Desc, std::forward<Args>(args)...)).c_str()), m_Time(GetTickCount()), m_File(File), m_Line(Line), m_Source(Src), m_Description(natUtil::C2Wstr(exception::what()))
 		{
 		}
 
@@ -36,6 +36,16 @@ namespace NatsuLib
 		nuInt GetTime() const noexcept
 		{
 			return m_Time;
+		}
+
+		ncTStr GetFile() const noexcept
+		{
+			return m_File.c_str();
+		}
+
+		nuInt GetLine() const noexcept
+		{
+			return m_Line;
 		}
 
 		ncTStr GetSource() const noexcept
@@ -50,6 +60,8 @@ namespace NatsuLib
 
 	protected:
 		nuInt m_Time;
+		nTString m_File;
+		nuInt m_Line;
 		nTString m_Source;
 		nTString m_Description;
 	};
@@ -63,14 +75,14 @@ namespace NatsuLib
 	{
 	public:
 		template <typename... Args>
-		natWinException(ncTStr Src, ncTStr Desc, Args&&... args) noexcept
-			: natWinException(Src, GetLastError(), Desc, std::forward<Args>(args)...)
+		natWinException(ncTStr Src, ncTStr File, nuInt Line, ncTStr Desc, Args&&... args) noexcept
+			: natWinException(Src, File, Line, GetLastError(), Desc, std::forward<Args>(args)...)
 		{
 		}
 
 		template <typename... Args>
-		natWinException(ncTStr Src, DWORD LastErr, ncTStr Desc, Args&&... args) noexcept
-			: natException(Src, Desc, std::forward<Args>(args)...), m_LastErr(LastErr)
+		natWinException(ncTStr Src, ncTStr File, nuInt Line, DWORD LastErr, ncTStr Desc, Args&&... args) noexcept
+			: natException(Src, File, Line, Desc, std::forward<Args>(args)...), m_LastErr(LastErr)
 		{
 			m_Description = natUtil::FormatString((m_Description + _T(" (LastErr = %d)")).c_str(), m_LastErr);
 		}
@@ -80,9 +92,18 @@ namespace NatsuLib
 			return m_LastErr;
 		}
 
+		nTString GetErrMsg() const noexcept
+		{
+			LPVOID pBuf = nullptr;
+			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, m_LastErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<nTStr>(&pBuf), 0, nullptr);
+			nTString ret(static_cast<ncTStr>(pBuf));
+			LocalFree(pBuf);
+			return move(ret);
+		}
+
 	private:
 		DWORD m_LastErr;
 	};
 }
 
-#define nat_Throw(ExceptionClass, ...) do { throw ExceptionClass(_T(__FUNCTION__), __VA_ARGS__); } while (false)
+#define nat_Throw(ExceptionClass, ...) do { throw ExceptionClass(_T(__FUNCTION__), _T(__FILE__), __LINE__, __VA_ARGS__); } while (false)

@@ -6,10 +6,12 @@
 #include "natType.h"
 #include <Windows.h>
 
+#ifdef TRACEREFOBJ
 #ifdef _DEBUG
 #include "natUtil.h"
 #include <typeinfo>
 #endif // _DEBUG
+#endif // TRACEREFOBJ
 
 namespace NatsuLib
 {
@@ -36,9 +38,19 @@ namespace NatsuLib
 		natRefObjImpl()
 			: m_cRef(1u)
 		{
+#ifdef TRACEREFOBJ
 #ifdef _DEBUG
 			OutputDebugString(natUtil::FormatString(_T("Type %s Create at (%p)\n"), natUtil::C2Wstr(typeid(*this).name()).c_str(), this).c_str());
 #endif // _DEBUG
+#endif
+		}
+		virtual ~natRefObjImpl()
+		{
+#ifdef TRACEREFOBJ
+#ifdef _DEBUG
+			OutputDebugString(natUtil::FormatString(_T("Type %s Destroy at (%p)\n"), natUtil::C2Wstr(typeid(*this).name()).c_str(), this).c_str());
+#endif // _DEBUG
+#endif
 		}
 
 		virtual void AddRef()
@@ -51,15 +63,9 @@ namespace NatsuLib
 			auto tRet = InterlockedDecrement(&m_cRef);
 			if (tRet == 0u)
 			{
-#ifdef _DEBUG
-				OutputDebugString(natUtil::FormatString(_T("Type %s Destroy at (%p)\n"), natUtil::C2Wstr(typeid(*this).name()).c_str(), this).c_str());
-#endif // _DEBUG
 				delete this;
 			}
 		}
-
-	protected:
-		virtual ~natRefObjImpl() = default;
 
 	private:
 		nuInt m_cRef;
@@ -140,12 +146,7 @@ namespace NatsuLib
 
 		natRefPointer& operator=(natRefPointer && other)&
 		{
-			if (m_pPointer != other.m_pPointer)
-			{
-				m_pPointer = other.m_pPointer;
-				other.m_pPointer = nullptr;
-			}
-
+			std::swap(m_pPointer, other.m_pPointer);
 			return *this;
 		}
 
@@ -204,7 +205,7 @@ namespace std
 	template <typename T>
 	struct hash<NatsuLib::natRefPointer<T>>
 	{
-		size_t operator()(const NatsuLib::natRefPointer<T>& _Keyval) const
+		size_t operator()(NatsuLib::natRefPointer<T> const& _Keyval) const
 		{
 			return hash<T*>()(_Keyval.Get());
 		}

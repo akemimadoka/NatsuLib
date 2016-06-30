@@ -41,7 +41,7 @@ natNamedPipeServerStream::natNamedPipeServerStream(ncTStr Pipename, PipeDirectio
 
 	if (m_hPipe == INVALID_HANDLE_VALUE || !m_hPipe)
 	{
-		throw natWinException(_T(__FUNCTION__), _T("Cannot create pipe."));
+		nat_Throw(natWinException, _T("Cannot create pipe."));
 	}
 }
 
@@ -143,7 +143,7 @@ void natNamedPipeServerStream::WaitForConnection()
 {
 	if (m_bConnected)
 	{
-		return;
+		nat_Throw(natException, _T("Already connected."));
 	}
 
 	if (IsAsync())
@@ -157,20 +157,20 @@ void natNamedPipeServerStream::WaitForConnection()
 			DWORD LastErr = GetLastError();
 			if (LastErr != ERROR_IO_PENDING)
 			{
-				throw natWinException(_T(__FUNCTION__), _T("Cannot connect to pipe."));
+				nat_Throw(natWinException, _T("Cannot connect to pipe."));
 			}
 		}
 
 		if (!event.Wait())
 		{
-			throw natWinException(_T(__FUNCTION__), _T("Cannot connect to pipe."));
+			nat_Throw(natWinException, _T("Cannot connect to pipe."));
 		}
 	}
 	else
 	{
 		if (!ConnectNamedPipe(m_hPipe, nullptr))
 		{
-			throw natWinException(_T(__FUNCTION__), _T("Cannot connect to pipe."));
+			nat_Throw(natWinException, _T("Cannot connect to pipe."));
 		}
 	}
 
@@ -197,7 +197,7 @@ std::future<void> natNamedPipeServerStream::WaitForConnectionAsync()
 				DWORD LastErr = GetLastError();
 				if (LastErr != ERROR_IO_PENDING)
 				{
-					throw natWinException(_T(__FUNCTION__), _T("Cannot connect to pipe."), LastErr);
+					nat_Throw(natWinException, _T("Cannot connect to pipe."), LastErr);
 				}
 			}
 

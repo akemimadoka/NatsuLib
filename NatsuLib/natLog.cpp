@@ -5,58 +5,36 @@
 
 using namespace NatsuLib;
 
-///	@brief	全局变量
-namespace n2dGlobal
+natLog::natLog(natEventBus& eventBus)
+	: m_EventBus(eventBus)
 {
-	///	@brief	默认日志文件名
-	ncTStr Logfile = _T("Log.log");
-}
-
-natLog::natLog(ncTStr const& logfile)
-	: m_LogFile(logfile),
-	m_fstr(m_LogFile)
-{
-	natEventBus::GetInstance().RegisterEvent<EventLogUpdated>();
-	LogMsg(_T("Log start."));
+	m_EventBus.RegisterEvent<EventLogUpdated>();
 }
 
 natLog::~natLog()
 {
-	m_fstr.close();
 }
 
-void natLog::UpdateLastLog(nTString&& log)
+void natLog::UpdateLastLog(nuInt type, nTString&& log)
 {
 	m_LastLog = move(log);
-	m_fstr << m_LastLog << std::endl;
-	EventLogUpdated event(m_LastLog.c_str());
-	natEventBus::GetInstance().Post(event);
+	EventLogUpdated event(type, std::chrono::system_clock::now(), m_LastLog.c_str());
+	m_EventBus.Post(event);
 }
 
-ncTStr natLog::ParseLogType(LogType logtype)
+ncTStr natLog::GetDefaultLogTypeName(LogType logtype)
 {
 	switch (logtype)
 	{
-	case LogType::Msg:
+	case Msg:
 		return _T("Message");
-	case LogType::Err:
+	case Err:
 		return _T("Error");
-	case LogType::Warn:
+	case Warn:
 		return _T("Warning");
 	default:
 		return _T("Unknown");
 	}
-}
-
-NATNOINLINE natLog& natLog::GetInstance()
-{
-	static natLog instance(n2dGlobal::Logfile);
-	return instance;
-}
-
-ncTStr natLog::GetLogFile() const
-{
-	return m_LogFile.c_str();
 }
 
 ncTStr natLog::GetLastLog() const
@@ -66,5 +44,5 @@ ncTStr natLog::GetLastLog() const
 
 void natLog::RegisterLogUpdateEventFunc(natEventBus::EventListenerFunc func)
 {
-	natEventBus::GetInstance().RegisterEventListener<EventLogUpdated>(func);
+	m_EventBus.RegisterEventListener<EventLogUpdated>(func);
 }

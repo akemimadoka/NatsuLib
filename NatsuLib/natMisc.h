@@ -6,7 +6,7 @@ namespace NatsuLib
 {
 	namespace _Detail
 	{
-		template <class F, class Tuple, std::size_t... I>
+		template <class F, class Tuple, size_t... I>
 		constexpr decltype(auto) apply_impl(F&& f, Tuple&& t, std::index_sequence<I...>)
 		{
 			return std::invoke(std::forward<F>(f), std::get<I>(std::forward<Tuple>(t))...);
@@ -17,27 +17,43 @@ namespace NatsuLib
 	constexpr decltype(auto) apply(F&& f, Tuple&& t)
 	{
 		return _Detail::apply_impl(std::forward<F>(f), std::forward<Tuple>(t),
-			std::make_index_sequence<std::tuple_size<std::decay_t<Tuple>>{}>{});
+			std::make_index_sequence<std::tuple_size<std::decay_t<Tuple>>::value>{});
 	}
 
 	template <typename T, typename... Args>
 	class natScope
 	{
 	public:
-		constexpr explicit natScope(T&& CallableObj, Args&&... Arg)
-			: m_CallableObj(std::forward<T>(CallableObj)), m_Args(std::forward_as_tuple<Args>(Arg)...)
+		constexpr explicit natScope(T CallableObj, Args&&... args)
+			: m_ShouldCall(true), m_CallableObj(CallableObj), m_Args(std::forward<Args>(args)...)
 		{
+		}
+
+		constexpr natScope(natScope && other)
+			: m_ShouldCall(true), m_CallableObj(other.m_CallableObj), m_Args(std::move(other.m_Args))
+		{
+			other.m_ShouldCall = false;
 		}
 
 		~natScope()
 		{
-			apply(m_CallableObj, m_Args);
+			if (m_ShouldCall)
+			{
+				apply(m_CallableObj, m_Args);
+			}
 		}
 
 	private:
+		bool m_ShouldCall;
 		T m_CallableObj;
-		std::tuple<Args...> m_Args;
+		std::tuple<Args&&...> m_Args;
 	};
+
+	template <typename T, typename ...Args>
+	auto make_scope(T CallableObj, Args&&... args)
+	{
+		return natScope<T, Args&&...>(CallableObj, std::forward<Args>(args)...);
+	}
 
 	template <typename Iter>
 	class natRange
@@ -162,8 +178,98 @@ namespace NatsuLib
 		Iter m_IterBegin, m_IterEnd;
 	};
 
+	template <typename Iter>
+	class natRange_ptrIterator
+	{
+	public:
+		typedef typename std::iterator_traits<Iter>::iterator_category iterator_category;
+		typedef typename std::iterator_traits<Iter>::value_type value_type;
+		typedef typename std::iterator_traits<Iter>::difference_type difference_type;
+		typedef typename std::iterator_traits<Iter>::reference reference;
+		typedef typename std::iterator_traits<Iter>::pointer pointer;
+
+		constexpr explicit natRange_ptrIterator(Iter iter)
+			: m_Iter(iter)
+		{
+		}
+
+		constexpr operator pointer() const
+		{
+			return std::addressof(*m_Iter);
+		}
+
+		decltype(auto) operator*() const
+		{
+			return *m_Iter;
+		}
+
+		natRange_ptrIterator& operator++() &
+		{
+			return *this += 1;
+		}
+
+		natRange_ptrIterator& operator--() &
+		{
+			return *this -= 1;
+		}
+
+		natRange_ptrIterator operator+(difference_type n) const
+		{
+			return natRange_ptrIterator(std::next(m_Iter, n));
+		}
+
+		natRange_ptrIterator operator-(difference_type n) const
+		{
+			return natRange_ptrIterator(std::prev(m_Iter, n));
+		}
+
+		natRange_ptrIterator& operator+=(difference_type n) &
+		{
+			std::advance(m_Iter, n);
+			return *this;
+		}
+
+		natRange_ptrIterator& operator-=(difference_type n) &
+		{
+			std::advance(m_Iter, -n);
+			return *this;
+		}
+
+		decltype(auto) operator[](difference_type n) const
+		{
+			return *std::next(m_Iter, n);
+		}
+
+		bool operator<=(natRange_ptrIterator const& other) const
+		{
+			return std::distance(m_Iter, other.m_Iter) <= 0;
+		}
+
+		bool operator>=(natRange_ptrIterator const& other) const
+		{
+			return std::distance(m_Iter, other.m_Iter) >= 0;
+		}
+
+		bool operator==(natRange_ptrIterator const& other) const
+		{
+			return m_Iter == other.m_Iter;
+		}
+
+		bool operator<(natRange_ptrIterator const& other) const
+		{
+			return !(*this >= other);
+		}
+
+		bool operator>(natRange_ptrIterator const& other) const
+		{
+			return !(*this <= other);
+		}
+	private:
+		Iter m_Iter;
+	};
+
 	template<typename Iter>
-	constexpr natRange<Iter> make_range(Iter begin, Iter end)
+	constexpr auto make_range(Iter begin, Iter end)
 	{
 		return natRange<Iter>(begin, end);
 	}
@@ -177,6 +283,6 @@ namespace NatsuLib
 	template<typename Range>
 	constexpr auto make_ptr_range(Range && r)
 	{
-		return natRange<decltype(&*std::begin(r))>(r);
+		return natRange<natRange_ptrIterator<decltype(std::begin(r))>>(r);
 	}
 }

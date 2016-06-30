@@ -12,9 +12,10 @@
 #include <map>
 #include <unordered_set>
 #include <unordered_map>
-#include "natType.h"
-#include "natException.h"
 #include <typeindex>
+
+#include "natType.h"
+#include "natStringUtil.h"
 
 namespace std
 {
@@ -23,7 +24,7 @@ namespace std
 	{
 		size_t operator()(function<Func> const& _Keyval) const
 		{
-			return hash<add_pointer_t<Func>>()(_Keyval.template target<Func>());
+			return hash<decay_t<Func>>()(_Keyval.template target<Func>());
 		}
 	};
 
@@ -56,8 +57,6 @@ namespace NatsuLib
 			Low = 3		///< @brief	µÍÓÅÏÈ¼¶
 		};
 	}
-
-
 
 	class natEventBase
 	{
@@ -95,16 +94,16 @@ namespace NatsuLib
 	public:
 		typedef std::function<void(natEventBase&)> EventListenerFunc;
 
-		NATNOINLINE static natEventBus& GetInstance()
-		{
-			static natEventBus s_Instance;
-			return s_Instance;
-		}
-
 		template <typename EventClass>
 		std::enable_if_t<std::is_base_of<natEventBase, EventClass>::value, void> RegisterEvent()
 		{
-			m_EventHandlerMap.try_emplace(typeid(EventClass));
+			bool Succeeded;
+			tie(std::ignore, Succeeded) = m_EventHandlerMap.try_emplace(typeid(EventClass));
+
+			if (!Succeeded)
+			{
+				nat_Throw(natException, _T("Cannot register event \"{0}\""), natUtil::C2Wstr(typeid(EventClass).name()));
+			}
 		}
 
 		template <typename EventClass, typename EventListener>
@@ -160,8 +159,5 @@ namespace NatsuLib
 
 	private:
 		std::unordered_map<std::type_index, std::map<int, std::map<nuInt, std::function<void(natEventBase&)>>>> m_EventHandlerMap;
-
-		natEventBus() = default;
-		~natEventBus() = default;
 	};
 }

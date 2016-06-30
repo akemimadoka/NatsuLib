@@ -187,6 +187,7 @@
     <ClInclude Include="extern\unzip\mztools.h" />
     <ClInclude Include="extern\unzip\unzip.h" />
     <ClInclude Include="extern\unzip\zip.h" />
+    <ClInclude Include="natConcepts.h" />
     <ClInclude Include="natEvent.h" />
     <ClInclude Include="natException.h" />
     <ClInclude Include="natLog.h" />
@@ -200,6 +201,7 @@
     <ClInclude Include="natRefObj.h" />
     <ClInclude Include="natStopWatch.h" />
     <ClInclude Include="natStream.h" />
+    <ClInclude Include="natStringUtil.h" />
     <ClInclude Include="natTransform.h" />
     <ClInclude Include="natType.h" />
     <ClInclude Include="natUtil.h" />
