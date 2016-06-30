@@ -50,7 +50,7 @@ namespace NatsuLib
 	};
 
 	template <typename T, typename ...Args>
-	auto make_scope(T CallableObj, Args&&... args)
+	constexpr auto make_scope(T CallableObj, Args&&... args)
 	{
 		return natScope<T, Args&&...>(CallableObj, std::forward<Args>(args)...);
 	}

@@ -51,7 +51,7 @@ typedef	ncStr				ncTStr;		///< @brief	常量通用字符串
 typedef std::basic_string<nTChar> nTString;	///< @brief	通用string类
 
 template <typename T>
-using nUnsafePtr = T*;
+using nUnsafePtr = std::add_pointer_t<T>;
 
 ///	@}
 

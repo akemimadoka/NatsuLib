@@ -85,7 +85,7 @@ natEventWrapper::natEventWrapper(nBool AutoReset, nBool InitialState)
 	m_hEvent = CreateEvent(NULL, !AutoReset, InitialState, NULL);
 	if (m_hEvent == NULL)
 	{
-		nat_Throw(natWinException, TEXT("natEventWrapper::natEventWrapper"), TEXT("Create event failed"));
+		nat_Throw(natWinException, _T("Create event failed"));
 	}
 }
 

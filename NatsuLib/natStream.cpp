@@ -234,6 +234,14 @@ natRefPointer<natMemoryStream> natFileStream::MapToMemoryStream()
 		{
 			m_pMappedFile = std::move(natMemoryStream::CreateFromExternMemory(reinterpret_cast<nData>(pFile), GetSize(), m_bReadable, m_bWritable));
 		}
+		else
+		{
+			nat_Throw(natWinException, _T("MapViewOfFile failed."));
+		}
+	}
+	else
+	{
+		nat_Throw(natWinException, _T("CreateFileMapping failed."));
 	}
 
 	return m_pMappedFile;
