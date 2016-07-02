@@ -197,7 +197,7 @@ std::future<void> natNamedPipeServerStream::WaitForConnectionAsync()
 				DWORD LastErr = GetLastError();
 				if (LastErr != ERROR_IO_PENDING)
 				{
-					nat_Throw(natWinException, _T("Cannot connect to pipe."), LastErr);
+					nat_Throw(natWinException, _T("Cannot connect to pipe."));
 				}
 			}
 

@@ -6,13 +6,14 @@
 #include <natMisc.h>
 #include <natConcepts.h>
 #include <natLog.h>
+#include <natNamedPipe.h>
 
 using namespace NatsuLib;
 
 struct Incrementable
 {
 	template <typename T>
-	[[noreturn]] auto requires_(T&& x) -> decltype(++x);
+	auto requires_(T&& x) -> decltype(++x);
 };
 
 template <typename T>
@@ -24,7 +25,7 @@ REQUIRES(void, std::conjunction<Models<Incrementable(T)>>::value) increment(T& x
 int main()
 {
 	std::locale defaultLocale("", LC_CTYPE);
-	//std::locale::global(defaultLocale);
+	std::locale::global(defaultLocale);
 	std::wcout.imbue(defaultLocale);
 	std::wclog.imbue(defaultLocale);
 	std::wcerr.imbue(defaultLocale);
@@ -59,7 +60,10 @@ int main()
 
 		int t = 5;
 		increment(t);
-		auto scope = make_scope([](int i) { std::cout << "end" << i << std::endl; }, t);
+		auto scope = make_scope([&logger](int i)
+		{
+			logger.LogMsg(_T("%s%d"), _T("end"), i);
+		}, t);
 		std::vector<nTString> strvec;
 		natUtil::split(_T("test 2333"), _T(" 2"), [&strvec](ncTStr str, size_t len)
 		{
@@ -67,13 +71,13 @@ int main()
 		});
 		for (auto&& item : strvec)
 		{
-			std::wcout << item << std::endl;
+			logger.LogMsg(_T("%s"), item);
 		}
 		
 		int arr[] = { 1, 2, 3, 4, 5 };
 		for (auto&& item : make_range(arr).pop_front().pop_back(2))
 		{
-			std::cout << item << std::endl;
+			logger.LogMsg(_T("%d"), item);
 		}
 	}
 	catch (natWinException& e)

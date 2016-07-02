@@ -84,7 +84,7 @@ namespace NatsuLib
 		natWinException(ncTStr Src, ncTStr File, nuInt Line, DWORD LastErr, ncTStr Desc, Args&&... args) noexcept
 			: natException(Src, File, Line, Desc, std::forward<Args>(args)...), m_LastErr(LastErr)
 		{
-			m_Description = natUtil::FormatString((m_Description + _T(" (LastErr = %d)")).c_str(), m_LastErr);
+			m_Description = move(natUtil::FormatString((m_Description + _T(" (LastErr = %ul)")).c_str(), m_LastErr));
 		}
 
 		DWORD GetErrNo() const noexcept
@@ -96,6 +96,11 @@ namespace NatsuLib
 		{
 			LPVOID pBuf = nullptr;
 			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, m_LastErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<nTStr>(&pBuf), 0, nullptr);
+			if (!pBuf)
+			{
+				return nTString();
+			}
+
 			nTString ret(static_cast<ncTStr>(pBuf));
 			LocalFree(pBuf);
 			return move(ret);
@@ -107,3 +112,5 @@ namespace NatsuLib
 }
 
 #define nat_Throw(ExceptionClass, ...) do { throw ExceptionClass(_T(__FUNCTION__), _T(__FILE__), __LINE__, __VA_ARGS__); } while (false)
+
+#include "natStringUtil.h"
