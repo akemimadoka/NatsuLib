@@ -6,7 +6,7 @@
 #include <natMisc.h>
 #include <natConcepts.h>
 #include <natLog.h>
-#include <natNamedPipe.h>
+#include <natMultiThread.h>
 
 using namespace NatsuLib;
 
@@ -64,20 +64,40 @@ int main()
 		{
 			logger.LogMsg(_T("%s%d"), _T("end"), i);
 		}, t);
-		std::vector<nTString> strvec;
-		natUtil::split(_T("test 2333"), _T(" 2"), [&strvec](ncTStr str, size_t len)
-		{
-			strvec.emplace_back(str, len);
-		});
-		for (auto&& item : strvec)
-		{
-			logger.LogMsg(_T("%s"), item);
-		}
 		
-		int arr[] = { 1, 2, 3, 4, 5 };
-		for (auto&& item : make_range(arr).pop_front().pop_back(2))
 		{
-			logger.LogMsg(_T("%d"), item);
+			std::vector<nTString> strvec;
+			natUtil::split(_T("test 2333"), _T(" 2"), [&strvec](ncTStr str, size_t len)
+			{
+				strvec.emplace_back(str, len);
+			});
+			for (auto&& item : strvec)
+			{
+				logger.LogMsg(_T("%s"), item);
+			}
+		}
+
+		{
+			int arr[] = { 1, 2, 3, 4, 5 };
+			for (auto&& item : make_range(arr).pop_front().pop_back(2))
+			{
+				logger.LogMsg(_T("%d"), item);
+			}
+		}
+
+		{
+			natThreadPool pool(2, 4);
+			auto ret = pool.QueueWork([](void* Param)
+			{
+				using namespace std::chrono_literals;
+				std::this_thread::sleep_for(10ms);
+				static_cast<natLog*>(Param)->LogMsg(_T("test"));
+				return 0u;
+			}, &logger);
+			auto&& result = ret.get();
+			logger.LogMsg(_T("Work started at thread index {0}, id {1}."), result.GetWorkThreadIndex(), pool.GetThreadId(result.GetWorkThreadIndex()));
+			logger.LogMsg(_T("Work finished with result {0}."), result.GetResult().get());
+			pool.WaitAllJobsFinish();
 		}
 	}
 	catch (natWinException& e)

@@ -43,7 +43,7 @@ nTString natUtil::GetResourceString(DWORD ResourceID, HINSTANCE hInstance)
 		do
 		{
 			tBuf.resize(tBuf.size() * 2u);
-			nLen = LoadString(hInstance, ResourceID, tBuf.data(), tBuf.size() - 1u);
+			nLen = LoadString(hInstance, ResourceID, tBuf.data(), static_cast<int>(tBuf.size() - 1));
 		} while (nLen < 0 || tBuf.size() - nLen <= FIXCHAR);
 	}
 	catch (std::bad_alloc&)

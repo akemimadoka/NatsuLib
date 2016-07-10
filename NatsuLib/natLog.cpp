@@ -15,10 +15,9 @@ natLog::~natLog()
 {
 }
 
-void natLog::UpdateLastLog(nuInt type, nTString&& log)
+void natLog::UpdateLog(nuInt type, nTString&& log)
 {
-	m_LastLog = move(log);
-	EventLogUpdated event(type, std::chrono::system_clock::now(), m_LastLog.c_str());
+	EventLogUpdated event(type, std::chrono::system_clock::now(), log.c_str());
 	m_EventBus.Post(event);
 }
 
@@ -35,11 +34,6 @@ ncTStr natLog::GetDefaultLogTypeName(LogType logtype)
 	default:
 		return _T("Unknown");
 	}
-}
-
-ncTStr natLog::GetLastLog() const
-{
-	return m_LastLog.c_str();
 }
 
 void natLog::RegisterLogUpdateEventFunc(natEventBus::EventListenerFunc func)

@@ -4,6 +4,17 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include <Windows.h>
+#include <unordered_map>
+#include <memory>
+#include <functional>
+#include <atomic>
+#include <queue>
+#include <future>
+
+#pragma push_macro("max")
+#ifdef max
+#	undef max
+#endif
 
 namespace NatsuLib
 {
@@ -27,25 +38,27 @@ namespace NatsuLib
 
 		///	@brief		获得线程句柄
 		///	@warning	请勿手动删除
-		HANDLE GetHandle() const;
+		HANDLE GetHandle() const noexcept;
+
+		DWORD GetThreadId() const noexcept;
 
 		///	@brief	继续线程执行
 		///	@return	是否成功
-		nBool Resume();
+		nBool Resume() noexcept;
 
 		///	@brief	阻塞线程执行
 		///	@return	是否成功
-		nBool Suspend();
+		nBool Suspend() noexcept;
 
 		///	@brief	等待线程执行
 		///	@param[in]	WaitTime	等待时间
 		///	@return	等待线程状态
-		DWORD Wait(nuInt WaitTime = INFINITE);
+		DWORD Wait(nuInt WaitTime = INFINITE) noexcept;
 
 		///	@brief	结束线程
 		///	@param[in]	ExitCode	退出码
 		///	@return	是否成功
-		nBool Terminate(nuInt ExitCode = nuInt(-1));
+		nBool Terminate(nuInt ExitCode = nuInt(-1)) noexcept;
 
 		///	@brief	获得退出码
 		nuInt GetExitCode() const;
@@ -86,8 +99,7 @@ namespace NatsuLib
 
 	////////////////////////////////////////////////////////////////////////////////
 	///	@brief	Windows的Event包装类
-	///	@note	通过Event对多线程操作进行同步\n
-	///			需与本程序的Event区分
+	///	@note	通过Event对多线程操作进行同步
 	////////////////////////////////////////////////////////////////////////////////
 	class natEventWrapper final
 	{
@@ -119,5 +131,102 @@ namespace NatsuLib
 		HANDLE m_hEvent;
 	};
 
+	class natThreadPool final
+	{
+		class WorkToken;
+	public:
+		typedef std::function<nuInt(void*)> WorkFunc;
+		enum : nuInt
+		{
+			DefaultMaxThreadCount = 4,
+			Infinity = std::numeric_limits<nuInt>::max(),
+		};
+
+		explicit natThreadPool(nuInt InitialThreadCount = 0, nuInt MaxThreadCount = DefaultMaxThreadCount);
+		~natThreadPool();
+
+		void KillIdleThreads(nBool Force = false);
+		void KillAllThreads(nBool Force = false);
+		std::future<WorkToken> QueueWork(WorkFunc workFunc, void* param = nullptr);
+		DWORD GetThreadId(nuInt Index) const;
+		void WaitAllJobsFinish(nuInt WaitTime = Infinity);
+
+	private:
+		class WorkerThread final
+			: public natThread
+		{
+		public:
+			WorkerThread(natThreadPool* pPool, nuInt Index);
+			WorkerThread(natThreadPool* pPool, nuInt Index, WorkFunc CallableObj, void* Param = nullptr);
+			~WorkerThread() = default;
+
+			WorkerThread(WorkerThread const&) = delete;
+			WorkerThread& operator=(WorkerThread const&) = delete;
+
+			nBool IsIdle() const;
+			std::future<nuInt> SetWork(WorkFunc CallableObj, void* Param = nullptr);
+
+			void RequestTerminate(nBool value = true);
+
+		private:
+			nuInt ThreadJob() override;
+
+			natThreadPool* m_pPool;
+			const nuInt m_Index;
+			WorkFunc m_CallableObj;
+			void* m_Arg;
+			std::promise<nuInt> m_LastResult;
+
+			std::atomic<nBool> m_Idle, m_ShouldTerminate;
+		};
+
+		class WorkToken final
+		{
+		public:
+			WorkToken() = default;
+			WorkToken(nuInt workThreadId, std::future<nuInt>&& result)
+				: m_WorkThreadIndex(workThreadId), m_Result(move(result))
+			{
+			}
+			WorkToken(WorkToken&& other)
+				: m_WorkThreadIndex(other.m_WorkThreadIndex), m_Result(move(other.m_Result))
+			{
+			}
+			~WorkToken() = default;
+
+			WorkToken& operator=(WorkToken&& other)
+			{
+				m_WorkThreadIndex = other.m_WorkThreadIndex;
+				m_Result = move(other.m_Result);
+				return *this;
+			}
+
+			nuInt GetWorkThreadIndex() const noexcept
+			{
+				return m_WorkThreadIndex;
+			}
+
+			std::future<nuInt>& GetResult() noexcept
+			{
+				return m_Result;
+			}
+
+		private:
+			nuInt m_WorkThreadIndex;
+			std::future<nuInt> m_Result;
+		};
+
+		nuInt getNextAvailableIndex();
+		nuInt getIdleThreadIndex();
+		void onWorkerThreadIdle(nuInt Index);
+
+		const nuInt m_MaxThreadCount;
+		std::unordered_map<nuInt, std::unique_ptr<WorkerThread>> m_Threads;
+		std::queue<std::tuple<WorkFunc, void*, std::promise<WorkToken>>> m_WorkQueue;
+		natCriticalSection m_Section;
+	};
+
 	///	@}
 }
+
+#pragma pop_macro("max")

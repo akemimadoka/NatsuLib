@@ -90,11 +90,8 @@ namespace NatsuLib
 		template <typename ... Arg>
 		void Log(nuInt type, ncTStr content, Arg &&... arg)
 		{
-			UpdateLastLog(type, std::move(natUtil::FormatString(content, std::forward<Arg>(arg)...)));
+			UpdateLog(type, std::move(natUtil::FormatString(content, std::forward<Arg>(arg)...)));
 		}
-
-		///	@brief	获得最新日志
-		ncTStr GetLastLog() const;
 
 		///	@brief	注册日志更新事件处理函数
 		void RegisterLogUpdateEventFunc(natEventBus::EventListenerFunc func);
@@ -102,8 +99,7 @@ namespace NatsuLib
 		static ncTStr GetDefaultLogTypeName(LogType logtype);
 
 	private:
-		void UpdateLastLog(nuInt type, nTString&& log);
-		nTString m_LastLog;
+		void UpdateLog(nuInt type, nTString&& log);
 		natEventBus& m_EventBus;
 	};
 }

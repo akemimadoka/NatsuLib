@@ -7,10 +7,8 @@
 #include <Windows.h>
 
 #ifdef TRACEREFOBJ
-#ifdef _DEBUG
 #include "natUtil.h"
 #include <typeinfo>
-#endif // _DEBUG
 #endif // TRACEREFOBJ
 
 namespace NatsuLib
@@ -39,17 +37,13 @@ namespace NatsuLib
 			: m_cRef(1u)
 		{
 #ifdef TRACEREFOBJ
-#ifdef _DEBUG
 			OutputDebugString(natUtil::FormatString(_T("Type %s Create at (%p)\n"), natUtil::C2Wstr(typeid(*this).name()).c_str(), this).c_str());
-#endif // _DEBUG
 #endif
 		}
 		virtual ~natRefObjImpl()
 		{
 #ifdef TRACEREFOBJ
-#ifdef _DEBUG
 			OutputDebugString(natUtil::FormatString(_T("Type %s Destroy at (%p)\n"), natUtil::C2Wstr(typeid(*this).name()).c_str(), this).c_str());
-#endif // _DEBUG
 #endif
 		}
 
