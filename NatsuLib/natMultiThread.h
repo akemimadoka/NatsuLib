@@ -31,6 +31,15 @@ namespace NatsuLib
 	class natThread
 	{
 	public:
+		typedef unsigned long ThreadIdType;
+		typedef unsigned long ResultType;
+		typedef nUnsafePtr<void> UnsafeHandle;
+
+		enum : nuInt
+		{
+			Infinity = std::numeric_limits<nuInt>::max(),
+		};
+
 		///	@brief	构造函数
 		///	@param[in]	Pause	创建线程时暂停
 		explicit natThread(nBool Pause = true);
@@ -38,9 +47,9 @@ namespace NatsuLib
 
 		///	@brief		获得线程句柄
 		///	@warning	请勿手动删除
-		HANDLE GetHandle() const noexcept;
+		UnsafeHandle GetHandle() const noexcept;
 
-		DWORD GetThreadId() const noexcept;
+		ThreadIdType GetThreadId() const noexcept;
 
 		///	@brief	继续线程执行
 		///	@return	是否成功
@@ -53,7 +62,7 @@ namespace NatsuLib
 		///	@brief	等待线程执行
 		///	@param[in]	WaitTime	等待时间
 		///	@return	等待线程状态
-		DWORD Wait(nuInt WaitTime = INFINITE) noexcept;
+		ResultType Wait(nuInt WaitTime = Infinity) noexcept;
 
 		///	@brief	结束线程
 		///	@param[in]	ExitCode	退出码
@@ -64,14 +73,14 @@ namespace NatsuLib
 		nuInt GetExitCode() const;
 	protected:
 		///	@brief	重写此方法以实现线程工作
-		virtual nuInt ThreadJob() = 0;
+		virtual ResultType ThreadJob() = 0;
 
 	private:
 		///	@brief	执行线程的包装函数
 		///	@param[in]	p	指向Thread类的指针
-		static DWORD WINAPI execute(void* p);
-		HANDLE m_hThread;
-		DWORD m_hThreadID;
+		static ResultType CALLBACK execute(void* p);
+		UnsafeHandle m_hThread;
+		ThreadIdType m_hThreadID;
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -104,12 +113,18 @@ namespace NatsuLib
 	class natEventWrapper final
 	{
 	public:
+		typedef nUnsafePtr<void> UnsafeHandle;
+		enum : nuInt
+		{
+			Infinity = std::numeric_limits<nuInt>::max(),
+		};
+
 		natEventWrapper(nBool AutoReset, nBool InitialState);
 		~natEventWrapper();
 
 		///	@brief		获得句柄
 		///	@warning	请勿手动释放
-		HANDLE GetHandle() const;
+		UnsafeHandle GetHandle() const;
 
 		///	@brief		标记事件
 		///	@return		是否成功
@@ -126,9 +141,9 @@ namespace NatsuLib
 		///	@brief		等待事件
 		///	@param[in]	WaitTime	等待时间
 		///	@return		是否成功
-		nBool Wait(nuInt WaitTime = INFINITE) const;
+		nBool Wait(nuInt WaitTime = Infinity) const;
 	private:
-		HANDLE m_hEvent;
+		UnsafeHandle m_hEvent;
 	};
 
 	class natThreadPool final
@@ -136,6 +151,8 @@ namespace NatsuLib
 		class WorkToken;
 	public:
 		typedef std::function<nuInt(void*)> WorkFunc;
+		typedef unsigned long ThreadIdType;
+		typedef natThread::ResultType ResultType;
 		enum : nuInt
 		{
 			DefaultMaxThreadCount = 4,
@@ -148,7 +165,7 @@ namespace NatsuLib
 		void KillIdleThreads(nBool Force = false);
 		void KillAllThreads(nBool Force = false);
 		std::future<WorkToken> QueueWork(WorkFunc workFunc, void* param = nullptr);
-		DWORD GetThreadId(nuInt Index) const;
+		ThreadIdType GetThreadId(nuInt Index) const;
 		void WaitAllJobsFinish(nuInt WaitTime = Infinity);
 
 	private:
@@ -169,7 +186,7 @@ namespace NatsuLib
 			void RequestTerminate(nBool value = true);
 
 		private:
-			nuInt ThreadJob() override;
+			ResultType ThreadJob() override;
 
 			natThreadPool* m_pPool;
 			const nuInt m_Index;

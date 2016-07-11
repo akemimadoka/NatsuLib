@@ -4,7 +4,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "natType.h"
-#include <Windows.h>
+#include <atomic>
 
 #ifdef TRACEREFOBJ
 #include "natUtil.h"
@@ -37,24 +37,24 @@ namespace NatsuLib
 			: m_cRef(1u)
 		{
 #ifdef TRACEREFOBJ
-			OutputDebugString(natUtil::FormatString(_T("Type %s Create at (%p)\n"), natUtil::C2Wstr(typeid(*this).name()).c_str(), this).c_str());
+			OutputDebugString(natUtil::FormatString(_T("Type %s created at (%p)\n"), natUtil::C2Wstr(typeid(*this).name()).c_str(), this).c_str());
 #endif
 		}
 		virtual ~natRefObjImpl()
 		{
 #ifdef TRACEREFOBJ
-			OutputDebugString(natUtil::FormatString(_T("Type %s Destroy at (%p)\n"), natUtil::C2Wstr(typeid(*this).name()).c_str(), this).c_str());
+			OutputDebugString(natUtil::FormatString(_T("Type %s destroied at (%p)\n"), natUtil::C2Wstr(typeid(*this).name()).c_str(), this).c_str());
 #endif
 		}
 
 		virtual void AddRef()
 		{
-			InterlockedIncrement(&m_cRef);
+			++m_cRef;
 		}
 
 		virtual void Release()
 		{
-			auto tRet = InterlockedDecrement(&m_cRef);
+			auto tRet = --m_cRef;
 			if (tRet == 0u)
 			{
 				delete this;
@@ -62,7 +62,7 @@ namespace NatsuLib
 		}
 
 	private:
-		nuInt m_cRef;
+		std::atomic<nuInt> m_cRef;
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -190,18 +190,15 @@ namespace NatsuLib
 		T* pRefObj = new T(std::forward<Arg>(args)...);
 		natRefPointer<T> Ret(pRefObj);
 		SafeRelease(pRefObj);
-		return Ret;
+		return std::move(Ret);
 	}
 }
 
-namespace std
+template <typename T>
+struct std::hash<NatsuLib::natRefPointer<T>>
 {
-	template <typename T>
-	struct hash<NatsuLib::natRefPointer<T>>
+	size_t operator()(NatsuLib::natRefPointer<T> const& _Keyval) const
 	{
-		size_t operator()(NatsuLib::natRefPointer<T> const& _Keyval) const
-		{
-			return hash<T*>()(_Keyval.Get());
-		}
-	};
-}
+		return hash<T*>()(_Keyval.Get());
+	}
+};

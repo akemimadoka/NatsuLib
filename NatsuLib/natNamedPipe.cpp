@@ -143,7 +143,7 @@ void natNamedPipeServerStream::WaitForConnection()
 {
 	if (m_bConnected)
 	{
-		nat_Throw(natException, _T("Already connected."));
+		return;
 	}
 
 	if (IsAsync())
@@ -181,7 +181,9 @@ std::future<void> natNamedPipeServerStream::WaitForConnectionAsync()
 {
 	if (m_bConnected)
 	{
-		nat_Throw(natException, _T("Already connected."));
+		std::promise<void> dummy;
+		dummy.set_value();
+		return dummy.get_future();
 	}
 
 	if (IsAsync())

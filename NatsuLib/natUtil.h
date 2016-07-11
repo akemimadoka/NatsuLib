@@ -8,15 +8,10 @@ namespace NatsuLib
 {
 	namespace natUtil
 	{
-		///	@brief	获得本地时间
-		///	@return	包含时间信息的字符串
-		inline nTString GetSysTime()
+		enum : nuInt
 		{
-			SYSTEMTIME st;
-			GetLocalTime(&st);
-
-			return FormatString(_T("%04d/%02d/%02d %02d:%02d:%02d"), st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
-		}
+			DefaultCodePage = CP_INSTALLED,
+		};
 
 		///	@brief	string转wstring
 		inline std::wstring C2Wstr(std::string const& str)
@@ -30,9 +25,9 @@ namespace NatsuLib
 		}
 
 		///	@brief	多字节转Unicode
-		std::wstring MultibyteToUnicode(ncStr Str, nuInt CodePage = CP_INSTALLED);
+		std::wstring MultibyteToUnicode(ncStr Str, nuInt CodePage = DefaultCodePage);
 		///	@brief	宽字符转多字节
-		std::string WidecharToMultibyte(ncWStr Str, nuInt CodePage = CP_INSTALLED);
+		std::string WidecharToMultibyte(ncWStr Str, nuInt CodePage = DefaultCodePage);
 
 		///	@brief	获得资源字符串
 		///	@param[in]	ResourceID	资源ID

@@ -214,7 +214,7 @@ ncTStr natFileStream::GetFilename() const noexcept
 	return m_Filename.c_str();
 }
 
-HANDLE natFileStream::GetUnsafeHandle() const noexcept
+natFileStream::UnsafeHandle natFileStream::GetUnsafeHandle() const noexcept
 {
 	return m_hFile;
 }

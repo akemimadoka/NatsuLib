@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "natLog.h"
 
-#pragma warning (disable:4996) 
-
 using namespace NatsuLib;
 
 natLog::natLog(natEventBus& eventBus)

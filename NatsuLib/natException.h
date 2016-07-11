@@ -109,6 +109,58 @@ namespace NatsuLib
 	private:
 		DWORD m_LastErr;
 	};
+
+	class natErrException
+		: public natException
+	{
+	public:
+		template <typename... Args>
+		natErrException(ncTStr Src, ncTStr File, nuInt Line, NatErr ErrNo, ncTStr Desc, Args&&... args) noexcept
+			: natException(Src, File, Line, Desc, std::forward<Args>(args)...), m_Errno(ErrNo)
+		{
+			m_Description = move(natUtil::FormatString((m_Description + _T(" (Errno = {0})")).c_str(), m_Errno));
+		}
+
+		NatErr GetErrNo() const noexcept
+		{
+			return m_Errno;
+		}
+
+		ncTStr GetErrMsg() const noexcept
+		{
+			return GetErrDescription(m_Errno);
+		}
+
+	private:
+		NatErr m_Errno;
+
+		static ncTStr GetErrDescription(NatErr Errno)
+		{
+			switch (Errno)
+			{
+			case NatErr_Interrupted:
+				return _T("Interrupted");
+			case NatErr_OK:
+				return _T("Success");
+			case NatErr_Unknown:
+				return _T("Unknown error");
+			case NatErr_IllegalState:
+				return _T("Illegal state");
+			case NatErr_InvalidArg:
+				return _T("Invalid argument");
+			case NatErr_InternalErr:
+				return _T("Internal error");
+			case NatErr_OutOfRange:
+				return _T("Out of range");
+			case NatErr_NotImpl:
+				return _T("Not implemented");
+			case NatErr_NotSupport:
+				return _T("Not supported");
+			default:
+				return _T("No description");
+			}
+		}
+	};
 }
 
 #define nat_Throw(ExceptionClass, ...) do { throw ExceptionClass(_T(__FUNCTION__), _T(__FILE__), __LINE__, __VA_ARGS__); } while (false)

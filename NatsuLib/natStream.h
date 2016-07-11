@@ -97,6 +97,8 @@ namespace NatsuLib
 		: public natRefObjImpl<natStream>
 	{
 	public:
+		typedef nUnsafePtr<void> UnsafeHandle;
+
 		natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable);
 		~natFileStream();
 
@@ -117,11 +119,11 @@ namespace NatsuLib
 		void Unlock() override;
 
 		ncTStr GetFilename() const noexcept;
-		HANDLE GetUnsafeHandle() const noexcept;
+		UnsafeHandle GetUnsafeHandle() const noexcept;
 		natRefPointer<natMemoryStream> MapToMemoryStream();
 
 	private:
-		HANDLE m_hFile, m_hMappedFile = NULL;
+		UnsafeHandle m_hFile, m_hMappedFile = NULL;
 		natRefPointer<natMemoryStream> m_pMappedFile;
 		nTString m_Filename;
 		nBool m_bReadable, m_bWritable;

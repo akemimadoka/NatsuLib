@@ -23,12 +23,12 @@ natThread::~natThread()
 	CloseHandle(m_hThread);
 }
 
-HANDLE natThread::GetHandle() const noexcept
+natThread::UnsafeHandle natThread::GetHandle() const noexcept
 {
 	return m_hThread;
 }
 
-DWORD natThread::GetThreadId() const noexcept
+natThread::ThreadIdType natThread::GetThreadId() const noexcept
 {
 	return m_hThreadID;
 }
@@ -43,7 +43,7 @@ nBool natThread::Suspend() noexcept
 	return SuspendThread(m_hThread) != DWORD(-1);
 }
 
-DWORD natThread::Wait(nuInt WaitTime) noexcept
+natThread::ResultType natThread::Wait(nuInt WaitTime) noexcept
 {
 	return WaitForSingleObject(m_hThread, WaitTime);
 }
@@ -63,7 +63,7 @@ nuInt natThread::GetExitCode() const
 	return ExitCode;
 }
 
-DWORD natThread::execute(void* p)
+natThread::ResultType natThread::execute(void* p)
 {
 	return static_cast<natThread *>(p)->ThreadJob();
 }
@@ -203,7 +203,7 @@ std::future<natThreadPool::WorkToken> natThreadPool::QueueWork(WorkFunc workFunc
 		std::promise<WorkToken> dummyPromise;
 		auto ret = dummyPromise.get_future();
 		dummyPromise.set_value(WorkToken(availableIndex, move(result)));
-		return ret;
+		return move(ret);
 	}
 
 	if (Index != std::numeric_limits<nuInt>::max())
@@ -212,16 +212,16 @@ std::future<natThreadPool::WorkToken> natThreadPool::QueueWork(WorkFunc workFunc
 		std::promise<WorkToken> dummyPromise;
 		auto ret = dummyPromise.get_future();
 		dummyPromise.set_value(WorkToken(Index, move(result)));
-		return ret;
+		return move(ret);
 	}
 
 	auto work = make_tuple(workFunc, param, std::promise<WorkToken>());
 	auto ret = std::get<2>(work).get_future();
 	m_WorkQueue.push(move(work));
-	return ret;
+	return move(ret);
 }
 
-DWORD natThreadPool::GetThreadId(nuInt Index) const
+natThread::ThreadIdType natThreadPool::GetThreadId(nuInt Index) const
 {
 	auto iter = m_Threads.find(Index);
 	if (iter == m_Threads.end())
@@ -286,7 +286,7 @@ void natThreadPool::WorkerThread::RequestTerminate(nBool value)
 	}
 }
 
-nuInt natThreadPool::WorkerThread::ThreadJob()
+natThread::ResultType natThreadPool::WorkerThread::ThreadJob()
 {
 	while (!m_ShouldTerminate)
 	{

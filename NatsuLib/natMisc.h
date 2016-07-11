@@ -30,7 +30,7 @@ namespace NatsuLib
 		}
 
 		constexpr natScope(natScope && other)
-			: m_ShouldCall(true), m_CallableObj(other.m_CallableObj), m_Args(std::move(other.m_Args))
+			: m_ShouldCall(true), m_CallableObj(std::move(other.m_CallableObj)), m_Args(std::move(other.m_Args))
 		{
 			other.m_ShouldCall = false;
 		}
@@ -52,7 +52,7 @@ namespace NatsuLib
 	template <typename T, typename ...Args>
 	constexpr auto make_scope(T CallableObj, Args&&... args)
 	{
-		return natScope<T, Args&&...>(CallableObj, std::forward<Args>(args)...);
+		return std::move(natScope<T, Args&&...>(CallableObj, std::forward<Args>(args)...));
 	}
 
 	template <typename Iter>
@@ -68,12 +68,14 @@ namespace NatsuLib
 		constexpr natRange(Iter begin, Iter end)
 			: m_IterBegin(begin), m_IterEnd(end)
 		{
+			assert(size() >= 0);
 		}
 
 		template <typename R>
 		constexpr explicit natRange(R&& range)
 			: m_IterBegin(std::begin(range)), m_IterEnd(std::end(range))
 		{
+			assert(size() >= 0);
 		}
 
 		~natRange() = default;
@@ -126,7 +128,7 @@ namespace NatsuLib
 
 		natRange& pop_front(difference_type n)
 		{
-			assert(size() > n - 1);
+			assert(size() >= n);
 			std::advance(m_IterBegin, n);
 			return *this;
 		}
@@ -143,7 +145,7 @@ namespace NatsuLib
 
 		natRange& pop_back(difference_type n)
 		{
-			assert(size() > n - 1);
+			assert(size() >= n);
 			std::advance(m_IterEnd, -n);
 			return *this;
 		}
