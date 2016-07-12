@@ -17,30 +17,6 @@
 #include "natType.h"
 #include "natStringUtil.h"
 
-namespace std
-{
-	template <typename Func>
-	struct hash<function<Func>>
-	{
-		size_t operator()(function<Func> const& _Keyval) const
-		{
-			return hash<decay_t<Func>>()(_Keyval.template target<Func>());
-		}
-	};
-
-	template <typename Func>
-	bool operator==(function<Func> const& left, function<Func> const& right)
-	{
-		return left.template target<Func>() == right.template target<Func>();
-	}
-
-	template <typename Func1, typename Func2>
-	bool operator==(function<Func1> const&, function<Func2> const&)
-	{
-		return false;
-	}
-}
-
 namespace NatsuLib
 {
 	namespace Priority

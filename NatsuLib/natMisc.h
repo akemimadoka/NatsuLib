@@ -1,4 +1,5 @@
 #pragma once
+#include "natType.h"
 #include <functional>
 #include <cassert>
 
@@ -44,7 +45,7 @@ namespace NatsuLib
 		}
 
 	private:
-		bool m_ShouldCall;
+		nBool m_ShouldCall;
 		T m_CallableObj;
 		std::tuple<Args&&...> m_Args;
 	};
@@ -111,7 +112,7 @@ namespace NatsuLib
 			return *std::next(m_IterBegin, index);
 		}
 
-		constexpr bool empty() const
+		constexpr nBool empty() const
 		{
 			return m_IterBegin == m_IterEnd;
 		}
@@ -174,6 +175,17 @@ namespace NatsuLib
 		natRange slice(difference_type start) const
 		{
 			return slice(start, size() - start);
+		}
+
+	protected:
+		natRange() = default;
+
+		void Init(Iter begin, Iter end)
+		{
+			assert(std::distance(begin, end) >= 0);
+
+			m_IterBegin = std::move(begin);
+			m_IterEnd = std::move(end);
 		}
 
 	private:
@@ -242,27 +254,27 @@ namespace NatsuLib
 			return *std::next(m_Iter, n);
 		}
 
-		bool operator<=(natRange_ptrIterator const& other) const
+		nBool operator<=(natRange_ptrIterator const& other) const
 		{
 			return std::distance(m_Iter, other.m_Iter) <= 0;
 		}
 
-		bool operator>=(natRange_ptrIterator const& other) const
+		nBool operator>=(natRange_ptrIterator const& other) const
 		{
 			return std::distance(m_Iter, other.m_Iter) >= 0;
 		}
 
-		bool operator==(natRange_ptrIterator const& other) const
+		nBool operator==(natRange_ptrIterator const& other) const
 		{
 			return m_Iter == other.m_Iter;
 		}
 
-		bool operator<(natRange_ptrIterator const& other) const
+		nBool operator<(natRange_ptrIterator const& other) const
 		{
 			return !(*this >= other);
 		}
 
-		bool operator>(natRange_ptrIterator const& other) const
+		nBool operator>(natRange_ptrIterator const& other) const
 		{
 			return !(*this <= other);
 		}

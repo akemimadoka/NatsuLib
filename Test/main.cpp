@@ -7,6 +7,7 @@
 #include <natConcepts.h>
 #include <natLog.h>
 #include <natMultiThread.h>
+#include <natLinq.h>
 
 using namespace NatsuLib;
 
@@ -79,7 +80,7 @@ int main()
 
 		{
 			int arr[] = { 1, 2, 3, 4, 5 };
-			for (auto&& item : make_range(arr).pop_front().pop_back(2))
+			for (auto&& item : from(make_range(arr)).select([](int i){ return i + 1; }).where([](int i){ return i > 3; }))
 			{
 				logger.LogMsg(_T("%d"), item);
 			}

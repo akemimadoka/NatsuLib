@@ -99,6 +99,15 @@
     <ClInclude Include="natMisc.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="natLinq.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natStringUtil.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natConcepts.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
