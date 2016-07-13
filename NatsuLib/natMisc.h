@@ -12,6 +12,189 @@ namespace NatsuLib
 		{
 			return std::invoke(std::forward<F>(f), std::get<I>(std::forward<Tuple>(t))...);
 		}
+
+		struct nullopt_t {};
+		constexpr nullopt_t nullopt{};
+
+		struct defaultconstruct_t {};
+		constexpr defaultconstruct_t defaultconstruct{};
+
+#pragma pack(1)
+		template <typename T>
+		class CommonStorage final
+		{
+		public:
+			constexpr CommonStorage() noexcept
+				: m_Constructed(false), m_Storage{0}
+			{
+			}
+
+			CommonStorage(CommonStorage const& other) noexcept(Init(std::declval<T const&>()))
+				: CommonStorage()
+			{
+				if (other.m_Constructed)
+				{
+					Init(other.Get());
+				}
+			}
+
+			CommonStorage(CommonStorage && other) noexcept(Init(std::declval<T &&>()))
+				: CommonStorage()
+			{
+				if (other.m_Constructed)
+				{
+					Init(std::move(other.Get()));
+				}
+			}
+
+			constexpr explicit CommonStorage(defaultconstruct_t) noexcept(std::is_nothrow_default_constructible<T>::value)
+				: CommonStorage()
+			{
+				Init(defaultconstruct);
+			}
+
+			constexpr explicit CommonStorage(const T& obj) noexcept(Init(obj))
+				: CommonStorage()
+			{
+				Init(obj);
+			}
+
+			constexpr explicit CommonStorage(T&& obj) noexcept(Init(std::move(obj)))
+				: CommonStorage()
+			{
+				Init(std::move(obj));
+			}
+
+			template <typename... Args>
+			constexpr explicit CommonStorage(Args&&... args) noexcept(Init(std::forward<Args>(args)...))
+				: CommonStorage()
+			{
+				Init(std::forward<Args>(args)...);
+			}
+
+			~CommonStorage()
+			{
+				Init();
+			}
+
+			void Init() noexcept
+			{
+				Uninit(std::is_destructible<T>{});
+			}
+
+			void Uninit(std::true_type) noexcept
+			{
+				if (m_Constructed)
+				{
+					Get().~T();
+					m_Constructed = false;
+				}
+			}
+
+			void Uninit(std::false_type) noexcept
+			{
+				m_Constructed = false;
+			}
+
+			void Init(defaultconstruct_t) noexcept(std::is_nothrow_default_constructible<T>::value)
+			{
+				Init();
+
+				new(m_Storage) T;
+				m_Constructed = true;
+			}
+
+			void Init(const T& obj) noexcept(std::is_nothrow_copy_constructible<T>::value)
+			{
+				Init();
+
+				new(m_Storage) T(obj);
+				m_Constructed = true;
+			}
+
+			void Init(T&& obj) noexcept(std::is_nothrow_move_constructible<T>::value)
+			{
+				Init();
+
+				new(m_Storage) T(std::move(obj));
+				m_Constructed = true;
+			}
+
+			template <typename... Args>
+			void Init(Args&&... args) noexcept(std::is_nothrow_constructible<T, Args&&...>::value)
+			{
+				Init();
+
+				new(m_Storage) T(std::forward<Args>(args)...);
+				m_Constructed = true;
+			}
+
+			T const& Get() const&
+			{
+				if (!m_Constructed)
+				{
+					nat_Throw(natException, _T("Storage has not constructed."));
+				}
+				return Get(std::nothrow);
+			}
+
+			T const& Get(std::nothrow_t) const&
+			{
+				return *reinterpret_cast<const T*>(m_Storage);
+			}
+
+			T& Get() &
+			{
+				if (!m_Constructed)
+				{
+					nat_Throw(natException, _T("Storage has not constructed."));
+				}
+				return Get(std::nothrow);
+			}
+
+			T& Get(std::nothrow_t) &
+			{
+				return *reinterpret_cast<T*>(m_Storage);
+			}
+
+			T const&& Get() const&&
+			{
+				if (!m_Constructed)
+				{
+					nat_Throw(natException, _T("Storage has not constructed."));
+				}
+				return std::move(Get(std::nothrow));
+			}
+
+			T const&& Get(std::nothrow_t) const&&
+			{
+				return std::move(*reinterpret_cast<const T*>(m_Storage));
+			}
+
+			T&& Get() &&
+			{
+				if (!m_Constructed)
+				{
+					nat_Throw(natException, _T("Storage has not constructed."));
+				}
+				return std::move(Get(std::nothrow));
+			}
+
+			T&& Get(std::nothrow_t) &&
+			{
+				return std::move(*reinterpret_cast<T*>(m_Storage));
+			}
+
+			constexpr nBool Constructed() const noexcept
+			{
+				return m_Constructed;
+			}
+
+		private:
+			nBool m_Constructed;
+			nByte m_Storage[sizeof(T)];
+		};
+#pragma pack()
 	}
 
 	template <class F, class Tuple>
@@ -49,15 +232,245 @@ namespace NatsuLib
 		T m_CallableObj;
 		std::tuple<Args&&...> m_Args;
 	};
-
+	
 	template <typename T, typename ...Args>
 	constexpr auto make_scope(T CallableObj, Args&&... args)
 	{
 		return std::move(natScope<T, Args&&...>(CallableObj, std::forward<Args>(args)...));
 	}
 
+	using _Detail::nullopt_t;
+	using _Detail::nullopt;
+
+	using _Detail::defaultconstruct_t;
+	using _Detail::defaultconstruct;
+
+	template <typename T>
+	class Optional
+	{
+	public:
+		typedef T value_type;
+
+		constexpr Optional()
+		{
+		}
+		constexpr Optional(nullopt_t)
+		{
+		}
+		constexpr Optional(defaultconstruct_t)
+			: m_Value(defaultconstruct)
+		{
+		}
+		Optional(Optional const& other)
+			: m_Value(other.m_Value)
+		{
+		}
+		Optional(Optional && other)
+			: m_Value(std::move(other.m_Value))
+		{
+		}
+		constexpr Optional(T const& value)
+			: m_Value(value)
+		{
+		}
+		constexpr Optional(T && value)
+			: m_Value(std::move(value))
+		{
+		}
+		template <typename... Args>
+		constexpr Optional(Args&&... args)
+			: m_Value(std::forward<Args>(args)...)
+		{
+		}
+
+		Optional& operator=(nullopt_t) &
+		{
+			m_Value.Init();
+			return *this;
+		}
+
+		Optional& operator=(Optional const& other) &
+		{
+			if (m_Value.Constructed())
+			{
+				m_Value.Get() = other.m_Value.Get();
+			}
+			else
+			{
+				m_Value.Init(other.m_Value.Get());
+			}
+			
+			return *this;
+		}
+
+		Optional& operator=(Optional && other) &
+		{
+			if (m_Value.Constructed())
+			{
+				m_Value.Get() = std::move(other.m_Value.Get());
+			}
+			else
+			{
+				m_Value.Init(std::move(other.m_Value.Get()));
+			}
+			
+			return *this;
+		}
+
+		template <typename U>
+		Optional& operator=(U&& value) &
+		{
+			if (m_Value.Constructed())
+			{
+				m_Value.Get() = std::forward<U>(value);
+			}
+			else
+			{
+				m_Value.Init(std::forward<U>(value));
+			}
+
+			return *this;
+		}
+
+		const T* operator->() const
+		{
+			assert(has_value() && "There is no available value.");
+
+			return &m_Value.Get();
+		}
+
+		T* operator->()
+		{
+			assert(has_value() && "There is no available value.");
+
+			return &m_Value.Get();
+		}
+
+		T const& operator*() const&
+		{
+			assert(has_value() && "There is no available value.");
+
+			return m_Value.Get();
+		}
+
+		T& operator*() &
+		{
+			assert(has_value() && "There is no available value.");
+
+			return m_Value.Get();
+		}
+
+		T const&& operator*() const&&
+		{
+			assert(has_value() && "There is no available value.");
+
+			return std::move(m_Value.Get());
+		}
+
+		T&& operator*() &&
+		{
+			assert(has_value() && "There is no available value.");
+
+			return std::move(m_Value.Get());
+		}
+
+		constexpr explicit operator nBool() const
+		{
+			return has_value();
+		}
+
+		constexpr nBool has_value() const
+		{
+			return m_Value.Constructed();
+		}
+
+		T const& value() const&
+		{
+			if (!has_value())
+			{
+				nat_Throw(natException, _T("There is no available value."));
+			}
+
+			return m_Value.Get();
+		}
+
+		T& value() &
+		{
+			if (!has_value())
+			{
+				nat_Throw(natException, _T("There is no available value."));
+			}
+
+			return m_Value.Get();
+		}
+
+		T const&& value() const&&
+		{
+			if (!has_value())
+			{
+				nat_Throw(natException, _T("There is no available value."));
+			}
+
+			return std::move(m_Value.Get());
+		}
+
+		T&& value() &&
+		{
+			if (!has_value())
+			{
+				nat_Throw(natException, _T("There is no available value."));
+			}
+
+			return std::move(m_Value.Get());
+		}
+
+		template <typename U>
+		constexpr T value_or(U&& default_value) const&
+		{
+			return has_value() ? m_Value.Get() : static_cast<T>(std::forward<U>(default_value));
+		}
+
+		template <typename U>
+		T value_or(U&& default_value) &&
+		{
+			return has_value() ? std::move(m_Value.Get()) : static_cast<T>(std::forward<U>(default_value));
+		}
+
+		void swap(Optional& other) noexcept(std::is_nothrow_move_constructible<T>::value && noexcept(std::swap(std::declval<T&>(), std::declval<T&>())))
+		{
+			if (has_value() && !other.has_value())
+			{
+				other.m_Value.Init(std::move(m_Value.Get()));
+				m_Value.Init();
+			}
+			else if (!has_value() && other.has_value())
+			{
+				m_Value.Init(std::move(other.m_Value.Get()));
+				other.m_Value.Init();
+			}
+			else if (has_value() && other.has_value())
+			{
+				std::swap(m_Value.Get(), other.m_Value.Get());
+			}
+		}
+
+		void reset()
+		{
+			m_Value.Init();
+		}
+
+		template <typename... Args>
+		void emplace(Args&&... args)
+		{
+			m_Value.Init(std::forward<Args>(args)...);
+		}
+
+	private:
+		_Detail::CommonStorage<T> m_Value;
+	};
+
 	template <typename Iter>
-	class natRange
+	class Range
 	{
 	public:
 		typedef typename std::iterator_traits<Iter>::iterator_category iterator_category;
@@ -66,20 +479,20 @@ namespace NatsuLib
 		typedef typename std::iterator_traits<Iter>::reference reference;
 		typedef typename std::iterator_traits<Iter>::pointer pointer;
 
-		constexpr natRange(Iter begin, Iter end)
+		constexpr Range(Iter begin, Iter end)
 			: m_IterBegin(begin), m_IterEnd(end)
 		{
-			assert(size() >= 0);
+			//assert(size() >= 0);
 		}
 
 		template <typename R>
-		constexpr explicit natRange(R&& range)
+		constexpr explicit Range(R&& range)
 			: m_IterBegin(std::begin(range)), m_IterEnd(std::end(range))
 		{
-			assert(size() >= 0);
+			//assert(size() >= 0);
 		}
 
-		~natRange() = default;
+		~Range() = default;
 
 		constexpr Iter begin() const
 		{
@@ -93,21 +506,21 @@ namespace NatsuLib
 
 		constexpr reference front() const
 		{
-			assert(!empty());
+			//assert(!empty());
 
 			return *m_IterBegin;
 		}
 
 		constexpr reference back() const
 		{
-			assert(!empty());
+			//assert(!empty());
 
 			return *std::prev(m_IterEnd);
 		}
 
 		constexpr reference operator[](difference_type index) const
 		{
-			assert(index < size());
+			//assert(index < size());
 
 			return *std::next(m_IterBegin, index);
 		}
@@ -122,67 +535,67 @@ namespace NatsuLib
 			return std::distance(m_IterBegin, m_IterEnd);
 		}
 
-		natRange& pop_front()
+		Range& pop_front()
 		{
 			return pop_front(1);
 		}
 
-		natRange& pop_front(difference_type n)
+		Range& pop_front(difference_type n)
 		{
-			assert(size() >= n);
+			//assert(size() >= n);
 			std::advance(m_IterBegin, n);
 			return *this;
 		}
 
-		natRange& pop_front_upto(difference_type n)
+		Range& pop_front_upto(difference_type n)
 		{
 			return pop_front(size() - n);
 		}
 
-		natRange& pop_back()
+		Range& pop_back()
 		{
 			return pop_back(1);
 		}
 
-		natRange& pop_back(difference_type n)
+		Range& pop_back(difference_type n)
 		{
-			assert(size() >= n);
+			//assert(size() >= n);
 			std::advance(m_IterEnd, -n);
 			return *this;
 		}
 
-		natRange& pop_back_upto(difference_type n)
+		Range& pop_back_upto(difference_type n)
 		{
 			return pop_back(n - size());
 		}
 
-		std::pair<natRange, natRange> split(difference_type index) const
+		std::pair<Range, Range> split(difference_type index) const
 		{
-			assert(index < size());
+			//assert(index < size());
 
 			auto&& MidIter = std::next(m_IterBegin, index);
-			return std::make_pair(natRange(m_IterBegin, MidIter), natRange(MidIter, m_IterEnd));
+			return std::make_pair(Range(m_IterBegin, MidIter), Range(MidIter, m_IterEnd));
 		}
 
-		natRange slice(difference_type start, difference_type stop) const
+		Range slice(difference_type start, difference_type stop) const
 		{
-			assert(stop >= start);
-			assert(stop - start <= size());
+			//assert(stop >= start);
+			//assert(stop - start <= size());
 
-			return natRange(std::next(m_IterBegin, start), std::next(m_IterBegin, stop));
+			return Range(std::next(m_IterBegin, start), std::next(m_IterBegin, stop));
 		}
 
-		natRange slice(difference_type start) const
+		Range slice(difference_type start) const
 		{
 			return slice(start, size() - start);
 		}
 
 	protected:
-		natRange() = default;
+		Range() = default;
 
 		void Init(Iter begin, Iter end)
 		{
-			assert(std::distance(begin, end) >= 0);
+			//assert(std::distance(begin, end) >= 0);
 
 			m_IterBegin = std::move(begin);
 			m_IterEnd = std::move(end);
@@ -285,18 +698,27 @@ namespace NatsuLib
 	template<typename Iter>
 	constexpr auto make_range(Iter begin, Iter end)
 	{
-		return natRange<Iter>(begin, end);
+		return Range<Iter>(begin, end);
 	}
 
-	template<typename Range>
-	constexpr auto make_range(Range && r)
+	template<typename Range_t>
+	constexpr auto make_range(Range_t && r)
 	{
-		return natRange<decltype(std::begin(r))>(r);
+		return Range<decltype(std::begin(r))>(r);
 	}
 
-	template<typename Range>
-	constexpr auto make_ptr_range(Range && r)
+	template<typename Range_t>
+	constexpr auto make_ptr_range(Range_t && r)
 	{
-		return natRange<natRange_ptrIterator<decltype(std::begin(r))>>(r);
+		return Range<natRange_ptrIterator<decltype(std::begin(r))>>(r);
 	}
 }
+
+template <typename T>
+struct std::hash<NatsuLib::Optional<T>>
+{
+	size_t operator()(NatsuLib::Optional<T> const& _Keyval) const
+	{
+		return _Keyval ? hash<T>{}(*_Keyval) : 0u;
+	}
+};

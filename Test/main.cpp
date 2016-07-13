@@ -84,6 +84,7 @@ int main()
 			{
 				logger.LogMsg(_T("%d"), item);
 			}
+			logger.LogMsg(_T("%d"), from_values(2, 4, 6, 3, 2).where([](int i) {return i >= 4; }).size());
 		}
 
 		{

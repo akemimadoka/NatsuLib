@@ -62,6 +62,7 @@ namespace NatsuLib
 			{
 				virtual ~IteratorInterface() = default;
 
+				virtual std::shared_ptr<IteratorInterface> Clone() const = 0;
 				virtual void MoveNext() = 0;
 				virtual T& Deref() const = 0;
 				virtual nBool Equals(IteratorInterface const& other) const = 0;
@@ -75,6 +76,11 @@ namespace NatsuLib
 				explicit IteratorImpl(Iter_t const& iterator)
 					: m_Iterator(iterator)
 				{
+				}
+
+				std::shared_ptr<IteratorInterface> Clone() const override
+				{
+					return std::move(std::static_pointer_cast<IteratorInterface>(std::make_shared<IteratorImpl>(m_Iterator)));
 				}
 
 				void MoveNext() override
@@ -95,12 +101,23 @@ namespace NatsuLib
 
 			typedef CommonIterator<T> Self_t;
 
-			std::unique_ptr<IteratorInterface> m_Iterator;
+			std::shared_ptr<IteratorInterface> m_Iterator;
 
 		public:
+			typedef std::forward_iterator_tag iterator_category;
+			typedef std::remove_reference_t<T> value_type;
+			typedef nInt difference_type;
+			typedef std::add_lvalue_reference_t<value_type> reference;
+			typedef std::add_pointer_t<value_type> pointer;
+
 			template <typename Iter_t>
 			explicit CommonIterator(Iter_t const& iterator)
-				: m_Iterator(std::move(std::make_unique<IteratorImpl<Iter_t>>(iterator)))
+				: m_Iterator(std::move(std::make_shared<IteratorImpl<Iter_t>>(iterator)))
+			{
+			}
+
+			CommonIterator(Self_t const& other)
+				: m_Iterator(std::move(other.m_Iterator->Clone()))
 			{
 			}
 
@@ -147,6 +164,8 @@ namespace NatsuLib
 				: m_pContainer(pContainer), m_Iterator(iterator)
 			{
 			}
+
+			StorageIterator(Self_t const&) = default;
 
 			Self_t& operator++() &
 			{
@@ -227,6 +246,8 @@ namespace NatsuLib
 			{
 			}
 
+			SelectIterator(Self_t const&) = default;
+
 			Self_t& operator++() &
 			{
 				++m_Iterator;
@@ -262,7 +283,7 @@ namespace NatsuLib
 			Iter_t m_Iterator, m_End;
 			CallableObj_t m_CallableObj;
 		public:
-			typedef typename std::iterator_traits<Iter_t>::iterator_category iterator_category;
+			typedef std::forward_iterator_tag iterator_category;
 			typedef typename std::iterator_traits<Iter_t>::value_type value_type;
 			typedef typename std::iterator_traits<Iter_t>::difference_type difference_type;
 			typedef typename std::iterator_traits<Iter_t>::reference reference;
@@ -275,6 +296,11 @@ namespace NatsuLib
 				{
 					++m_Iterator;
 				}
+			}
+
+			WhereIterator(Self_t const& other)
+				: m_Iterator(other.m_Iterator), m_End(other.m_End), m_CallableObj(other.m_CallableObj)
+			{
 			}
 
 			Self_t& operator++() &
@@ -302,11 +328,6 @@ namespace NatsuLib
 			{
 				return !(*this == other);
 			}
-
-			difference_type operator-(Self_t const& other) const
-			{
-				return std::distance(other.m_Iterator, m_Iterator);
-			}
 		};
 
 		template <typename Iter_t>
@@ -332,6 +353,8 @@ namespace NatsuLib
 					++m_Iterator;
 				}
 			}
+
+			SkipWhileIterator(Self_t const&) = default;
 
 			Self_t& operator++() &
 			{
@@ -367,7 +390,7 @@ namespace NatsuLib
 
 			Iter_t m_Iterator, m_Target, m_End;
 		public:
-			typedef typename std::iterator_traits<Iter_t>::iterator_category iterator_category;
+			typedef std::forward_iterator_tag iterator_category;
 			typedef typename std::iterator_traits<Iter_t>::value_type value_type;
 			typedef typename std::iterator_traits<Iter_t>::difference_type difference_type;
 			typedef typename std::iterator_traits<Iter_t>::reference reference;
@@ -383,6 +406,8 @@ namespace NatsuLib
 
 				m_Target = std::move(std::next(m_Iterator, count));
 			}
+
+			TakeIterator(Self_t const&) = default;
 
 			Self_t& operator++() &
 			{
@@ -408,11 +433,6 @@ namespace NatsuLib
 			{
 				return !(*this == other);
 			}
-
-			difference_type operator-(Self_t const& other) const
-			{
-				return std::distance(other.m_Iterator, m_Iterator);
-			}
 		};
 
 		template <typename Iter_t, typename CallableObj_t>
@@ -423,7 +443,7 @@ namespace NatsuLib
 			Iter_t m_Iterator, m_End;
 			CallableObj_t m_CallableObj;
 		public:
-			typedef typename std::iterator_traits<Iter_t>::iterator_category iterator_category;
+			typedef std::forward_iterator_tag iterator_category;
 			typedef typename std::iterator_traits<Iter_t>::value_type value_type;
 			typedef typename std::iterator_traits<Iter_t>::difference_type difference_type;
 			typedef typename std::iterator_traits<Iter_t>::reference reference;
@@ -437,6 +457,8 @@ namespace NatsuLib
 					m_Iterator = m_End;
 				}
 			}
+
+			TakeWhileIterator(Self_t const&) = default;
 
 			Self_t& operator++() &
 			{
@@ -461,11 +483,6 @@ namespace NatsuLib
 			nBool operator!=(Self_t const& other) const
 			{
 				return !(*this == other);
-			}
-
-			difference_type operator-(Self_t const& other) const
-			{
-				return std::distance(other.m_Iterator, m_Iterator);
 			}
 		};
 
@@ -500,6 +517,8 @@ namespace NatsuLib
 				: m_Current1(current1), m_End1(end1), m_Current2(current2), m_End2(end2)
 			{
 			}
+
+			ConcatIterator(Self_t const&) = default;
 
 			Self_t& operator++() &
 			{
@@ -566,6 +585,8 @@ namespace NatsuLib
 			{
 			}
 
+			ZipIterator(Self_t const&) = default;
+
 			Self_t operator++() &
 			{
 				if (m_Current1 != m_End1 && m_Current2 != m_End2)
@@ -601,12 +622,6 @@ namespace NatsuLib
 	class LinqEnumerable;
 
 	template <typename Container>
-	Linq<decltype(*std::begin(std::declval<Container>()))> from_values(std::shared_ptr<Container> const& pContainer);
-
-	template <typename Container>
-	Linq<decltype(*std::begin(std::declval<Container>()))> from_values(Container const& container);
-
-	template <typename Container>
 	Linq<decltype(*std::begin(std::declval<Container>()))> from_values(Container && container);
 
 	template <typename T, size_t size>
@@ -618,9 +633,6 @@ namespace NatsuLib
 	template <typename T>
 	Linq<T> from_empty();
 
-	template <typename Arg, typename... Args>
-	std::enable_if_t<std::disjunction<std::is_same<Arg, Args>...>::value, Linq<Arg>> from_values(Arg&& value, Args&&... values);
-
 	template <typename Iter_t>
 	LinqEnumerable<Iter_t> from(Iter_t const& begin, Iter_t const& end);
 
@@ -629,9 +641,9 @@ namespace NatsuLib
 
 	template <typename Iter_t>
 	class LinqEnumerable
-		: public natRange<Iter_t>
+		: public Range<Iter_t>
 	{
-		typedef natRange<Iter_t> _Base;
+		typedef Range<Iter_t> _Base;
 		typedef std::decay_t<decltype(*std::declval<Iter_t>())> Element_t;
 
 	public:
@@ -641,9 +653,28 @@ namespace NatsuLib
 		using _Base::reference;
 		using _Base::pointer;
 
+	private:
+		Optional<difference_type> m_Size;
+
+	public:
 		LinqEnumerable(Iter_t begin, Iter_t end)
 			: _Base(begin, end)
 		{
+		}
+
+		LinqEnumerable(LinqEnumerable const& other)
+			: _Base(other.begin(), other.end())
+		{
+		}
+
+		difference_type size()
+		{
+			if (!m_Size)
+			{
+				m_Size.emplace(std::distance(_Base::begin(), _Base::end()));
+			}
+
+			return m_Size.value();
 		}
 
 		template <typename CallableObj>
@@ -660,10 +691,9 @@ namespace NatsuLib
 				_Detail::WhereIterator<Iter_t, CallableObj>(_Base::end(), _Base::end(), callableObj));
 		}
 
-		LinqEnumerable& skip(difference_type count)
+		LinqEnumerable skip(difference_type count)
 		{
-			_Base::pop_front(count);
-			return *this;
+			return LinqEnumerable(*this).pop_front(count);
 		}
 
 		template <typename CallableObj>
@@ -1031,24 +1061,24 @@ namespace NatsuLib
 	};
 
 	template <typename Container>
-	Linq<decltype(*std::begin(std::declval<Container>()))> from_values(std::shared_ptr<Container> const& pContainer)
+	auto from_pointertocontainer(std::shared_ptr<Container> const& pContainer)
 	{
 		return LinqEnumerable<_Detail::StorageIterator<Container>>(_Detail::StorageIterator<Container>(pContainer, std::begin(*pContainer)),
 			_Detail::StorageIterator<Container>(pContainer, std::end(*pContainer)));
 	}
 
 	template <typename Container>
-	Linq<decltype(*std::begin(std::declval<Container>()))> from_values(Container const& container)
+	auto from_values(Container const& container)
 	{
 		auto pContainer = std::make_shared<Container>(container);
-		return from_values(pContainer);
+		return from_pointertocontainer(pContainer);
 	}
 
 	template <typename Container>
 	Linq<decltype(*std::begin(std::declval<Container>()))> from_values(Container && container)
 	{
 		auto pContainer = std::make_shared<Container>(std::move(container));
-		return from_values(pContainer);
+		return from_pointertocontainer(pContainer);
 	}
 
 	template <typename T, size_t size>
@@ -1070,9 +1100,10 @@ namespace NatsuLib
 	}
 
 	template <typename Arg, typename... Args>
-	std::enable_if_t<std::disjunction<std::is_same<Arg, Args>...>::value, Linq<Arg>> from_values(Arg&& value, Args&&... values)
+	auto from_values(Arg&& value, Args&&... values)
 	{
-		return from_values({ value, values... });
+		std::vector<std::remove_reference_t<std::remove_cv_t<Arg>>> tmpVec { std::forward<Arg>(value), std::forward<Args>(values)... };
+		return from_values(std::move(tmpVec));
 	}
 
 	template <typename Iter_t>
@@ -1088,7 +1119,7 @@ namespace NatsuLib
 	}
 
 	template <typename Iter_t>
-	LinqEnumerable<Iter_t> from(natRange<Iter_t> const& range)
+	LinqEnumerable<Iter_t> from(Range<Iter_t> const& range)
 	{
 		return from(range.begin(), range.end());
 	}
