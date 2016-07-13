@@ -165,8 +165,6 @@ namespace NatsuLib
 			{
 			}
 
-			StorageIterator(Self_t const&) = default;
-
 			Self_t& operator++() &
 			{
 				++m_Iterator;
@@ -246,8 +244,6 @@ namespace NatsuLib
 			{
 			}
 
-			SelectIterator(Self_t const&) = default;
-
 			Self_t& operator++() &
 			{
 				++m_Iterator;
@@ -296,11 +292,6 @@ namespace NatsuLib
 				{
 					++m_Iterator;
 				}
-			}
-
-			WhereIterator(Self_t const& other)
-				: m_Iterator(other.m_Iterator), m_End(other.m_End), m_CallableObj(other.m_CallableObj)
-			{
 			}
 
 			Self_t& operator++() &
@@ -354,8 +345,6 @@ namespace NatsuLib
 				}
 			}
 
-			SkipWhileIterator(Self_t const&) = default;
-
 			Self_t& operator++() &
 			{
 				++m_Iterator;
@@ -407,8 +396,6 @@ namespace NatsuLib
 				m_Target = std::move(std::next(m_Iterator, count));
 			}
 
-			TakeIterator(Self_t const&) = default;
-
 			Self_t& operator++() &
 			{
 				if (++m_Iterator == m_Target)
@@ -457,8 +444,6 @@ namespace NatsuLib
 					m_Iterator = m_End;
 				}
 			}
-
-			TakeWhileIterator(Self_t const&) = default;
 
 			Self_t& operator++() &
 			{
@@ -517,8 +502,6 @@ namespace NatsuLib
 				: m_Current1(current1), m_End1(end1), m_Current2(current2), m_End2(end2)
 			{
 			}
-
-			ConcatIterator(Self_t const&) = default;
 
 			Self_t& operator++() &
 			{
@@ -585,8 +568,6 @@ namespace NatsuLib
 			{
 			}
 
-			ZipIterator(Self_t const&) = default;
-
 			Self_t operator++() &
 			{
 				if (m_Current1 != m_End1 && m_Current2 != m_End2)
@@ -618,26 +599,11 @@ namespace NatsuLib
 	template <typename T>
 	class Linq;
 
-	template <typename Iter_t>
-	class LinqEnumerable;
-
 	template <typename Container>
 	Linq<decltype(*std::begin(std::declval<Container>()))> from_values(Container && container);
 
-	template <typename T, size_t size>
-	Linq<T> from_values(T(&array)[size]);
-
-	template <typename T>
-	Linq<T> from_values(std::initializer_list<T> const& il);
-
 	template <typename T>
 	Linq<T> from_empty();
-
-	template <typename Iter_t>
-	LinqEnumerable<Iter_t> from(Iter_t const& begin, Iter_t const& end);
-
-	template <typename Container>
-	auto from(Container const& container)->LinqEnumerable<decltype(*std::begin(container))>;
 
 	template <typename Iter_t>
 	class LinqEnumerable
@@ -933,6 +899,7 @@ namespace NatsuLib
 				auto key2 = lower2->first;
 				auto upper1 = map1.upper_bound(key1);
 				auto upper2 = map2.upper_bound(key2);
+
 				if (key1 < key2)
 				{
 					std::vector<Value1_t> outers;
