@@ -5,6 +5,8 @@
 
 using namespace NatsuLib;
 
+#ifdef WIN32
+
 natNamedPipeServerStream::natNamedPipeServerStream(ncTStr Pipename, PipeDirection Direction, nuInt MaxInstances, nuInt OutBuffer, nuInt InBuffer, nuInt TimeOut, PipeMode TransmissionMode, PipeMode ReadMode, PipeOptions Options)
 	: m_hPipe(nullptr), m_bAsync(Options == PipeOptions::Asynchronous), m_bConnected(false), m_bMessageComplete(false), m_bReadable(false), m_bWritable(false), m_LastErr(NatErr_OK)
 {
@@ -149,7 +151,7 @@ void natNamedPipeServerStream::WaitForConnection()
 	if (IsAsync())
 	{
 		natEventWrapper event(true, false);
-		OVERLAPPED opd = {0};
+		OVERLAPPED opd = { 0 };
 		opd.hEvent = event.GetHandle();
 
 		if (!ConnectNamedPipe(m_hPipe, &opd))
@@ -207,7 +209,7 @@ std::future<void> natNamedPipeServerStream::WaitForConnectionAsync()
 			m_bConnected = true;
 		});
 	}
-	
+
 	return std::async([this]() { ConnectNamedPipe(m_hPipe, NULL); m_bConnected = true; });
 }
 
@@ -303,3 +305,5 @@ nResult natNamedPipeClientStream::Wait(nuInt timeOut)
 
 	return m_LastErr = NatErr_OK;
 }
+
+#endif

@@ -3,7 +3,10 @@
 ///	@brief	多线程支持
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <Windows.h>
+
+#ifdef WIN32
+#	include <Windows.h>
+#endif
 #include <unordered_map>
 #include <memory>
 #include <functional>
@@ -31,9 +34,15 @@ namespace NatsuLib
 	class natThread
 	{
 	public:
-		typedef unsigned long ThreadIdType;
+#ifdef WIN32
+		typedef DWORD ThreadIdType;
+		typedef DWORD ResultType;
+		typedef HANDLE UnsafeHandle;
+#else
+		typedef std::thread::id ThreadIdType;
 		typedef unsigned long ResultType;
 		typedef nUnsafePtr<void> UnsafeHandle;
+#endif
 
 		enum : nuInt
 		{
@@ -47,7 +56,7 @@ namespace NatsuLib
 
 		///	@brief		获得线程句柄
 		///	@warning	请勿手动删除
-		UnsafeHandle GetHandle() const noexcept;
+		UnsafeHandle GetHandle() noexcept;
 
 		ThreadIdType GetThreadId() const noexcept;
 
@@ -61,8 +70,8 @@ namespace NatsuLib
 
 		///	@brief	等待线程执行
 		///	@param[in]	WaitTime	等待时间
-		///	@return	等待线程状态
-		ResultType Wait(nuInt WaitTime = Infinity) noexcept;
+		///	@return	返回时是否未超时
+		nBool Wait(nuInt WaitTime = Infinity) noexcept;
 
 		///	@brief	结束线程
 		///	@param[in]	ExitCode	退出码
@@ -70,17 +79,24 @@ namespace NatsuLib
 		nBool Terminate(nuInt ExitCode = nuInt(-1)) noexcept;
 
 		///	@brief	获得退出码
-		nuInt GetExitCode() const;
+		nuInt GetExitCode();
 	protected:
 		///	@brief	重写此方法以实现线程工作
 		virtual ResultType ThreadJob() = 0;
 
 	private:
+#ifdef WIN32
 		///	@brief	执行线程的包装函数
 		///	@param[in]	p	指向Thread类的指针
 		static ResultType CALLBACK execute(void* p);
 		UnsafeHandle m_hThread;
 		ThreadIdType m_hThreadID;
+#else
+		std::future<ResultType> m_Result;
+		std::mutex m_Mutex;
+		std::condition_variable m_Pause;
+		std::thread m_Thread;
+#endif
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -103,7 +119,11 @@ namespace NatsuLib
 		///	@brief	解锁临界区
 		void UnLock();
 	private:
+#ifdef WIN32
 		CRITICAL_SECTION m_Section;
+#else
+		std::recursive_mutex m_Mutex;
+#endif
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -113,7 +133,12 @@ namespace NatsuLib
 	class natEventWrapper final
 	{
 	public:
+#ifdef WIN32
+		typedef HANDLE UnsafeHandle;
+#else
 		typedef nUnsafePtr<void> UnsafeHandle;
+#endif
+		
 		enum : nuInt
 		{
 			Infinity = std::numeric_limits<nuInt>::max(),
@@ -124,7 +149,7 @@ namespace NatsuLib
 
 		///	@brief		获得句柄
 		///	@warning	请勿手动释放
-		UnsafeHandle GetHandle() const;
+		UnsafeHandle GetHandle();
 
 		///	@brief		标记事件
 		///	@return		是否成功
@@ -136,14 +161,19 @@ namespace NatsuLib
 
 		///	@brief		事件脉冲
 		///	@return		是否成功
-		nBool Pulse() const;
+		nBool Pulse();
 
 		///	@brief		等待事件
 		///	@param[in]	WaitTime	等待时间
 		///	@return		是否成功
-		nBool Wait(nuInt WaitTime = Infinity) const;
+		nBool Wait(nuInt WaitTime = Infinity);
 	private:
+#ifdef WIN32
 		UnsafeHandle m_hEvent;
+#else
+		std::mutex m_Mutex;
+		std::condition_variable m_Condition;
+#endif
 	};
 
 	class natThreadPool final
@@ -151,8 +181,6 @@ namespace NatsuLib
 		class WorkToken;
 	public:
 		typedef std::function<nuInt(void*)> WorkFunc;
-		typedef unsigned long ThreadIdType;
-		typedef natThread::ResultType ResultType;
 		enum : nuInt
 		{
 			DefaultMaxThreadCount = 4,
@@ -165,7 +193,7 @@ namespace NatsuLib
 		void KillIdleThreads(nBool Force = false);
 		void KillAllThreads(nBool Force = false);
 		std::future<WorkToken> QueueWork(WorkFunc workFunc, void* param = nullptr);
-		ThreadIdType GetThreadId(nuInt Index) const;
+		natThread::ThreadIdType GetThreadId(nuInt Index) const;
 		void WaitAllJobsFinish(nuInt WaitTime = Infinity);
 
 	private:

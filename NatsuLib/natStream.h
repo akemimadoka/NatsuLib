@@ -97,7 +97,11 @@ namespace NatsuLib
 		: public natRefObjImpl<natStream>
 	{
 	public:
+#ifdef WIN32
+		typedef HANDLE UnsafeHandle;
+#else
 		typedef nUnsafePtr<void> UnsafeHandle;
+#endif
 
 		natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable);
 		~natFileStream();
@@ -120,10 +124,13 @@ namespace NatsuLib
 
 		ncTStr GetFilename() const noexcept;
 		UnsafeHandle GetUnsafeHandle() const noexcept;
+
+#ifdef WIN32
 		natRefPointer<natMemoryStream> MapToMemoryStream();
+#endif
 
 	private:
-		UnsafeHandle m_hFile, m_hMappedFile = NULL;
+		UnsafeHandle m_hFile, m_hMappedFile;
 		natRefPointer<natMemoryStream> m_pMappedFile;
 		nTString m_Filename;
 		nBool m_bReadable, m_bWritable;

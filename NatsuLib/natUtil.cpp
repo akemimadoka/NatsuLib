@@ -15,6 +15,7 @@ enum : nuInt
 #endif
 };
 
+#ifdef WIN32
 std::wstring natUtil::MultibyteToUnicode(ncStr Str, nuInt CodePage)
 {
 	nInt Num = MultiByteToWideChar(CodePage, 0, Str, -1, nullptr, 0);
@@ -76,3 +77,7 @@ std::vector<nByte> natUtil::GetResourceData(DWORD ResourceID, ncTStr lpType, HIN
 
 	return std::vector<nByte>();
 }
+#else
+// TODO
+#endif
+

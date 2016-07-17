@@ -1,13 +1,13 @@
 #include "stdafx.h"
 #include "natStream.h"
 #include "natException.h"
-#include "natUtil.h"
 #include <algorithm>
 
 using namespace NatsuLib;
 
+#ifdef WIN32
 natFileStream::natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable)
-	: m_Filename(lpFilename), m_bReadable(bReadable), m_bWritable(bWritable), m_LastErr(NatErr_OK)
+	: m_hMappedFile(NULL), m_Filename(lpFilename), m_bReadable(bReadable), m_bWritable(bWritable), m_LastErr(NatErr_OK)
 {
 	m_hFile = CreateFile(
 		lpFilename,
@@ -17,7 +17,7 @@ natFileStream::natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable
 		bWritable ? OPEN_ALWAYS : OPEN_EXISTING,
 		FILE_ATTRIBUTE_NORMAL,
 		NULL
-		);
+	);
 
 	if (!m_hFile || m_hFile == INVALID_HANDLE_VALUE)
 	{
@@ -190,7 +190,7 @@ void natFileStream::Flush()
 	{
 		FlushViewOfFile(m_pMappedFile->GetInternalBuffer(), static_cast<SIZE_T>(GetSize()));
 	}
-	
+
 	FlushFileBuffers(m_hFile);
 }
 
@@ -252,6 +252,9 @@ natFileStream::~natFileStream()
 	CloseHandle(m_hMappedFile);
 	CloseHandle(m_hFile);
 }
+#else
+	// TODO
+#endif
 
 natMemoryStream::natMemoryStream(ncData pData, nLen Length, nBool bReadable, nBool bWritable, nBool bResizable)
 	: m_pData(nullptr), m_Length(0ul), m_CurPos(0u), m_bReadable(bReadable), m_bWritable(bWritable), m_bResizable(bResizable), m_bExtern(false), m_LastErr(NatErr_OK)

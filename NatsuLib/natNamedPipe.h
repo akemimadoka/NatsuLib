@@ -34,6 +34,12 @@ namespace NatsuLib
 		: public natRefObjImpl<natStream>
 	{
 	public:
+#ifdef WIN32
+		typedef HANDLE UnsafeHandle;
+#else
+		typedef nUnsafePtr<void> UnsafeHandle;
+#endif
+
 		enum : nuInt
 		{
 			MaxAllowedServerInstances = std::numeric_limits<nuInt>::max(),
@@ -113,7 +119,7 @@ namespace NatsuLib
 		}
 
 	private:
-		HANDLE m_hPipe;
+		UnsafeHandle m_hPipe;
 		natCriticalSection m_Section;
 		nBool m_bAsync, m_bConnected, m_bMessageComplete, m_bReadable, m_bWritable;
 		NatErr m_LastErr;
@@ -125,7 +131,7 @@ namespace NatsuLib
 	public:
 		enum TimeOut : nuInt
 		{
-			Infinity = static_cast<nuInt>(-1),
+			Infinity = std::numeric_limits<nuInt>::max(),
 		};
 
 		natNamedPipeClientStream(ncTStr Pipename, nBool bReadable, nBool bWritable);

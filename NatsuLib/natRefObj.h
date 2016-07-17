@@ -4,7 +4,12 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "natType.h"
+
+#ifdef WIN32
+#include <Windows.h>
+#else
 #include <atomic>
+#endif
 
 #ifdef TRACEREFOBJ
 #include "natUtil.h"
@@ -49,12 +54,22 @@ namespace NatsuLib
 
 		virtual void AddRef()
 		{
+#ifdef WIN32
+			InterlockedIncrement(&m_cRef);
+#else
 			++m_cRef;
+#endif
 		}
 
 		virtual void Release()
 		{
-			auto tRet = --m_cRef;
+			auto tRet =
+#ifdef WIN32
+				InterlockedDecrement(&m_cRef);
+#else
+				--m_cRef;
+#endif
+				
 			if (tRet == 0u)
 			{
 				delete this;
@@ -62,7 +77,11 @@ namespace NatsuLib
 		}
 
 	private:
+#ifdef WIN32
+		nuInt m_cRef;
+#else
 		std::atomic<nuInt> m_cRef;
+#endif
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
