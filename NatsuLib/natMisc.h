@@ -205,7 +205,7 @@ namespace NatsuLib
 	}
 
 	template <typename T, typename... Args>
-	class natScope
+	class natScope final
 	{
 	public:
 		constexpr explicit natScope(T CallableObj, Args&&... args)
@@ -213,7 +213,7 @@ namespace NatsuLib
 		{
 		}
 
-		constexpr natScope(natScope && other)
+		constexpr natScope(natScope && other) noexcept
 			: m_ShouldCall(true), m_CallableObj(std::move(other.m_CallableObj)), m_Args(std::move(other.m_Args))
 		{
 			other.m_ShouldCall = false;
@@ -236,7 +236,7 @@ namespace NatsuLib
 	template <typename T, typename ...Args>
 	constexpr auto make_scope(T CallableObj, Args&&... args)
 	{
-		return std::move(natScope<T, Args&&...>(CallableObj, std::forward<Args>(args)...));
+		return natScope<T, Args&&...>{ CallableObj, std::forward<Args>(args)... };
 	}
 
 	using _Detail::nullopt_t;
@@ -246,7 +246,7 @@ namespace NatsuLib
 	using _Detail::defaultconstruct;
 
 	template <typename T>
-	class Optional
+	class Optional final
 	{
 	public:
 		typedef T value_type;
@@ -265,7 +265,7 @@ namespace NatsuLib
 			: m_Value(other.m_Value)
 		{
 		}
-		Optional(Optional && other)
+		Optional(Optional && other) noexcept
 			: m_Value(std::move(other.m_Value))
 		{
 		}
@@ -303,7 +303,7 @@ namespace NatsuLib
 			return *this;
 		}
 
-		Optional& operator=(Optional && other) &
+		Optional& operator=(Optional && other) & noexcept
 		{
 			if (m_Value.Constructed())
 			{
@@ -470,7 +470,7 @@ namespace NatsuLib
 	};
 
 	template <typename Iter>
-	class Range
+	class Range final
 	{
 	public:
 		typedef typename std::iterator_traits<Iter>::iterator_category iterator_category;
@@ -506,14 +506,14 @@ namespace NatsuLib
 
 		constexpr reference front() const
 		{
-			//assert(!empty());
+			assert(!empty());
 
 			return *m_IterBegin;
 		}
 
 		constexpr reference back() const
 		{
-			//assert(!empty());
+			assert(!empty());
 
 			return *std::prev(m_IterEnd);
 		}
@@ -579,7 +579,7 @@ namespace NatsuLib
 
 		Range slice(difference_type start, difference_type stop) const
 		{
-			//assert(stop >= start);
+			assert(stop >= start);
 			//assert(stop - start <= size());
 
 			return Range(std::next(m_IterBegin, start), std::next(m_IterBegin, stop));
@@ -606,7 +606,7 @@ namespace NatsuLib
 	};
 
 	template <typename Iter>
-	class natRange_ptrIterator
+	class natRange_ptrIterator final
 	{
 	public:
 		typedef typename std::iterator_traits<Iter>::iterator_category iterator_category;

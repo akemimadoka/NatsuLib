@@ -24,26 +24,6 @@ REQUIRES(void, std::conjunction<Models<Incrementable(T)>>::value) increment(T& x
 	++x;
 }
 
-struct a : IUnknown
-{
-	virtual ~a()
-	{
-	}
-
-	HRESULT __stdcall QueryInterface(const IID& riid, void** ppvObject) override
-	{
-		return E_NOTIMPL;
-	}
-	ULONG __stdcall AddRef() override
-	{
-		return 0;
-	}
-	ULONG __stdcall Release() override
-	{
-		return 0;
-	}
-};
-
 int main()
 {
 	std::locale defaultLocale("", LC_CTYPE);
@@ -61,7 +41,7 @@ int main()
 		tm timeStruct;
 		localtime_s(&timeStruct, &time);
 		natLog::LogType logType = static_cast<natLog::LogType>(eventLogUpdated.GetLogType());
-		nTString logStr = std::move(natUtil::FormatString(_T("[{0}] [{1}] {2}"), std::put_time(&timeStruct, _T("%F %T")), natLog::GetDefaultLogTypeName(logType), eventLogUpdated.GetData()));
+		nTString logStr = natUtil::FormatString(_T("[{0}] [{1}] {2}"), std::put_time(&timeStruct, _T("%F %T")), natLog::GetDefaultLogTypeName(logType), eventLogUpdated.GetData());
 		switch (logType)
 		{
 		case natLog::Msg:

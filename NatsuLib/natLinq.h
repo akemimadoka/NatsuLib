@@ -7,13 +7,9 @@
 #include <map>
 
 #pragma push_macro("max")
-#ifdef max
-#	undef max
-#endif
 #pragma push_macro("min")
-#ifdef min
-#	undef min
-#endif
+#undef max
+#undef min
 
 template <typename Func>
 struct std::hash<std::function<Func>>
@@ -56,7 +52,7 @@ namespace NatsuLib
 		using deref_t = std::decay_t<decltype(*std::declval<T>())>;
 
 		template <typename T>
-		class CommonIterator
+		class CommonIterator final
 		{
 			struct IteratorInterface
 			{
@@ -69,7 +65,7 @@ namespace NatsuLib
 			};
 
 			template <typename Iter_t>
-			class IteratorImpl : public IteratorInterface
+			class IteratorImpl final : public IteratorInterface
 			{
 				Iter_t m_Iterator;
 			public:
@@ -106,18 +102,18 @@ namespace NatsuLib
 		public:
 			typedef std::forward_iterator_tag iterator_category;
 			typedef std::remove_reference_t<T> value_type;
-			typedef nInt difference_type;
+			typedef ptrdiff_t difference_type;
 			typedef std::add_lvalue_reference_t<value_type> reference;
 			typedef std::add_pointer_t<value_type> pointer;
 
 			template <typename Iter_t>
 			explicit CommonIterator(Iter_t const& iterator)
-				: m_Iterator(std::move(std::make_shared<IteratorImpl<Iter_t>>(iterator)))
+				: m_Iterator(std::make_shared<IteratorImpl<Iter_t>>(iterator))
 			{
 			}
 
 			CommonIterator(Self_t const& other)
-				: m_Iterator(std::move(other.m_Iterator->Clone()))
+				: m_Iterator(other.m_Iterator->Clone())
 			{
 			}
 
@@ -145,7 +141,7 @@ namespace NatsuLib
 		};
 
 		template <typename Container_t>
-		class StorageIterator
+		class StorageIterator final
 		{
 			typedef StorageIterator<Container_t> Self_t;
 			typedef decltype(std::begin(std::declval<Container_t>())) IteratorType;
@@ -193,7 +189,7 @@ namespace NatsuLib
 		};
 
 		template <typename T>
-		class EmptyIterator
+		class EmptyIterator final
 		{
 			typedef EmptyIterator<T> Self_t;
 		public:
@@ -225,7 +221,7 @@ namespace NatsuLib
 		};
 
 		template <typename Iter_t, typename CallableObj_t>
-		class SelectIterator
+		class SelectIterator final
 		{
 			typedef SelectIterator<Iter_t, CallableObj_t> Self_t;
 
@@ -272,7 +268,7 @@ namespace NatsuLib
 		};
 
 		template <typename Iter_t, typename CallableObj_t>
-		class WhereIterator
+		class WhereIterator final
 		{
 			typedef WhereIterator<Iter_t, CallableObj_t> Self_t;
 
@@ -322,7 +318,7 @@ namespace NatsuLib
 		};
 
 		template <typename Iter_t>
-		class SkipWhileIterator
+		class SkipWhileIterator final
 		{
 			typedef SkipWhileIterator<Iter_t> Self_t;
 
@@ -373,7 +369,7 @@ namespace NatsuLib
 		};
 
 		template <typename Iter_t>
-		class TakeIterator
+		class TakeIterator final
 		{
 			typedef TakeIterator<Iter_t> Self_t;
 
@@ -423,7 +419,7 @@ namespace NatsuLib
 		};
 
 		template <typename Iter_t, typename CallableObj_t>
-		class TakeWhileIterator
+		class TakeWhileIterator final
 		{
 			typedef TakeWhileIterator<Iter_t, CallableObj_t> Self_t;
 
@@ -472,7 +468,7 @@ namespace NatsuLib
 		};
 
 		template <typename Iter1_t, typename Iter2_t>
-		class ConcatIterator
+		class ConcatIterator final
 		{
 			typedef ConcatIterator<Iter1_t, Iter2_t> Self_t;
 
@@ -505,14 +501,7 @@ namespace NatsuLib
 
 			Self_t& operator++() &
 			{
-				if (m_Current1 != m_End1)
-				{
-					++m_Current1;
-				}
-				else
-				{
-					++m_Current2;
-				}
+				++(m_Current1 != m_End1 ? m_Current1 : m_Current2);
 
 				return *this;
 			}
@@ -534,7 +523,7 @@ namespace NatsuLib
 		};
 
 		template <typename Iter1_t, typename Iter2_t>
-		class ZipIterator
+		class ZipIterator final
 		{
 			typedef ZipIterator<Iter1_t, Iter2_t> Self_t;
 
@@ -619,7 +608,7 @@ namespace NatsuLib
 
 	private:
 		Range<Iter_t> m_Range;
-		mutable Optional<difference_type> m_Size;
+		mutable Optional<size_t> m_Size;
 
 	public:
 		constexpr LinqEnumerable(Iter_t begin, Iter_t end)
@@ -642,17 +631,17 @@ namespace NatsuLib
 			return m_Range.end();
 		}
 
-		difference_type size() const
+		size_t size() const
 		{
 			if (!m_Size)
 			{
-				m_Size.emplace(std::distance(m_Range.begin(), m_Range.end()));
+				m_Size.emplace(static_cast<size_t>(std::distance(m_Range.begin(), m_Range.end())));
 			}
 
 			return m_Size.value();
 		}
 
-		difference_type count() const
+		size_t count() const
 		{
 			return size();
 		}
@@ -1025,12 +1014,12 @@ namespace NatsuLib
 		template <typename Container>
 		Container Cast() const
 		{
-			return std::move(Container(m_Range.begin(), m_Range.end()));
+			return Container{ m_Range.begin(), m_Range.end() };
 		}
 	};
 
 	template <typename T>
-	class Linq
+	class Linq final
 		: public LinqEnumerable<_Detail::CommonIterator<T>>
 	{
 		typedef LinqEnumerable<_Detail::CommonIterator<T>> _Base;
