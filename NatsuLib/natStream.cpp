@@ -25,6 +25,15 @@ natFileStream::natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable
 	}
 }
 
+natFileStream::natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable)
+	: m_hFile(hFile), m_hMappedFile(NULL), m_bReadable(bReadable), m_bWritable(bWritable), m_LastErr(NatErr_OK)
+{
+	if (!m_hFile || m_hFile == INVALID_HANDLE_VALUE)
+	{
+		nat_Throw(natErrException, NatErr_InvalidArg, _T("Invalid hFile."));
+	}
+}
+
 NatErr natFileStream::GetLastErr() const
 {
 	return m_LastErr;

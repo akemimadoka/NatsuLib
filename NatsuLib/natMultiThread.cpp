@@ -46,7 +46,7 @@ nBool natThread::Suspend() noexcept
 
 nBool natThread::Wait(nuInt WaitTime) noexcept
 {
-	return WaitForSingleObject(m_hThread, WaitTime);
+	return WaitForSingleObject(m_hThread, WaitTime) != WAIT_TIMEOUT;
 }
 
 nBool natThread::Terminate(nuInt ExitCode) noexcept

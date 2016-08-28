@@ -7,7 +7,6 @@
 #include <chrono>
 
 #include "natEvent.h"
-#include "natType.h"
 
 namespace NatsuLib
 {

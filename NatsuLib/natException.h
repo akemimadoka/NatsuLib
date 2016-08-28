@@ -5,7 +5,10 @@
 #pragma once
 
 #include "natType.h"
+#include <chrono>
+#ifdef WIN32
 #include <Windows.h>
+#endif
 
 namespace NatsuLib
 {
@@ -27,13 +30,17 @@ namespace NatsuLib
 	public:
 		template <typename... Args>
 		natException(ncTStr Src, ncTStr File, nuInt Line, ncTStr Desc, Args&&... args) noexcept
-			: exception(natUtil::W2Cstr(natUtil::FormatString(Desc, std::forward<Args>(args)...)).c_str()), m_Time(GetTickCount()), m_File(File), m_Line(Line), m_Source(Src), m_Description(natUtil::C2Wstr(exception::what()))
+#ifdef UNICODE
+			: exception(natUtil::W2Cstr(natUtil::FormatString(Desc, std::forward<Args>(args)...)).c_str()), m_Time(std::chrono::system_clock::now()), m_File(File), m_Line(Line), m_Source(Src), m_Description(natUtil::C2Wstr(exception::what()))
+#else
+			: exception(natUtil::FormatString(Desc, std::forward<Args>(args)...).c_str()), m_Time(std::chrono::system_clock::now()), m_File(File), m_Line(Line), m_Source(Src), m_Description(exception::what())
+#endif
 		{
 		}
 
 		virtual ~natException() = default;
 
-		nuInt GetTime() const noexcept
+		std::chrono::system_clock::time_point GetTime() const noexcept
 		{
 			return m_Time;
 		}
@@ -59,13 +66,14 @@ namespace NatsuLib
 		}
 
 	protected:
-		nuInt m_Time;
+		std::chrono::system_clock::time_point m_Time;
 		nTString m_File;
 		nuInt m_Line;
 		nTString m_Source;
 		nTString m_Description;
 	};
 
+#ifdef WIN32
 	////////////////////////////////////////////////////////////////////////////////
 	///	@brief	NatsuLib WinAPI调用异常
 	///	@note	可以自动附加LastErr信息
@@ -84,7 +92,7 @@ namespace NatsuLib
 		natWinException(ncTStr Src, ncTStr File, nuInt Line, DWORD LastErr, ncTStr Desc, Args&&... args) noexcept
 			: natException(Src, File, Line, Desc, std::forward<Args>(args)...), m_LastErr(LastErr)
 		{
-			m_Description = move(natUtil::FormatString((m_Description + _T(" (LastErr = %ul)")).c_str(), m_LastErr));
+			m_Description = move(natUtil::FormatString((m_Description + _T(" (LastErr = {0})")).c_str(), m_LastErr));
 		}
 
 		DWORD GetErrNo() const noexcept
@@ -92,23 +100,27 @@ namespace NatsuLib
 			return m_LastErr;
 		}
 
-		nTString GetErrMsg() const noexcept
+		ncTStr GetErrMsg() const noexcept
 		{
-			LPVOID pBuf = nullptr;
-			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, m_LastErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<nTStr>(&pBuf), 0, nullptr);
-			if (!pBuf)
+			if (m_ErrMsg.empty())
 			{
-				return nTString();
+				LPVOID pBuf = nullptr;
+				FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, m_LastErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<nTStr>(&pBuf), 0, nullptr);
+				if (pBuf)
+				{
+					m_ErrMsg = static_cast<ncTStr>(pBuf);
+					LocalFree(pBuf);
+				}
 			}
 
-			nTString ret(static_cast<ncTStr>(pBuf));
-			LocalFree(pBuf);
-			return move(ret);
+			return m_ErrMsg.c_str();
 		}
 
 	private:
 		DWORD m_LastErr;
+		mutable nTString m_ErrMsg;
 	};
+#endif
 
 	class natErrException
 		: public natException
@@ -164,5 +176,6 @@ namespace NatsuLib
 }
 
 #define nat_Throw(ExceptionClass, ...) do { throw ExceptionClass(_T(__FUNCTION__), _T(__FILE__), __LINE__, __VA_ARGS__); } while (false)
+#define nat_ThrowIfFailed(Expression, ...) do { nResult result; if (NATFAIL(result = (Expression))) nat_Throw(natErrException, static_cast<NatErr>(result), __VA_ARGS__); } while (false)
 
 #include "natStringUtil.h"

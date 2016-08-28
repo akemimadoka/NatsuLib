@@ -3,6 +3,7 @@
 ///	@brief	描述NatsuLib中基本数据类型、部分宏及内联函数
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
+
 #include <cstdint>
 #include <tchar.h>
 #include <string>
@@ -119,9 +120,39 @@ NATINLINE void SafeDelArr(T*& ptr)
 	ptr = nullptr;
 }
 
+namespace NatsuLib
+{
+	namespace _Detail
+	{
+		template <typename T, typename Enable = void>
+		struct CanAddRef
+			: std::false_type
+		{
+		};
+
+		template <typename T>
+		struct CanAddRef<T, std::void_t<decltype(std::declval<T>().AddRef())>>
+			: std::true_type
+		{
+		};
+
+		template <typename T, typename Enable = void>
+		struct IsReleasable
+			: std::false_type
+		{
+		};
+
+		template <typename T>
+		struct IsReleasable<T, std::void_t<decltype(std::declval<T>().Release())>>
+			: std::true_type
+		{
+		};
+	}
+}
+
 ///	@brief	安全释放
 template <typename T>
-NATINLINE void SafeRelease(T*& ptr)
+NATINLINE std::enable_if_t<NatsuLib::_Detail::IsReleasable<T>::value> SafeRelease(T*& ptr)
 {
 	if (ptr != nullptr)
 	{

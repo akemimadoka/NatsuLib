@@ -1,11 +1,12 @@
 #pragma once
-#include "natType.h"
 #include "natStringUtil.h"
 
 #ifdef WIN32
 #include <Windows.h>
 #endif
 #include <vector>
+#include <locale>
+#include <codecvt>
 
 namespace NatsuLib
 {
@@ -17,17 +18,18 @@ namespace NatsuLib
 #ifdef WIN32
 				= CP_INSTALLED
 #endif
+			,
 		};
 
 		///	@brief	string转wstring
 		inline std::wstring C2Wstr(std::string const& str)
 		{
-			return std::wstring(str.begin(), str.end());
+			return std::wstring_convert<std::codecvt_utf8<nWChar>>{}.from_bytes(str);
 		}
 		///	@brief	wstring转string
 		inline std::string W2Cstr(std::wstring const& str)
 		{
-			return std::string(str.begin(), str.end());
+			return std::wstring_convert<std::codecvt_utf8<nWChar>>{}.to_bytes(str);
 		}
 
 		///	@brief	多字节转Unicode

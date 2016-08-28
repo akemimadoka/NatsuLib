@@ -26,16 +26,23 @@ namespace NatsuLib
 			struct visit_impl<0>
 			{
 				template <typename T, typename F>
-				static void visit(T&&, size_t, F) { assert(false); }
+				[[noreturn]] static void visit(T&&, size_t, F)
+				{
+					nat_Throw(natException, _T("Out of range."));
+				}
 			};
 
 			template <bool test, typename T>
 			struct ExpectImpl
 			{
 				template <typename U>
-				constexpr static T Get(U&&)
+				[[noreturn]] constexpr static T Get(U&&)
 				{
-					nat_Throw(natException, _T("Type {0} cannot convert to {1}"), C2Wstr(typeid(U).name()), C2Wstr(typeid(T).name()));
+#ifdef UNICODE
+					nat_Throw(natException, _T("Type {0} cannot be converted to {1}."), C2Wstr(typeid(U).name()), C2Wstr(typeid(T).name()));
+#else
+					nat_Throw(natException, _T("Type {0} cannot be converted to {1}."), typeid(U).name(), typeid(T).name());
+#endif
 				}
 			};
 

@@ -13,6 +13,7 @@ enum : nuInt
 #else
 	2u
 #endif
+	,
 };
 
 #ifdef WIN32

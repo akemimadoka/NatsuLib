@@ -190,6 +190,7 @@
     <ClInclude Include="natConcepts.h" />
     <ClInclude Include="natEvent.h" />
     <ClInclude Include="natException.h" />
+    <ClInclude Include="natInterface.h" />
     <ClInclude Include="natLinq.h" />
     <ClInclude Include="natLog.h" />
     <ClInclude Include="natMat.h" />

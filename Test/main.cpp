@@ -8,6 +8,7 @@
 #include <natLog.h>
 #include <natMultiThread.h>
 #include <natLinq.h>
+#include <natStream.h>
 
 using namespace NatsuLib;
 
@@ -22,6 +23,26 @@ REQUIRES(void, std::conjunction<Models<Incrementable(T)>>::value) increment(T& x
 {
 	++x;
 }
+
+struct a : IUnknown
+{
+	virtual ~a()
+	{
+	}
+
+	HRESULT __stdcall QueryInterface(const IID& riid, void** ppvObject) override
+	{
+		return E_NOTIMPL;
+	}
+	ULONG __stdcall AddRef() override
+	{
+		return 0;
+	}
+	ULONG __stdcall Release() override
+	{
+		return 0;
+	}
+};
 
 int main()
 {
@@ -58,7 +79,7 @@ int main()
 	try
 	{
 		logger.LogMsg(_T("{1} {0}"), _T("²âÊÔÖÐÎÄ"), 123);
-
+		
 		int t = 5;
 		increment(t);
 		auto scope = make_scope([&logger](int i)
@@ -84,7 +105,7 @@ int main()
 			{
 				logger.LogMsg(_T("%d"), item);
 			}
-			logger.LogMsg(_T("%d"), from_values(2, 4, 6, 3, 2).where([](int i) {return i >= 4; }).count());
+			logger.LogMsg(_T("%d"), from_values(2, 4, 6, 3, 2).where([](int i) { return i >= 4; }).count());
 		}
 
 		{

@@ -233,13 +233,13 @@ namespace NatsuLib
 				: m_WorkThreadIndex(workThreadId), m_Result(move(result))
 			{
 			}
-			WorkToken(WorkToken&& other)
+			WorkToken(WorkToken&& other) noexcept
 				: m_WorkThreadIndex(other.m_WorkThreadIndex), m_Result(move(other.m_Result))
 			{
 			}
 			~WorkToken() = default;
 
-			WorkToken& operator=(WorkToken&& other)
+			WorkToken& operator=(WorkToken&& other) noexcept
 			{
 				m_WorkThreadIndex = other.m_WorkThreadIndex;
 				m_Result = move(other.m_Result);

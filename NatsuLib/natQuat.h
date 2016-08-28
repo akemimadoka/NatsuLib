@@ -6,7 +6,7 @@
 namespace NatsuLib
 {
 #define OPERATORSCALAR(op) template <typename U>\
-	natQuat& operator##op(U const& Scalar)\
+	natQuat& operator##op(U const& Scalar) noexcept\
 	{\
 		x op static_cast<T>(Scalar);\
 		y op static_cast<T>(Scalar);\
@@ -16,7 +16,7 @@ namespace NatsuLib
 	}
 
 #define OPERATORSELF(op) template <typename U>\
-	natQuat& operator##op(natQuat<U> const& v)\
+	natQuat& operator##op(natQuat<U> const& v) noexcept\
 	{\
 		x op static_cast<T>(v.x);\
 		y op static_cast<T>(v.y);\
@@ -26,19 +26,19 @@ namespace NatsuLib
 	}
 
 #define TOPERATORSCALARNML(op) template <typename T, typename U>\
-	auto operator##op(natQuat<T> const& q, U const& Scalar)\
+	auto operator##op(natQuat<T> const& q, U const& Scalar) noexcept\
 	{\
 		return natQuat<decltype(q.w op Scalar)>(q.w op Scalar, q.x op Scalar, q.y op Scalar, q.z op Scalar);\
 	}
 
 #define TOPERATORSCALARNM(op) template <typename T, typename U>\
-auto operator##op(U const& Scalar, natQuat<T> const& q)\
+auto operator##op(U const& Scalar, natQuat<T> const& q) noexcept\
 {\
 	return natQuat<decltype(Scalar op q.w)>(Scalar op q.w, Scalar op q.x, Scalar op q.y, Scalar op q.z);\
 }
 
 #define TOPERATORSELFNM(op) template <typename T, typename U>\
-	auto operator##op(natQuat<T> const& q1, natQuat<U> const& q2)\
+	auto operator##op(natQuat<T> const& q1, natQuat<U> const& q2) noexcept\
 	{\
 		return natQuat<decltype(q1.w op q2.w)>(q1.w op q2.w, q1.x op q2.x, q1.y op q2.y, q1.z op q2.z);\
 	}
@@ -56,65 +56,62 @@ auto operator##op(U const& Scalar, natQuat<T> const& q)\
 			return 4u;
 		}
 
-		T const& operator[](nuInt i) const
+		T const& operator[](nuInt i) const noexcept
 		{
-			if (i >= length())
-			{
-				nat_Throw(natException, _T("Out of range"));
-			}
+			assert(i < length() && "Out of range");
 
 			return (&x)[i];
 		}
 
-		T& operator[](nuInt i)
+		T& operator[](nuInt i) noexcept
 		{
 			return const_cast<T&>(static_cast<natQuat const*>(this)->operator[](i));
 		}
 
-		natQuat()
+		constexpr natQuat() noexcept
 			: x(0), y(0), z(0), w(1)
 		{
 		}
 
-		explicit natQuat(T const& Scalar)
+		constexpr explicit natQuat(T const& Scalar) noexcept
 			: x(Scalar), y(Scalar), z(Scalar), w(Scalar)
 		{
 		}
 
-		natQuat(T const& s, natVec3<T> const& v)
+		constexpr natQuat(T const& s, natVec3<T> const& v) noexcept
 			: x(v.x), y(v.y), z(v.z), w(s)
 		{
 		}
 
-		natQuat(T const& sw, T const& sx, T const& sy, T const& sz)
+		constexpr natQuat(T const& sw, T const& sx, T const& sy, T const& sz) noexcept
 			: x(sx), y(sy), z(sz), w(sw)
 		{
 		}
 
 		template <typename U>
-		explicit natQuat(const U* S)
+		constexpr explicit natQuat(const U* S) noexcept
 			: x(static_cast<T>(S[0])), y(static_cast<T>(S[1])), z(static_cast<T>(S[2])), w(static_cast<T>(S[3]))
 		{
 		}
 
 		template <typename U>
-		explicit natQuat(natQuat<U> && q)
+		constexpr explicit natQuat(natQuat<U> && q) noexcept
 			: x(static_cast<T&&>(q.x)), y(static_cast<T&&>(q.y)), z(static_cast<T&&>(q.z)), w(static_cast<T&&>(q.w))
 		{
 		}
 
 		template <typename U>
-		explicit natQuat(natQuat<U> const& q)
+		constexpr explicit natQuat(natQuat<U> const& q) noexcept
 			: x(static_cast<T>(q.x)), y(static_cast<T>(q.y)), z(static_cast<T>(q.z)), w(static_cast<T>(q.w))
 		{
 		}
 
-		natQuat(natQuat const&) = default;
-		natQuat(natQuat &&) = default;
+		constexpr natQuat(natQuat const&) noexcept = default;
+		constexpr natQuat(natQuat &&) noexcept = default;
 
-		natQuat(natVec3<T> const& u, natVec3<T> const& v);
+		natQuat(natVec3<T> const& u, natVec3<T> const& v) noexcept;
 
-		explicit natQuat(natVec3<T> const& eulerAngle)
+		explicit natQuat(natVec3<T> const& eulerAngle) noexcept
 		{
 			natVec3<T> c = eulerAngle * T(0.5);
 			natVec3<T> s = c;
@@ -129,11 +126,11 @@ auto operator##op(U const& Scalar, natQuat<T> const& q)\
 			z = c.x * c.y * s.z - s.x * s.y * c.z;
 		}
 
-		natQuat& operator=(natQuat const& v) = default;
-		natQuat& operator=(natQuat && v) = default;
+		natQuat& operator=(natQuat const& v) noexcept = default;
+		natQuat& operator=(natQuat && v) noexcept = default;
 
 		template <typename U>
-		natQuat& operator=(natQuat<U> && v)
+		natQuat& operator=(natQuat<U> && v) noexcept
 		{
 			x = static_cast<T&&>(v.x);
 			y = static_cast<T&&>(v.y);
@@ -143,66 +140,66 @@ auto operator##op(U const& Scalar, natQuat<T> const& q)\
 			return *this;
 		}
 
-		natQuat& operator++()
+		natQuat& operator++() noexcept
 		{
 			++x; ++y; ++z; ++w;
 			return *this;
 		}
 
-		natQuat& operator--()
+		natQuat& operator--() noexcept
 		{
 			--x; --y; --z; --w;
 			return *this;
 		}
 
-		natQuat operator++(int)
+		natQuat operator++(int) noexcept
 		{
 			natQuat tResult(*this);
 			++*this;
 			return tResult;
 		}
 
-		natQuat operator--(int)
+		natQuat operator--(int) noexcept
 		{
 			natQuat tResult(*this);
 			--*this;
 			return tResult;
 		}
 
-		natQuat operator-() const
+		natQuat operator-() const noexcept
 		{
 			return natQuat(-w, -x, -y, -z);
 		}
 
-		natQuat operator~() const
+		natQuat operator~() const noexcept
 		{
 			return natQuat(~w, ~x, ~y, ~z);
 		}
 
 		template <typename U>
-		nBool operator==(natQuat<U> const& v) const
+		nBool operator==(natQuat<U> const& v) const noexcept
 		{
 			return (x == v.x) && (y == v.y) && (z == v.z) && (w == v.w);
 		}
 
 		template <typename U>
-		nBool operator!=(natQuat<U> const& v) const
+		nBool operator!=(natQuat<U> const& v) const noexcept
 		{
 			return !(*this == v);
 		}
 
-		natQuat conjugate() const
+		natQuat conjugate() const noexcept
 		{
 			return natQuat(w, -x, -y, -z);
 		}
 
-		natQuat inverse() const;
+		natQuat inverse() const noexcept;
 
 		template <typename U>
-		U cast() const;
+		U cast() const noexcept;
 
 		template <>
-		natMat3<T> cast<natMat3<T>>() const
+		natMat3<T> cast<natMat3<T>>() const noexcept
 		{
 			natMat3<T> Result;
 			T qxx(x * x);
@@ -229,7 +226,7 @@ auto operator##op(U const& Scalar, natQuat<T> const& q)\
 			return Result;
 		}
 
-		explicit natQuat(natMat3<T> const& m)
+		explicit natQuat(natMat3<T> const& m) noexcept
 		{
 			T fourXSquaredMinus1 = m[0][0] - m[1][1] - m[2][2];
 			T fourYSquaredMinus1 = m[1][1] - m[0][0] - m[2][2];
@@ -285,7 +282,7 @@ auto operator##op(U const& Scalar, natQuat<T> const& q)\
 				break;
 
 			default:
-				nat_Throw(natException, _T("Internal error"));
+				assert(false && "Index too big");
 			}
 		}
 
@@ -301,7 +298,7 @@ auto operator##op(U const& Scalar, natQuat<T> const& q)\
 		OPERATORSCALAR(*= );
 
 		template <typename U>
-		natQuat<T>& operator*=(natQuat<U> const& r)
+		natQuat<T>& operator*=(natQuat<U> const& r) noexcept
 		{
 			natQuat<T> const p(*this);
 			natQuat<T> const q(r);
@@ -344,7 +341,7 @@ auto operator##op(U const& Scalar, natQuat<T> const& q)\
 	TOPERATORSCALARNML(*);
 
 	template <typename T, typename U>
-	auto operator*(natQuat<T> const& q, natQuat<U> const& r)
+	auto operator*(natQuat<T> const& q, natQuat<U> const& r) noexcept
 	{
 		return natQuat<T>(q) *= r;
 	}
@@ -374,7 +371,7 @@ auto operator##op(U const& Scalar, natQuat<T> const& q)\
 	TOPERATORSCALARNM(-);
 
 	template <typename T, typename U>
-	natQuat<T> operator*(U const& Scalar, natQuat<T> const& v)
+	natQuat<T> operator*(U const& Scalar, natQuat<T> const& v) noexcept
 	{
 		return v * Scalar;
 	}
@@ -396,19 +393,19 @@ auto operator##op(U const& Scalar, natQuat<T> const& q)\
 	namespace natTransform
 	{
 		template <typename T>
-		T dot(natQuat<T> const& x, natQuat<T> const& y)
+		T dot(natQuat<T> const& x, natQuat<T> const& y) noexcept
 		{
 			return x.x * y.x + x.y * y.y + x.z * y.z + x.w * y.w;
 		}
 
 		template <typename T>
-		T length(natQuat<T> const& q)
+		T length(natQuat<T> const& q) noexcept
 		{
 			return sqrt(dot(q, q));
 		}
 
 		template <typename T>
-		natQuat<T> normalize(natQuat<T> const& q)
+		natQuat<T> normalize(natQuat<T> const& q) noexcept
 		{
 			T len = length(q);
 			if (len <= T(0))
@@ -421,7 +418,7 @@ auto operator##op(U const& Scalar, natQuat<T> const& q)\
 		}
 
 		template <typename T>
-		natQuat<T> cross(natQuat<T> const& q1, natQuat<T> const& q2)
+		natQuat<T> cross(natQuat<T> const& q1, natQuat<T> const& q2) noexcept
 		{
 			return natQuat<T>(
 				q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z,
@@ -431,7 +428,7 @@ auto operator##op(U const& Scalar, natQuat<T> const& q)\
 		}
 
 		template <typename T>
-		natQuat<T> mix(natQuat<T> const& x, natQuat<T> const& y, T const& a)
+		natQuat<T> mix(natQuat<T> const& x, natQuat<T> const& y, T const& a) noexcept
 		{
 			T cosTheta = dot(x, y);
 
@@ -451,17 +448,15 @@ auto operator##op(U const& Scalar, natQuat<T> const& q)\
 		}
 
 		template <typename T>
-		natQuat<T> lerp(natQuat<T> const& x, natQuat<T> const& y, T const& a)
+		natQuat<T> lerp(natQuat<T> const& x, natQuat<T> const& y, T const& a) noexcept
 		{
-#ifdef _DEBUG
-			if (a < T(0) || a > T(1))
-				nat_Throw(natException, _T("Out of range"));
-#endif
+			assert(a >= T(0) && a <= T(1) && "Out of range");
+
 			return x * (T(1) - a) + (y * a);
 		}
 
 		template <typename T>
-		natQuat<T> slerp(natQuat<T> const& x, natQuat<T> const& y, T const& a)
+		natQuat<T> slerp(natQuat<T> const& x, natQuat<T> const& y, T const& a) noexcept
 		{
 			T cosTheta = dot(x, y);
 
@@ -488,7 +483,7 @@ auto operator##op(U const& Scalar, natQuat<T> const& q)\
 		}
 
 		template <typename T>
-		natQuat<T> rotate(natQuat<T> const& q, T const& angle, natVec3<T> const& v)
+		natQuat<T> rotate(natQuat<T> const& q, T const& angle, natVec3<T> const& v) noexcept
 		{
 			static_assert(std::is_floating_point<T>::value, "T should be an floating point type");
 
@@ -508,37 +503,37 @@ auto operator##op(U const& Scalar, natQuat<T> const& q)\
 		}
 
 		template <typename T>
-		T roll(natQuat<T> const& q)
+		T roll(natQuat<T> const& q) noexcept
 		{
 			return T(atan2(T(2) * (q.x * q.y + q.w * q.z), q.w * q.w + q.x * q.x - q.y * q.y - q.z * q.z));
 		}
 
 		template <typename T>
-		T pitch(natQuat<T> const& q)
+		T pitch(natQuat<T> const& q) noexcept
 		{
 			return T(atan2(T(2) * (q.y * q.z + q.w * q.x), q.w * q.w - q.x * q.x - q.y * q.y + q.z * q.z));
 		}
 
 		template <typename T>
-		T yaw(natQuat<T> const& q)
+		T yaw(natQuat<T> const& q) noexcept
 		{
 			return asin(T(-2) * (q.x * q.z - q.w * q.y));
 		}
 
 		template <typename T>
-		natVec3<T> eulerAngles(natQuat<T> const& x)
+		natVec3<T> eulerAngles(natQuat<T> const& x) noexcept
 		{
 			return natVec3<T>(pitch(x), yaw(x), roll(x));
 		}
 
 		template <typename T>
-		T angle(natQuat<T> const& x)
+		T angle(natQuat<T> const& x) noexcept
 		{
 			return acos(x.w) * T(2);
 		}
 
 		template <typename T>
-		natVec3<T> axis(natQuat<T> const& x)
+		natVec3<T> axis(natQuat<T> const& x) noexcept
 		{
 			T tmp1 = static_cast<T>(1) - x.w * x.w;
 			if (tmp1 <= static_cast<T>(0))
@@ -549,7 +544,7 @@ auto operator##op(U const& Scalar, natQuat<T> const& q)\
 		}
 
 		template <typename T>
-		natQuat<T> angleAxis(T const& angle, natVec3<T> const& v)
+		natQuat<T> angleAxis(T const& angle, natVec3<T> const& v) noexcept
 		{
 			T const s = sin(angle * T(0.5));
 
@@ -562,7 +557,7 @@ auto operator##op(U const& Scalar, natQuat<T> const& q)\
 	}
 
 	template <typename T>
-	natQuat<T>::natQuat(natVec3<T> const& u, natVec3<T> const& v)
+	natQuat<T>::natQuat(natVec3<T> const& u, natVec3<T> const& v) noexcept
 	{
 		const natVec3<T> LocalW(natTransform::cross(u, v));
 		const T Dot = natTransform::dot(u, v);
@@ -571,7 +566,7 @@ auto operator##op(U const& Scalar, natQuat<T> const& q)\
 	}
 
 	template <typename T>
-	natQuat<T> natQuat<T>::inverse() const
+	natQuat<T> natQuat<T>::inverse() const noexcept
 	{
 		return conjugate() / natTransform::dot(*this, *this);
 	}

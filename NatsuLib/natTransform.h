@@ -20,10 +20,9 @@ namespace NatsuLib
 	namespace natTransform
 	{
 		///	@brief	角度转弧度
-		template <typename T>
-		inline T DegtoRad(T num)
+		template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
+		T DegtoRad(T num) noexcept
 		{
-			static_assert(std::is_floating_point<T>::value, "T should be an floating point type");
 			return num / static_cast<T>(180.0) * static_cast<T>(
 #ifdef M_PI
 				M_PI
@@ -34,10 +33,9 @@ namespace NatsuLib
 		}
 
 		///	@brief	弧度转角度
-		template <typename T>
-		inline T RadtoDeg(T num)
+		template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
+		T RadtoDeg(T num) noexcept
 		{
-			static_assert(std::is_floating_point<T>::value, "T should be an floating point type");
 			return num * static_cast<T>(180.0) / static_cast<T>(
 #ifdef M_PI
 				M_PI
@@ -48,7 +46,7 @@ namespace NatsuLib
 		}
 
 		template <typename T>
-		T dot(natVec2<T> const& x, natVec2<T> const& y)
+		T dot(natVec2<T> const& x, natVec2<T> const& y) noexcept
 		{
 			natVec2<T> tmp(x * y);
 
@@ -56,7 +54,7 @@ namespace NatsuLib
 		}
 
 		template <typename T>
-		T dot(natVec3<T> const& x, natVec3<T> const& y)
+		T dot(natVec3<T> const& x, natVec3<T> const& y) noexcept
 		{
 			natVec3<T> tmp(x * y);
 
@@ -64,54 +62,46 @@ namespace NatsuLib
 		}
 
 		template <typename T>
-		T dot(natVec4<T> const& x, natVec4<T> const& y)
+		T dot(natVec4<T> const& x, natVec4<T> const& y) noexcept
 		{
 			natVec4<T> tmp(x * y);
 
 			return tmp.x + tmp.y + tmp.z + tmp.w;
 		}
 
-		template <typename T>
-		T length(T const& x)
+		template <typename T, std::enable_if_t<std::is_integral<T>::value, bool> = true>
+		T length(T const& x) noexcept
 		{
-			static_assert(std::is_arithmetic<T>::value, "T should be an arithmetic type or natVec");
-
-			if (std::is_integral<T>::value)
-			{
-				return abs(x);
-			}
-
-			if (std::is_floating_point<T>::value)
-			{
-				return fabs(x);
-			}
+			return abs(x);
 		}
 
-		template <typename T, template <typename> class vectype>
-		T length(vectype<T> const& v)
+		template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
+		T length(T const& x) noexcept
 		{
-			static_assert(std::is_base_of<natVec, vectype<T>>::value, "T should be an arithmetic type or natVec");
+			return fabs(x);
+		}
+
+		template <typename T, template <typename> class vectype, std::enable_if_t<std::is_base_of<natVec, vectype<T>>::value, bool> = true>
+		T length(vectype<T> const& v) noexcept
+		{
 			return sqrt(dot(v, v));
 		}
 
-		template <typename T>
-		T inversesqrt(T const& x)
+		template <typename T, std::enable_if_t<std::is_arithmetic<T>::value, bool> = true>
+		T inversesqrt(T const& x) noexcept
 		{
-			static_assert(std::is_arithmetic<T>::value, "T should be an arithmetic type or natVec");
 			return static_cast<T>(1) / sqrt(x);
 		}
 
-		template <typename T, template <typename> class vectype>
-		auto inversesqrt(vectype<T> const& v) -> decltype(v.call(sqrt))
+		template <typename T, template <typename> class vectype, std::enable_if_t<std::is_base_of<natVec, vectype<T>>::value, bool> = true>
+		auto inversesqrt(vectype<T> const& v) noexcept -> decltype(v.call(sqrt))
 		{
-			static_assert(std::is_base_of<natVec, vectype<T>>::value, "T should be an arithmetic type or natVec");
 			return static_cast<T>(1) / v.call(sqrt);
 		}
 
-		template <template <typename> class vectype>
-		vectype<nFloat> inversesqrt(vectype<nFloat> const& v)
+		template <template <typename> class vectype, std::enable_if_t<std::is_base_of<natVec, vectype<nFloat>>::value, bool> = true>
+		vectype<nFloat> inversesqrt(vectype<nFloat> const& v) noexcept
 		{
-			static_assert(std::is_base_of<natVec, vectype<nFloat>>::value, "T should be an arithmetic type or natVec");
 			auto tmp(v);
 			auto xhalf(tmp * 0.5f);
 			auto p = reinterpret_cast<vectype<nuInt>*>(const_cast<vectype<nFloat>*>(&v));
@@ -122,35 +112,32 @@ namespace NatsuLib
 			return tmp;
 		}
 
-		template <typename T>
-		T normalize(T const& x)
+		template <typename T, std::enable_if_t<std::is_arithmetic<T>::value, bool> = true>
+		T normalize(T const& x) noexcept
 		{
-			static_assert(std::is_arithmetic<T>::value, "T should be an arithmetic type or natVec");
-
 			return x < T(0) ? T(-1) : T(1);
 		}
 
-		template <typename T, template <typename> class vectype>
-		vectype<T> normalize(vectype<T> const& v)
+		template <typename T, template <typename> class vectype, std::enable_if_t<std::is_base_of<natVec, vectype<T>>::value, bool> = true>
+		vectype<T> normalize(vectype<T> const& v) noexcept
 		{
-			static_assert(std::is_base_of<natVec, vectype<T>>::value, "T should be an arithmetic type or natVec");
 			return v * inversesqrt(dot(v, v));
 		}
 
 		template <typename T>
-		T faceforward(T const& N, T const& I, T const& Nref)
+		T faceforward(T const& N, T const& I, T const& Nref) noexcept
 		{
 			return dot(Nref, I) < static_cast<T>(0) ? N : -N;
 		}
 
 		template <typename T>
-		T reflect(T const& I, T const& N)
+		T reflect(T const& I, T const& N) noexcept
 		{
 			return I - N * dot(N, I) * static_cast<T>(2);
 		}
 
 		template <typename T>
-		T refract(T const& I, T const& N, typename T::type const& eta)
+		T refract(T const& I, T const& N, typename T::type const& eta) noexcept
 		{
 			typename T::type const dotValue(dot(N, I));
 			typename T::type const k(static_cast<typename T::type>(1) - eta * eta * (static_cast<typename T::type>(1) - dotValue * dotValue));
@@ -158,13 +145,13 @@ namespace NatsuLib
 		}
 
 		template <typename T>
-		T distance(T const& p0, T const& p1)
+		T distance(T const& p0, T const& p1) noexcept
 		{
 			return length(p1 - p0);
 		}
 
 		template <typename T>
-		natVec3<T> cross(natVec3<T> const& x, natVec3<T> const& y)
+		natVec3<T> cross(natVec3<T> const& x, natVec3<T> const& y) noexcept
 		{
 			return natVec3<T>(
 				x.y * y.z - y.y * x.z,
@@ -172,30 +159,26 @@ namespace NatsuLib
 				x.x * y.y - y.x * x.y);
 		}
 
-		template <typename T, typename U>
-		T mix(T const& x, T const& y, U const& a)
+		template <typename T, typename U, std::enable_if_t<std::is_floating_point<U>::value, bool> = true>
+		T mix(T const& x, T const& y, U const& a) noexcept
 		{
-			static_assert(std::is_floating_point<U>::value, "type of a should be floating-point");
-
 			return static_cast<T>(static_cast<U>(x) + a * static_cast<U>(y - x));
 		}
 
 		template <typename T>
-		T mix(T const& x, T const& y, nBool a)
+		T mix(T const& x, T const& y, nBool a) noexcept
 		{
 			return a ? y : x;
 		}
 
-		template <typename T, typename U, template<typename> class vecType>
-		vecType<T> mix(vecType<T> const& x, vecType<T> const& y, vecType<U> const& a)
+		template <typename T, typename U, template<typename> class vecType, std::enable_if_t<std::is_floating_point<U>::value, bool> = true>
+		vecType<T> mix(vecType<T> const& x, vecType<T> const& y, vecType<U> const& a) noexcept
 		{
-			static_assert(std::is_floating_point<U>::value, "type of a should be floating-point");
-
 			return vecType<T>(vecType<U>(x) + a * vecType<U>(y - x));
 		}
 
 		template <typename T, template<typename> class vecType>
-		vecType<T> mix(vecType<T> const& x, vecType<T> const& y, vecType<nBool> const& a)
+		vecType<T> mix(vecType<T> const& x, vecType<T> const& y, vecType<nBool> const& a) noexcept
 		{
 			vecType<T> Result;
 			for (nuInt i = 0u; i < x.length(); ++i)
@@ -206,22 +189,20 @@ namespace NatsuLib
 			return Result;
 		}
 
-		template <typename T, typename U, template<typename> class vecType>
-		vecType<T> mix(vecType<T> const& x, vecType<T> const& y, U const& a)
+		template <typename T, typename U, template<typename> class vecType, std::enable_if_t<std::is_floating_point<U>::value, bool> = true>
+		vecType<T> mix(vecType<T> const& x, vecType<T> const& y, U const& a) noexcept
 		{
-			static_assert(std::is_floating_point<U>::value, "type of a should be floating-point");
-
 			return vecType<T>(vecType<U>(x) + a * vecType<U>(y - x));
 		}
 
 		template <typename T, template<typename> class vecType>
-		vecType<T> mix(vecType<T> const& x, vecType<T> const& y, nBool a)
+		vecType<T> mix(vecType<T> const& x, vecType<T> const& y, nBool a) noexcept
 		{
 			return a ? y : x;
 		}
 
 		template <typename T>
-		natMat4<T> move(natMat4<T> m, natVec3<T> const& v)
+		natMat4<T> move(natMat4<T> m, natVec3<T> const& v) noexcept
 		{
 			auto a = &m[0][0];
 			a[0] += v.x * a[3];
@@ -241,14 +222,14 @@ namespace NatsuLib
 		}
 
 		template <typename T>
-		natMat4<T> translate(natMat4<T> m, natVec3<T> const& v)
+		natMat4<T> translate(natMat4<T> m, natVec3<T> const& v) noexcept
 		{
 			m[3] = m[0] * v[0] + m[1] * v[1] + m[2] * v[2] + m[3];
 			return m;
 		}
 
 		template <typename T>
-		natMat4<T> rotate(natMat4<T> const& m, T const& angle, natVec3<T> const& v)
+		natMat4<T> rotate(natMat4<T> const& m, T const& angle, natVec3<T> const& v) noexcept
 		{
 			T const c = cos(angle);
 			T const s = sin(angle);
@@ -278,7 +259,7 @@ namespace NatsuLib
 		}
 
 		template <typename T>
-		natMat4<T> scale(natMat4<T> const& m, natVec3<T> const& v)
+		natMat4<T> scale(natMat4<T> const& m, natVec3<T> const& v) noexcept
 		{
 			return natMat4<T>(
 				m[0] * v[0],
@@ -288,7 +269,7 @@ namespace NatsuLib
 		}
 
 		template <typename T>
-		natMat4<T> scale_slow(natMat4<T> const& m, natVec3<T> const& v)
+		natMat4<T> scale_slow(natMat4<T> const& m, natVec3<T> const& v) noexcept
 		{
 			return m * natMat4<T>(v.x, v.y, v.z, static_cast<T>(1));
 		}
@@ -300,7 +281,7 @@ namespace NatsuLib
 			T const& bottom,
 			T const& top,
 			T const& zNear = static_cast<T>(-1),
-			T const& zFar = static_cast<T>(1))
+			T const& zFar = static_cast<T>(1)) noexcept
 		{
 			return natMat4<T>(
 				static_cast<T>(2) / (right - left), 0, 0, 0,
@@ -316,7 +297,7 @@ namespace NatsuLib
 			T const& bottom,
 			T const& top,
 			T const& nearVal,
-			T const& farVal)
+			T const& farVal) noexcept
 		{
 			return natMat4<T>(
 				(static_cast<T>(2) * nearVal) / (right - left), 0, 0, 0,
@@ -330,12 +311,9 @@ namespace NatsuLib
 			T const& fovy,
 			T const& aspect,
 			T const& zNear,
-			T const& zFar)
+			T const& zFar) noexcept
 		{
-			if (abs(aspect - std::numeric_limits<T>::epsilon()) <= static_cast<T>(0))
-			{
-				nat_Throw(natException, _T("aspect too small"));
-			}
+			assert(abs(aspect - std::numeric_limits<T>::epsilon()) > static_cast<T>(0) && "aspect too small");
 
 			T const tanHalfFovy = tan(fovy / static_cast<T>(2));
 
@@ -350,12 +328,9 @@ namespace NatsuLib
 		natMat4<T> perspective(
 			T const& fovy,
 			T const& aspect,
-			T const& zNear)
+			T const& zNear) noexcept
 		{
-			if (abs(aspect - std::numeric_limits<T>::epsilon()) <= static_cast<T>(0))
-			{
-				nat_Throw(natException, _T("aspect too small"));
-			}
+			assert(abs(aspect - std::numeric_limits<T>::epsilon()) > static_cast<T>(0) && "aspect too small");
 
 			T const tanHalfFovy = tan(fovy / static_cast<T>(2));
 
@@ -372,7 +347,7 @@ namespace NatsuLib
 			natMat4<T> const& model,
 			natMat4<T> const& proj,
 			natVec4<T> const& viewport
-		)
+		) noexcept
 		{
 			natVec4<T> tmp(obj.x, obj.y, obj.z, static_cast<T>(1));
 			tmp = model * tmp;
@@ -392,7 +367,7 @@ namespace NatsuLib
 			natMat4<T> const& model,
 			natMat4<T> const& proj,
 			natVec4<T> const& viewport
-		)
+		) noexcept
 		{
 			natVec4<T> tmp(win.x, win.y, win.z, T(1));
 			tmp.x = (tmp.x - T(viewport[0])) / T(viewport[2]);
@@ -410,7 +385,7 @@ namespace NatsuLib
 			natVec3<T> const& eye,
 			natVec3<T> const& center,
 			natVec3<T> const& up
-		)
+		) noexcept
 		{
 			natVec3<T> const f(normalize(center - eye));
 			natVec3<T> const s(normalize(cross(f, up)));

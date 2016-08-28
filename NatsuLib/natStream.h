@@ -3,7 +3,6 @@
 ///	@brief	NatsuLib流
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <string>
 #include "natRefObj.h"
 #include "natMultiThread.h"
 
@@ -88,58 +87,6 @@ namespace NatsuLib
 		virtual void Unlock() = 0;
 	};
 
-	class natMemoryStream;
-
-	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	NatsuLib文件流实现
-	////////////////////////////////////////////////////////////////////////////////
-	class natFileStream
-		: public natRefObjImpl<natStream>
-	{
-	public:
-#ifdef WIN32
-		typedef HANDLE UnsafeHandle;
-#else
-		typedef nUnsafePtr<void> UnsafeHandle;
-#endif
-
-		natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable);
-		~natFileStream();
-
-		NatErr GetLastErr() const override;
-		nBool CanWrite() const override;
-		nBool CanRead() const override;
-		nBool CanResize() const override;
-		nBool CanSeek() const override;
-		nLen GetSize() const override;
-		nResult SetSize(nLen Size) override;
-		nLen GetPosition() const override;
-		nResult SetPosition(NatSeek Origin, nLong Offset) override;
-		nLen ReadBytes(nData pData, nLen Length) override;
-		nLen WriteBytes(ncData pData, nLen Length) override;
-		void Flush() override;
-		void Lock() override;
-		nResult TryLock() override;
-		void Unlock() override;
-
-		ncTStr GetFilename() const noexcept;
-		UnsafeHandle GetUnsafeHandle() const noexcept;
-
-#ifdef WIN32
-		natRefPointer<natMemoryStream> MapToMemoryStream();
-#endif
-
-	private:
-		UnsafeHandle m_hFile, m_hMappedFile;
-		natRefPointer<natMemoryStream> m_pMappedFile;
-		nTString m_Filename;
-		nBool m_bReadable, m_bWritable;
-		natCriticalSection m_Section;
-
-	protected:
-		NatErr m_LastErr;
-	};
-
 	////////////////////////////////////////////////////////////////////////////////
 	///	@brief	NatsuLib内存流实现
 	////////////////////////////////////////////////////////////////////////////////
@@ -182,6 +129,57 @@ namespace NatsuLib
 		nBool m_bExtern;
 		natCriticalSection m_Section;
 
+		NatErr m_LastErr;
+	};
+
+	////////////////////////////////////////////////////////////////////////////////
+	///	@brief	NatsuLib文件流实现
+	////////////////////////////////////////////////////////////////////////////////
+	class natFileStream
+		: public natRefObjImpl<natStream>
+	{
+	public:
+#ifdef WIN32
+		typedef HANDLE UnsafeHandle;
+#else
+		typedef nUnsafePtr<void> UnsafeHandle;
+#endif
+
+		natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable);
+		natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable);
+		~natFileStream();
+
+		NatErr GetLastErr() const override;
+		nBool CanWrite() const override;
+		nBool CanRead() const override;
+		nBool CanResize() const override;
+		nBool CanSeek() const override;
+		nLen GetSize() const override;
+		nResult SetSize(nLen Size) override;
+		nLen GetPosition() const override;
+		nResult SetPosition(NatSeek Origin, nLong Offset) override;
+		nLen ReadBytes(nData pData, nLen Length) override;
+		nLen WriteBytes(ncData pData, nLen Length) override;
+		void Flush() override;
+		void Lock() override;
+		nResult TryLock() override;
+		void Unlock() override;
+
+		ncTStr GetFilename() const noexcept;
+		UnsafeHandle GetUnsafeHandle() const noexcept;
+
+#ifdef WIN32
+		natRefPointer<natMemoryStream> MapToMemoryStream();
+#endif
+
+	private:
+		UnsafeHandle m_hFile, m_hMappedFile;
+		natRefPointer<natMemoryStream> m_pMappedFile;
+		nTString m_Filename;
+		nBool m_bReadable, m_bWritable;
+		natCriticalSection m_Section;
+
+	protected:
 		NatErr m_LastErr;
 	};
 }

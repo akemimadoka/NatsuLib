@@ -1082,7 +1082,7 @@ namespace NatsuLib
 		return LinqEnumerable<_Detail::EmptyIterator<T>>(_Detail::EmptyIterator<T>(), _Detail::EmptyIterator<T>());
 	}
 
-	template <typename Arg, typename... Args>
+	template <typename Arg, typename... Args, std::enable_if_t<std::conjunction<std::is_same<Arg, Args>...>::value, nBool> = true>
 	auto from_values(Arg&& value, Args&&... values)
 	{
 		std::vector<std::remove_reference_t<std::remove_cv_t<Arg>>> tmpVec { std::forward<Arg>(value), std::forward<Args>(values)... };

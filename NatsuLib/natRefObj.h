@@ -52,7 +52,7 @@ namespace NatsuLib
 #endif
 		}
 
-		virtual void AddRef()
+		void AddRef() override
 		{
 #ifdef WIN32
 			InterlockedIncrement(&m_cRef);
@@ -61,7 +61,7 @@ namespace NatsuLib
 #endif
 		}
 
-		virtual void Release()
+		void Release() override
 		{
 			auto tRet =
 #ifdef WIN32

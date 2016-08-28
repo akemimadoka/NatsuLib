@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////////////
-///	@file	event.h
+///	@file	natEvent.h
 ///	@brief	EventÀàÊµÏÖ
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
@@ -122,9 +122,9 @@ namespace NatsuLib
 				nat_Throw(natException, _T("Unregistered event."));
 			}
 
-			for (auto& listeners : iter->second)
+			for (auto&& listeners : iter->second)
 			{
-				for (auto& listener : listeners.second)
+				for (auto&& listener : listeners.second)
 				{
 					listener.second(static_cast<natEventBase&>(event));
 				}

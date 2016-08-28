@@ -17,7 +17,7 @@ namespace NatsuLib
 	///	@{
 
 #define OPERATORSCALAR(op) template <typename U>\
-	natMat2& operator##op(U const& Scalar)\
+	natMat2& operator##op(U const& Scalar) noexcept\
 	{\
 		value[0] op static_cast<T>(Scalar);\
 		value[1] op static_cast<T>(Scalar);\
@@ -25,7 +25,7 @@ namespace NatsuLib
 	}
 
 #define OPERATORSELF(op) template <typename U>\
-	natMat2& operator##op(natMat2<U> const& m)\
+	natMat2& operator##op(natMat2<U> const& m) noexcept\
 	{\
 		value[0] op static_cast<col_type>(m.value[0]);\
 		value[1] op static_cast<col_type>(m.value[1]);\
@@ -33,19 +33,19 @@ namespace NatsuLib
 	}
 
 #define TOPERATORSCALARNML(op) template <typename T, typename U>\
-	auto operator##op(natMat2<T> const& m, U const& Scalar)\
+	auto operator##op(natMat2<T> const& m, U const& Scalar) noexcept\
 	{\
 		return natMat2<decltype(m[0] op Scalar)>(m[0] op Scalar, m[1] op Scalar);\
 	}
 
 #define TOPERATORSELFNM(op) template <typename T, typename U>\
-	auto operator##op(natMat2<T> const& m1, natMat2<U> const& m2)\
+	auto operator##op(natMat2<T> const& m1, natMat2<U> const& m2) noexcept\
 	{\
 		return natMat2<decltype(m1[0] op m2[0])>(m1[0] op m2[0], m1[1] op m2[1]);\
 	}
 
 #define TOPERATORSCALARNM(op) template <typename T, typename U>\
-auto operator##op(U const& Scalar, natMat2<T> const& m)\
+auto operator##op(U const& Scalar, natMat2<T> const& m) noexcept\
 {\
 	return natMat2<decltype(Scalar op m[0])>(Scalar op m[0], Scalar op m[1]);\
 }
@@ -62,6 +62,7 @@ auto operator##op(U const& Scalar, natMat2<T> const& m)\
 	template <typename T = nFloat>
 	struct natMat2
 	{
+		static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
 		typedef natVec2<T> col_type;
 		typedef natVec2<T> row_type;
 
@@ -74,88 +75,86 @@ auto operator##op(U const& Scalar, natMat2<T> const& m)\
 			return 2u;
 		}
 
-		col_type const& operator[](nuInt i) const
+		col_type const& operator[](nuInt i) const noexcept
 		{
-			if (i >= length())
-			{
-				nat_Throw(natException, _T("Out of range"));
-			}
+			assert(i < length() && "Out of range");
 
 			return value[i];
 		}
 
-		col_type& operator[](nuInt i)
+		col_type& operator[](nuInt i) noexcept
 		{
 			return const_cast<col_type&>(static_cast<natMat2 const*>(this)->operator[](i));
 		}
 
-		natMat2()
+		constexpr natMat2() noexcept
 			: natMat2(T(1))
 		{
 		}
 
-		explicit natMat2(T const& Scalar)
+		constexpr explicit natMat2(T const& Scalar) noexcept
+			: value
+			{
+				{ Scalar, 0 },
+				{ 0, Scalar }
+			}
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = col_type(Scalar, 0);
-			value[1] = col_type(0, Scalar);
 		}
 
 		template <typename U>
-		explicit natMat2(natMat2<U> const& m)
+		constexpr explicit natMat2(natMat2<U> const& m) noexcept
+			: value { m.value[0], m.value[1] }
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = static_cast<col_type>(m.value[0]);
-			value[1] = static_cast<col_type>(m.value[1]);
 		}
 
 		template <typename U>
-		explicit natMat2(natMat2<U> && m)
+		constexpr explicit natMat2(natMat2<U> && m) noexcept
+			: value { static_cast<col_type &&>(m.value[0]), static_cast<col_type &&>(m.value[1]) }
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = static_cast<col_type &&>(m.value[0]);
-			value[1] = static_cast<col_type &&>(m.value[1]);
 		}
 
-		natMat2(
+		constexpr natMat2(
 			T const& x1, T const& y1,
-			T const& x2, T const& y2)
+			T const& x2, T const& y2) noexcept
+			: value
+			{
+				{ x1, y1 },
+				{ x2, y2 }
+			}
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = col_type(x1, y1);
-			value[1] = col_type(x2, y2);
 		}
 
 		template <typename U>
-		explicit natMat2(const U* x)
+		constexpr explicit natMat2(const U* x) noexcept
+			: value
+			{
+				{ x },
+				{ x + 2 }
+			}
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = col_type(x);
-			value[1] = col_type(x + 2);
 		}
 
-		explicit natMat2(
-			natVec2<T> const& v)
+		constexpr explicit natMat2(natVec2<T> const& v) noexcept
+			: value
+			{
+				{ v.x, 0 },
+				{ 0, v.y }
+			}
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = col_type(v.x, 0);
-			value[1] = col_type(0, v.y);
 		}
 
-		natMat2(
+		constexpr natMat2(
 			col_type const& v1,
-			col_type const& v2)
+			col_type const& v2) noexcept
+			: value { v1, v2 }
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = v1;
-			value[1] = v2;
 		}
 
-		natMat2 inverse() const
+		natMat2 inverse() const noexcept
 		{
 			T OneOverDeterminant = static_cast<T>(1) / (
 				+value[0][0] * value[1][1]
-				- value[1][0] * value[0][1]);
+				-value[1][0] * value[0][1]);
 
 			return natMat2(
 				+value[1][1] * OneOverDeterminant,
@@ -164,20 +163,20 @@ auto operator##op(U const& Scalar, natMat2<T> const& m)\
 				+value[0][0] * OneOverDeterminant);
 		}
 
-		natMat2(natMat2 const& m) = default;
-		natMat2(natMat2 && m) = default;
+		constexpr natMat2(natMat2 const& m) noexcept = default;
+		constexpr natMat2(natMat2 && m) noexcept = default;
 
 		template <typename U>
-		explicit natMat2(natMat3<U> const& m);
+		constexpr explicit natMat2(natMat3<U> const& m) noexcept;
 
 		template <typename U>
-		explicit natMat2(natMat4<U> const& m);
+		constexpr explicit natMat2(natMat4<U> const& m) noexcept;
 
-		natMat2& operator=(natMat2 const& m) = default;
-		natMat2& operator=(natMat2 && m) = default;
+		natMat2& operator=(natMat2 const& m) noexcept = default;
+		natMat2& operator=(natMat2 && m) noexcept = default;
 
 		template <typename U>
-		natMat2& operator=(natMat2<U> && m)
+		natMat2& operator=(natMat2<U> && m) noexcept
 		{
 			value[0] = static_cast<col_type &&>(m.value[0]);
 			value[1] = static_cast<col_type &&>(m.value[1]);
@@ -215,7 +214,7 @@ auto operator##op(U const& Scalar, natMat2<T> const& m)\
 			return tResult;
 		}
 
-		natMat2 operator-()
+		natMat2 operator-() const noexcept
 		{
 			return natMat2(-value[0], -value[1]);
 		}
@@ -268,7 +267,7 @@ auto operator##op(U const& Scalar, natMat2<T> const& m)\
 	TOPERATORSCALARNML(/ );
 
 	template <typename T, typename U>
-	auto operator*(natMat2<T> const& m1, natMat2<U> const& m2)
+	auto operator*(natMat2<T> const& m1, natMat2<U> const& m2) noexcept
 	{
 		return natMat2<decltype(m1[0][0] * m2.value[0][0] + m1[1][0] * m2.value[0][1])>(
 			m1[0][0] * m2.value[0][0] + m1[1][0] * m2.value[0][1], m1[0][1] * m2.value[0][0] + m1[1][1] * m2.value[0][1],
@@ -276,7 +275,7 @@ auto operator##op(U const& Scalar, natMat2<T> const& m)\
 	}
 
 	template <typename T, typename U>
-	auto operator/(natMat2<T> const& m1, natMat2<U> const& m2)
+	auto operator/(natMat2<T> const& m1, natMat2<U> const& m2) noexcept
 	{
 		return natMat2<T>(m1) /= m2;
 	}
@@ -290,25 +289,25 @@ auto operator##op(U const& Scalar, natMat2<T> const& m)\
 	TOPERATORSCALARNM(/ );
 
 	template <typename T, typename U>
-	natVec2<T> operator*(natMat2<T> const& m, natVec2<U> const& v)
+	natVec2<T> operator*(natMat2<T> const& m, natVec2<U> const& v) noexcept
 	{
 		return natVec2<T>(m[0][0] * v.x + m[1][0] * v.y, m[0][1] * v.x + m[1][1] * v.y);
 	}
 
 	template <typename T, typename U>
-	natVec2<U> operator*(natVec2<U> const& v, natMat2<T> const& m)
+	natVec2<U> operator*(natVec2<U> const& v, natMat2<T> const& m) noexcept
 	{
 		return natVec2<T>(v.x * m[0][0] + v.y * m[0][1], v.x * m[1][0] + v.y * m[1][1]);
 	}
 
 	template <typename T, typename U>
-	natVec2<T> operator/(natMat2<T> const& m, natVec2<U> const& v)
+	natVec2<T> operator/(natMat2<T> const& m, natVec2<U> const& v) noexcept
 	{
 		return m.inverse() * v;
 	}
 
 	template <typename T, typename U>
-	natVec2<T> operator/(natVec2<U> const& v, natMat2<T> const& m)
+	natVec2<T> operator/(natVec2<U> const& v, natMat2<T> const& m) noexcept
 	{
 		return v * m.inverse();
 	}
@@ -334,7 +333,7 @@ auto operator##op(U const& Scalar, natMat2<T> const& m)\
 #endif
 
 #define OPERATORSCALAR(op) template <typename U>\
-	natMat3& operator##op(U const& Scalar)\
+	natMat3& operator##op(U const& Scalar) noexcept\
 	{\
 		value[0] op static_cast<T>(Scalar);\
 		value[1] op static_cast<T>(Scalar);\
@@ -343,7 +342,7 @@ auto operator##op(U const& Scalar, natMat2<T> const& m)\
 	}
 
 #define OPERATORSELF(op) template <typename U>\
-	natMat3& operator##op(natMat3<U> const& m)\
+	natMat3& operator##op(natMat3<U> const& m) noexcept\
 	{\
 		value[0] op static_cast<col_type>(m.value[0]);\
 		value[1] op static_cast<col_type>(m.value[1]);\
@@ -352,19 +351,19 @@ auto operator##op(U const& Scalar, natMat2<T> const& m)\
 	}
 
 #define TOPERATORSCALARNML(op) template <typename T, typename U>\
-	auto operator##op(natMat3<T> const& m, U const& Scalar)\
+	auto operator##op(natMat3<T> const& m, U const& Scalar) noexcept\
 	{\
 		return natMat3<decltype(m[0] op Scalar)>(m[0] op Scalar, m[1] op Scalar, m[2] op Scalar);\
 	}
 
 #define TOPERATORSELFNM(op) template <typename T, typename U>\
-	auto operator##op(natMat3<T> const& m1, natMat3<U> const& m2)\
+	auto operator##op(natMat3<T> const& m1, natMat3<U> const& m2) noexcept\
 	{\
 		return natMat3<decltype(m1[0] op m2[0])>(m1[0] op m2[0], m1[1] op m2[1], m1[2] op m2[2]);\
 	}
 
 #define TOPERATORSCALARNM(op) template <typename T, typename U>\
-auto operator##op(U const& Scalar, natMat3<T> const& m)\
+auto operator##op(U const& Scalar, natMat3<T> const& m) noexcept\
 {\
 	return natMat3<decltype(Scalar op m[0])>(Scalar op m[0], Scalar op m[1], Scalar op m[2]);\
 }
@@ -375,6 +374,7 @@ auto operator##op(U const& Scalar, natMat3<T> const& m)\
 	template <typename T = nFloat>
 	struct natMat3
 	{
+		static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
 		typedef natVec3<T> col_type;
 		typedef natVec3<T> row_type;
 
@@ -387,93 +387,88 @@ auto operator##op(U const& Scalar, natMat3<T> const& m)\
 			return 3u;
 		}
 
-		col_type const& operator[](nuInt i) const
+		col_type const& operator[](nuInt i) const noexcept
 		{
-			if (i >= length())
-			{
-				nat_Throw(natException, _T("Out of range"));
-			}
+			assert(i < length() && "Out of range");
 
 			return value[i];
 		}
 
-		col_type& operator[](nuInt i)
+		col_type& operator[](nuInt i) noexcept
 		{
 			return const_cast<col_type&>(static_cast<natMat3 const*>(this)->operator[](i));
 		}
 
-		natMat3()
+		constexpr natMat3() noexcept
 			: natMat3(T(1))
 		{
 		}
 
-		explicit natMat3(T const& Scalar)
+		constexpr explicit natMat3(T const& Scalar) noexcept
+			: value
+			{
+				{ Scalar, 0, 0 },
+				{ 0, Scalar, 0 },
+				{ 0, 0, Scalar }
+			}
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = col_type(Scalar, 0, 0);
-			value[1] = col_type(0, Scalar, 0);
-			value[2] = col_type(0, 0, Scalar);
 		}
 
 		template <typename U>
-		explicit natMat3(natMat3<U> const& m)
+		constexpr explicit natMat3(natMat3<U> const& m) noexcept
+			: value { m.value[0], m.value[1], m.value[2] }
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = static_cast<col_type>(m.value[0]);
-			value[1] = static_cast<col_type>(m.value[1]);
-			value[2] = static_cast<col_type>(m.value[2]);
 		}
 
 		template <typename U>
-		explicit natMat3(natMat3<U> && m)
+		constexpr explicit natMat3(natMat3<U> && m) noexcept
+			: value { static_cast<col_type &&>(m.value[0]), static_cast<col_type &&>(m.value[1]), static_cast<col_type &&>(m.value[2]) }
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = static_cast<col_type &&>(m.value[0]);
-			value[1] = static_cast<col_type &&>(m.value[1]);
-			value[2] = static_cast<col_type &&>(m.value[2]);
 		}
 
-		natMat3(
+		constexpr natMat3(
 			T const& x1, T const& y1, T const& z1,
 			T const& x2, T const& y2, T const& z2,
-			T const& x3, T const& y3, T const& z3)
+			T const& x3, T const& y3, T const& z3) noexcept
+			: value
+			{
+				{ x1, y1, z1 },
+				{ x2, y2, z2 },
+				{ x3, y3, z3 }
+			}
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = col_type(x1, y1, z1);
-			value[1] = col_type(x2, y2, z2);
-			value[2] = col_type(x3, y3, z3);
 		}
 
 		template <typename U>
-		explicit natMat3(const U* x)
+		constexpr explicit natMat3(const U* x) noexcept
+			: value
+			{
+				{ x },
+				{ x + 3 },
+				{ x + 6 }
+			}
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = col_type(x);
-			value[1] = col_type(x + 3);
-			value[2] = col_type(x + 6);
 		}
 
-		explicit natMat3(
-			natVec3<T> const& v)
+		constexpr explicit natMat3(natVec3<T> const& v) noexcept
+			: value
+			{
+				{ v.x, 0, 0 },
+				{ 0, v.y, 0 },
+				{ 0, 0, v.z }
+			}
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = col_type(v.x, 0, 0);
-			value[1] = col_type(0, v.y, 0);
-			value[2] = col_type(0, 0, v.z);
 		}
 
-		natMat3(
+		constexpr natMat3(
 			col_type const& v1,
 			col_type const& v2,
-			col_type const& v3)
+			col_type const& v3) noexcept
+			: value { v1, v2, v3 }
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = v1;
-			value[1] = v2;
-			value[2] = v3;
 		}
 
-		natMat3 inverse() const
+		natMat3 inverse() const noexcept
 		{
 			T OneOverDeterminant = static_cast<T>(1) / (
 				+value[0][0] * (value[1][1] * value[2][2] - value[2][1] * value[1][2])
@@ -486,25 +481,28 @@ auto operator##op(U const& Scalar, natMat3<T> const& m)\
 				+value[0][1] * value[1][2] - value[1][1] * value[0][2] * OneOverDeterminant, -value[0][0] * value[1][2] - value[1][0] * value[0][2] * OneOverDeterminant, +value[0][0] * value[1][1] - value[1][0] * value[0][1] * OneOverDeterminant);
 		}
 
-		natMat3(natMat3 const& m) = default;
-		natMat3(natMat3 && m) = default;
+		constexpr natMat3(natMat3 const& m) noexcept = default;
+		constexpr natMat3(natMat3 && m) noexcept = default;
 
 		template <typename U>
-		explicit natMat3(natMat2<U> const& m)
+		constexpr explicit natMat3(natMat2<U> const& m) noexcept
+			: value
+			{
+				{ m[0], 0 },
+				{ m[1], 0 },
+				{ 0, 0, 1 }
+			}
 		{
-			value[0] = col_type(m[0], 0);
-			value[1] = col_type(m[1], 0);
-			value[2] = col_type(0, 0, 1);
 		}
 
 		template <typename U>
-		explicit natMat3(natMat4<U> const& m);
+		constexpr explicit natMat3(natMat4<U> const& m) noexcept;
 
-		natMat3& operator=(natMat3 const& m) = default;
-		natMat3& operator=(natMat3 && m) = default;
+		natMat3& operator=(natMat3 const& m) noexcept = default;
+		natMat3& operator=(natMat3 && m) noexcept = default;
 
 		template <typename U>
-		natMat3& operator=(natMat3<U> && m)
+		natMat3& operator=(natMat3<U> && m) noexcept
 		{
 			value[0] = static_cast<col_type &&>(m.value[0]);
 			value[1] = static_cast<col_type &&>(m.value[1]);
@@ -513,21 +511,21 @@ auto operator##op(U const& Scalar, natMat3<T> const& m)\
 			return *this;
 		}
 
-		natMat3& operator++()
+		natMat3& operator++() noexcept
 		{
 			++value[0]; ++value[1]; ++value[2];
 
 			return *this;
 		}
 
-		natMat3& operator--()
+		natMat3& operator--() noexcept
 		{
 			--value[0]; --value[1]; --value[2];
 
 			return *this;
 		}
 
-		natMat3 operator++(int)
+		natMat3 operator++(int) noexcept
 		{
 			natMat3 tResult(*this);
 			++*this;
@@ -535,7 +533,7 @@ auto operator##op(U const& Scalar, natMat3<T> const& m)\
 			return tResult;
 		}
 
-		natMat3 operator--(int)
+		natMat3 operator--(int) noexcept
 		{
 			natMat3 tResult(*this);
 			--*this;
@@ -543,19 +541,19 @@ auto operator##op(U const& Scalar, natMat3<T> const& m)\
 			return tResult;
 		}
 
-		natMat3 operator-()
+		natMat3 operator-() noexcept
 		{
 			return natMat3(-value[0], -value[1], -value[2]);
 		}
 
 		template <typename U>
-		nBool operator==(natMat2<U> const& m) const
+		nBool operator==(natMat2<U> const& m) const noexcept
 		{
 			return (value[0] == m.value[0]) && (value[1] == m.value[1]) && (value[2] == m.value[2]);
 		}
 
 		template <typename U>
-		nBool operator!=(natMat2<U> const& m) const
+		nBool operator!=(natMat2<U> const& m) const noexcept
 		{
 			return !(*this == m);
 		}
@@ -574,13 +572,13 @@ auto operator##op(U const& Scalar, natMat3<T> const& m)\
 		OPERATORSCALAR(/= );
 
 		template <typename U>
-		natMat3& operator*=(natMat3<U> const& m)
+		natMat3& operator*=(natMat3<U> const& m) noexcept
 		{
 			return (*this = *this * m);
 		}
 
 		template <typename U>
-		natMat3& operator/=(natMat3<U> const& m)
+		natMat3& operator/=(natMat3<U> const& m) noexcept
 		{
 			return (*this = *this * m.inverse());
 		}
@@ -596,7 +594,7 @@ auto operator##op(U const& Scalar, natMat3<T> const& m)\
 	TOPERATORSCALARNML(/ );
 
 	template <typename T, typename U>
-	auto operator*(natMat3<T> const& m1, natMat3<U> const& m2)
+	auto operator*(natMat3<T> const& m1, natMat3<U> const& m2) noexcept
 	{
 		return natMat3<decltype(m1[0][0] * m2.value[0][0])>(
 			m1[0][0] * m2.value[0][0] + m1[1][0] * m2.value[0][1] + m1[2][0] * m2.value[0][2],
@@ -612,7 +610,7 @@ auto operator##op(U const& Scalar, natMat3<T> const& m)\
 	}
 
 	template <typename T, typename U>
-	auto operator/(natMat3<T> const& m1, natMat3<U> const& m2)
+	auto operator/(natMat3<T> const& m1, natMat3<U> const& m2) noexcept
 	{
 		return natMat3<T>(m1) /= m2;
 	}
@@ -626,7 +624,7 @@ auto operator##op(U const& Scalar, natMat3<T> const& m)\
 	TOPERATORSCALARNM(/ );
 
 	template <typename T, typename U>
-	natVec3<T> operator*(natMat3<T> const& m, natVec3<U> const& v)
+	natVec3<T> operator*(natMat3<T> const& m, natVec3<U> const& v) noexcept
 	{
 		return natVec3<T>(
 			m[0][0] * v.x + m[1][0] * v.y + m[2][0] * v.z,
@@ -636,7 +634,7 @@ auto operator##op(U const& Scalar, natMat3<T> const& m)\
 	}
 
 	template <typename T, typename U>
-	natVec3<U> operator*(natVec3<U> const& v, natMat3<T> const& m)
+	natVec3<U> operator*(natVec3<U> const& v, natMat3<T> const& m) noexcept
 	{
 		return natVec3<T>(
 			v.x * m[0][0] + v.y * m[0][1] + v.z * m[0][2],
@@ -646,13 +644,13 @@ auto operator##op(U const& Scalar, natMat3<T> const& m)\
 	}
 
 	template <typename T, typename U>
-	natVec3<T> operator/(natMat3<T> const& m, natVec3<U> const& v)
+	natVec3<T> operator/(natMat3<T> const& m, natVec3<U> const& v) noexcept
 	{
 		return m.inverse() * v;
 	}
 
 	template <typename T, typename U>
-	natVec3<T> operator/(natVec3<U> const& v, natMat3<T> const& m)
+	natVec3<T> operator/(natVec3<U> const& v, natMat3<T> const& m) noexcept
 	{
 		return v * m.inverse();
 	}
@@ -678,7 +676,7 @@ auto operator##op(U const& Scalar, natMat3<T> const& m)\
 #endif
 
 #define OPERATORSCALAR(op) template <typename U>\
-	natMat4& operator##op(U const& Scalar)\
+	natMat4& operator##op(U const& Scalar) noexcept\
 	{\
 		value[0] op static_cast<T>(Scalar);\
 		value[1] op static_cast<T>(Scalar);\
@@ -688,7 +686,7 @@ auto operator##op(U const& Scalar, natMat3<T> const& m)\
 	}
 
 #define OPERATORSELF(op) template <typename U>\
-	natMat4& operator##op(natMat4<U> const& m)\
+	natMat4& operator##op(natMat4<U> const& m) noexcept\
 	{\
 		value[0] op static_cast<col_type>(m.value[0]);\
 		value[1] op static_cast<col_type>(m.value[1]);\
@@ -698,19 +696,19 @@ auto operator##op(U const& Scalar, natMat3<T> const& m)\
 	}
 
 #define TOPERATORSCALARNML(op) template <typename T, typename U>\
-	auto operator##op(natMat4<T> const& m, U const& Scalar)\
+	auto operator##op(natMat4<T> const& m, U const& Scalar) noexcept\
 	{\
 		return natMat4<decltype(m[0] op Scalar)>(m[0] op Scalar, m[1] op Scalar, m[2] op Scalar, m[3] op Scalar);\
 	}
 
 #define TOPERATORSELFNM(op) template <typename T, typename U>\
-	auto operator##op(natMat4<T> const& m1, natMat4<U> const& m2)\
+	auto operator##op(natMat4<T> const& m1, natMat4<U> const& m2) noexcept\
 	{\
 		return natMat4<decltype(m1[0] op m2[0])>(m1[0] op m2[0], m1[1] op m2[1], m1[2] op m2[2], m1[3] op m2[3]);\
 	}
 
 #define TOPERATORSCALARNM(op) template <typename T, typename U>\
-auto operator##op(U const& Scalar, natMat4<T> const& m)\
+auto operator##op(U const& Scalar, natMat4<T> const& m) noexcept\
 {\
 	return natMat4<decltype(Scalar op m[0])>(Scalar op m[0], Scalar op m[1], Scalar op m[2], Scalar op m[3]);\
 }
@@ -721,6 +719,7 @@ auto operator##op(U const& Scalar, natMat4<T> const& m)\
 	template <typename T = nFloat>
 	struct natMat4
 	{
+		static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
 		typedef natVec4<T> col_type;
 		typedef natVec4<T> row_type;
 
@@ -733,102 +732,94 @@ auto operator##op(U const& Scalar, natMat4<T> const& m)\
 			return 4u;
 		}
 
-		col_type const& operator[](nuInt i) const
+		col_type const& operator[](nuInt i) const noexcept
 		{
-			if (i >= length())
-			{
-				nat_Throw(natException, _T("Out of range"));
-			}
+			assert(i < length() && "Out of range");
 
 			return value[i];
 		}
 
-		col_type& operator[](nuInt i)
+		col_type& operator[](nuInt i) noexcept
 		{
 			return const_cast<col_type&>(static_cast<natMat4 const*>(this)->operator[](i));
 		}
 
-		natMat4()
+		constexpr natMat4() noexcept
 			: natMat4(T(1))
 		{
 		}
 
-		explicit natMat4(T const& Scalar)
+		constexpr explicit natMat4(T const& Scalar) noexcept
+			: value
+			{
+				{ Scalar, 0, 0, 0 },
+				{ 0, Scalar, 0, 0 },
+				{ 0, 0, Scalar, 0 },
+				{ 0, 0, 0, Scalar }
+			}
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = col_type(Scalar, 0, 0, 0);
-			value[1] = col_type(0, Scalar, 0, 0);
-			value[2] = col_type(0, 0, Scalar, 0);
-			value[3] = col_type(0, 0, 0, Scalar);
 		}
 
 		template <typename U>
-		explicit natMat4(natMat4<U> const& m)
+		constexpr explicit natMat4(natMat4<U> const& m) noexcept
+			: value { m.value[0], m.value[1], m.value[2], m.value[3] }
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = static_cast<col_type>(m.value[0]);
-			value[1] = static_cast<col_type>(m.value[1]);
-			value[2] = static_cast<col_type>(m.value[2]);
-			value[3] = static_cast<col_type>(m.value[3]);
 		}
 
 		template <typename U>
-		explicit natMat4(natMat4<U> && m)
+		constexpr explicit natMat4(natMat4<U> && m) noexcept
+			: value { static_cast<col_type &&>(m.value[0]), static_cast<col_type &&>(m.value[1]), static_cast<col_type &&>(m.value[2]), static_cast<col_type &&>(m.value[3]) }
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = static_cast<col_type &&>(m.value[0]);
-			value[1] = static_cast<col_type &&>(m.value[1]);
-			value[2] = static_cast<col_type &&>(m.value[2]);
-			value[3] = static_cast<col_type &&>(m.value[3]);
 		}
 
-		natMat4(
+		constexpr natMat4(
 			T const& x1, T const& y1, T const& z1, T const& w1,
 			T const& x2, T const& y2, T const& z2, T const& w2,
 			T const& x3, T const& y3, T const& z3, T const& w3,
-			T const& x4, T const& y4, T const& z4, T const& w4)
+			T const& x4, T const& y4, T const& z4, T const& w4) noexcept
+			: value
+			{
+				{ x1, y1, z1, w1 },
+				{ x2, y2, z2, w2 },
+				{ x3, y3, z3, w3 },
+				{ x4, y4, z4, w4 }
+			}
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = col_type(x1, y1, z1, w1);
-			value[1] = col_type(x2, y2, z2, w2);
-			value[2] = col_type(x3, y3, z3, w3);
-			value[3] = col_type(x4, y4, z4, w4);
 		}
 
 		template <typename U>
-		explicit natMat4(const U* x)
+		constexpr explicit natMat4(const U* x) noexcept
+			: value
+			{
+				col_type{ x },
+				col_type{ x + 4 },
+				col_type{ x + 8 },
+				col_type{ x + 12 }
+			}
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = col_type(x);
-			value[1] = col_type(x + 4);
-			value[2] = col_type(x + 8);
-			value[3] = col_type(x + 12);
 		}
 
-		explicit natMat4(
-			natVec4<T> const& v)
+		constexpr explicit natMat4(natVec4<T> const& v) noexcept
+			: value
+			{
+				{ v.x, 0, 0, 0 },
+				{ 0, v.y, 0, 0 },
+				{ 0, 0, v.z, 0 },
+				{ 0, 0, 0, v.w }
+			}
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = col_type(v.x, 0, 0, 0);
-			value[1] = col_type(0, v.y, 0, 0);
-			value[2] = col_type(0, 0, v.z, 0);
-			value[3] = col_type(0, 0, 0, v.w);
 		}
 
-		natMat4(
+		constexpr natMat4(
 			col_type const& v1,
 			col_type const& v2,
 			col_type const& v3,
-			col_type const& v4)
+			col_type const& v4) noexcept
+			: value { v1, v2, v3, v4 }
 		{
-			static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
-			value[0] = v1;
-			value[1] = v2;
-			value[2] = v3;
-			value[3] = v4;
 		}
 
-		natMat4 inverse() const
+		constexpr natMat4 inverse() const noexcept
 		{
 			T Coef00 = value[2][2] * value[3][3] - value[3][2] * value[2][3];
 			T Coef02 = value[1][2] * value[3][3] - value[3][2] * value[1][3];
@@ -885,32 +876,38 @@ auto operator##op(U const& Scalar, natMat4<T> const& m)\
 			return Inverse * OneOverDeterminant;
 		}
 
-		natMat4(natMat4 const& m) = default;
-		natMat4(natMat4 && m) = default;
+		constexpr natMat4(natMat4 const& m) noexcept = default;
+		constexpr natMat4(natMat4 && m) noexcept = default;
 
 		template <typename U>
-		explicit natMat4(natMat2<U> const& m)
+		constexpr explicit natMat4(natMat2<U> const& m) noexcept
+			: value
+			{
+				{ m[0], 0, 0 },
+				{ m[1], 0, 0 },
+				{ 0, 0, 1, 0 },
+				{ 0, 0, 0, 1 }
+			}
 		{
-			value[0] = col_type(m[0], 0, 0);
-			value[1] = col_type(m[1], 0, 0);
-			value[2] = col_type(0, 0, 1, 0);
-			value[3] = col_type(0, 0, 0, 1);
 		}
 
 		template <typename U>
-		explicit natMat4(natMat3<U> const& m)
+		constexpr explicit natMat4(natMat3<U> const& m) noexcept
+			: value
+			{
+				{ m[0], 0 },
+				{ m[1], 0 },
+				{ m[2], 0 },
+				{ 0, 0, 0, 1 }
+			}
 		{
-			value[0] = col_type(m[0], 0);
-			value[1] = col_type(m[1], 0);
-			value[2] = col_type(m[2], 0);
-			value[3] = col_type(0, 0, 0, 1);
 		}
 
-		natMat4& operator=(natMat4 const& m) = default;
-		natMat4& operator=(natMat4 && m) = default;
+		natMat4& operator=(natMat4 const& m) noexcept = default;
+		natMat4& operator=(natMat4 && m) noexcept = default;
 
 		template <typename U>
-		natMat4& operator=(natMat4<U> && m)
+		natMat4& operator=(natMat4<U> && m) noexcept
 		{
 			value[0] = static_cast<col_type &&>(m.value[0]);
 			value[1] = static_cast<col_type &&>(m.value[1]);
@@ -920,21 +917,21 @@ auto operator##op(U const& Scalar, natMat4<T> const& m)\
 			return *this;
 		}
 
-		natMat4& operator++()
+		natMat4& operator++() noexcept
 		{
 			++value[0]; ++value[1]; ++value[2]; ++value[3];
 
 			return *this;
 		}
 
-		natMat4& operator--()
+		natMat4& operator--() noexcept
 		{
 			--value[0]; --value[1]; --value[2]; --value[3];
 
 			return *this;
 		}
 
-		natMat4 operator++(int)
+		natMat4 operator++(int) noexcept
 		{
 			natMat4 tResult(*this);
 			++*this;
@@ -942,7 +939,7 @@ auto operator##op(U const& Scalar, natMat4<T> const& m)\
 			return tResult;
 		}
 
-		natMat4 operator--(int)
+		natMat4 operator--(int) noexcept
 		{
 			natMat4 tResult(*this);
 			--*this;
@@ -950,19 +947,19 @@ auto operator##op(U const& Scalar, natMat4<T> const& m)\
 			return tResult;
 		}
 
-		natMat4 operator-()
+		natMat4 operator-() noexcept
 		{
 			return natMat4(-value[0], -value[1], -value[2], -value[3]);
 		}
 
 		template <typename U>
-		nBool operator==(natMat2<U> const& m) const
+		nBool operator==(natMat2<U> const& m) const noexcept
 		{
 			return (value[0] == m.value[0]) && (value[1] == m.value[1]) && (value[2] == m.value[2]) && (value[3] == m.value[3]);
 		}
 
 		template <typename U>
-		nBool operator!=(natMat2<U> const& m) const
+		nBool operator!=(natMat2<U> const& m) const noexcept
 		{
 			return !(*this == m);
 		}
@@ -981,13 +978,13 @@ auto operator##op(U const& Scalar, natMat4<T> const& m)\
 		OPERATORSCALAR(/= );
 
 		template <typename U>
-		natMat4& operator*=(natMat4<U> const& m)
+		natMat4& operator*=(natMat4<U> const& m) noexcept
 		{
 			return (*this = *this * m);
 		}
 
 		template <typename U>
-		natMat4& operator/=(natMat4<U> const& m)
+		natMat4& operator/=(natMat4<U> const& m) noexcept
 		{
 			return (*this = *this * m.inverse());
 		}
@@ -1004,7 +1001,7 @@ auto operator##op(U const& Scalar, natMat4<T> const& m)\
 	TOPERATORSCALARNML(/ );
 
 	template <typename T, typename U>
-	auto operator*(natMat4<T> const& m1, natMat4<U> const& m2)
+	auto operator*(natMat4<T> const& m1, natMat4<U> const& m2) noexcept
 	{
 		auto const SrcA0 = m1[0];
 		auto const SrcA1 = m1[1];
@@ -1024,7 +1021,7 @@ auto operator##op(U const& Scalar, natMat4<T> const& m)\
 	}
 
 	template <typename T, typename U>
-	auto operator/(natMat4<T> const& m1, natMat4<U> const& m2)
+	auto operator/(natMat4<T> const& m1, natMat4<U> const& m2) noexcept
 	{
 		return natMat4<T>(m1) /= m2;
 	}
@@ -1038,7 +1035,7 @@ auto operator##op(U const& Scalar, natMat4<T> const& m)\
 	TOPERATORSCALARNM(/ );
 
 	template <typename T, typename U>
-	natVec4<T> operator*(natMat4<T> const& m, natVec4<U> const& v)
+	natVec4<T> operator*(natMat4<T> const& m, natVec4<U> const& v) noexcept
 	{
 		typename natMat4<T>::col_type const Mov0(v[0]);
 		typename natMat4<T>::col_type const Mov1(v[1]);
@@ -1062,7 +1059,7 @@ auto operator##op(U const& Scalar, natMat4<T> const& m)\
 	}
 
 	template <typename T, typename U>
-	natVec4<U> operator*(natVec4<U> const& v, natMat4<T> const& m)
+	natVec4<U> operator*(natVec4<U> const& v, natMat4<T> const& m) noexcept
 	{
 		return natVec4<T>(
 			v.x * m[0][0] + v.y * m[0][1] + v.z * m[0][2] + v.w * m[0][3],
@@ -1073,13 +1070,13 @@ auto operator##op(U const& Scalar, natMat4<T> const& m)\
 	}
 
 	template <typename T, typename U>
-	natVec4<T> operator/(natMat4<T> const& m, natVec4<U> const& v)
+	natVec4<T> operator/(natMat4<T> const& m, natVec4<U> const& v) noexcept
 	{
 		return m.inverse() * v;
 	}
 
 	template <typename T, typename U>
-	natVec4<T> operator/(natVec4<U> const& v, natMat4<T> const& m)
+	natVec4<T> operator/(natVec4<U> const& v, natMat4<T> const& m) noexcept
 	{
 		return v * m.inverse();
 	}
@@ -1106,27 +1103,23 @@ auto operator##op(U const& Scalar, natMat4<T> const& m)\
 
 	template <typename T>
 	template <typename U>
-	natMat2<T>::natMat2(natMat3<U> const& m)
+	constexpr natMat2<T>::natMat2(natMat3<U> const& m) noexcept
+		: value { static_cast<col_type>(m[0]), static_cast<col_type>(m[1]) }
 	{
-		value[0] = col_type(m[0]);
-		value[1] = col_type(m[1]);
 	}
 
 	template <typename T>
 	template <typename U>
-	natMat2<T>::natMat2(natMat4<U> const& m)
+	constexpr natMat2<T>::natMat2(natMat4<U> const& m) noexcept
+		: value { static_cast<col_type>(m[0]), static_cast<col_type>(m[1]) }
 	{
-		value[0] = col_type(m[0]);
-		value[1] = col_type(m[1]);
 	}
 
 	template <typename T>
 	template <typename U>
-	natMat3<T>::natMat3(natMat4<U> const& m)
+	constexpr natMat3<T>::natMat3(natMat4<U> const& m) noexcept
+		: value { static_cast<col_type>(m[0]), static_cast<col_type>(m[1]), static_cast<col_type>(m[2]) }
 	{
-		value[0] = col_type(m[0]);
-		value[1] = col_type(m[1]);
-		value[2] = col_type(m[2]);
 	}
 
 	/// @}
