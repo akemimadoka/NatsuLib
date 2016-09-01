@@ -72,7 +72,7 @@
         #define NOUNCRYPT
 #endif
 
-#include "..\zlib\include\zlib.h"
+#include "../zlib/include/zlib.h"
 #include "unzip.h"
 
 #ifdef STDC
