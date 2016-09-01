@@ -188,6 +188,7 @@
     <ClInclude Include="extern\unzip\unzip.h" />
     <ClInclude Include="extern\unzip\zip.h" />
     <ClInclude Include="natConcepts.h" />
+    <ClInclude Include="natDelegate.h" />
     <ClInclude Include="natEvent.h" />
     <ClInclude Include="natException.h" />
     <ClInclude Include="natInterface.h" />

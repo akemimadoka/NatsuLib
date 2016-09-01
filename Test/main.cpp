@@ -34,27 +34,7 @@ int main()
 
 	natEventBus eventBus;
 	natLog logger(eventBus);
-	logger.RegisterLogUpdateEventFunc([] (natEventBase& event)
-	{
-		decltype(auto) eventLogUpdated = static_cast<natLog::EventLogUpdated&>(event);
-		time_t time = std::chrono::system_clock::to_time_t(eventLogUpdated.GetTime());
-		tm timeStruct;
-		localtime_s(&timeStruct, &time);
-		natLog::LogType logType = static_cast<natLog::LogType>(eventLogUpdated.GetLogType());
-		nTString logStr = natUtil::FormatString(_T("[{0}] [{1}] {2}"), std::put_time(&timeStruct, _T("%F %T")), natLog::GetDefaultLogTypeName(logType), eventLogUpdated.GetData());
-		switch (logType)
-		{
-		case natLog::Msg:
-		case natLog::Warn:
-			std::wclog << logStr << std::endl;
-			break;
-		case natLog::Err:
-			std::wcerr << logStr << std::endl;
-			break;
-		default:
-			break;
-		}
-	});
+	logger.UseDefaultAction();
 
 	try
 	{

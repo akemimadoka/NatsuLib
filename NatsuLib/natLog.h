@@ -5,6 +5,7 @@
 #pragma once
 #include <string>
 #include <chrono>
+#include <iostream>
 
 #include "natEvent.h"
 
@@ -26,7 +27,7 @@ namespace NatsuLib
 			{
 			}
 
-			bool CanCancel() const noexcept override
+			nBool CanCancel() const noexcept override
 			{
 				return false;
 			}
@@ -92,7 +93,49 @@ namespace NatsuLib
 		}
 
 		///	@brief	注册日志更新事件处理函数
-		void RegisterLogUpdateEventFunc(natEventBus::EventListenerFunc func);
+		void RegisterLogUpdateEventFunc(natEventBus::EventListenerDelegate func);
+
+	private:
+		struct OutputToOStream
+		{
+			template <typename CurrentChar_t, typename... RestChar_t>
+			static void Impl(ncTStr str, std::basic_ostream<CurrentChar_t>& currentOStream, std::basic_ostream<RestChar_t>&... _ostreams)
+			{
+				currentOStream << str << std::endl;
+				Impl(str, std::forward<std::basic_ostream<RestChar_t>>(_ostreams)...);
+			}
+
+			static void Impl(ncTStr /*str*/)
+			{
+			}
+		};
+
+	public:
+		template <typename... Char_t>
+		void UseDefaultAction(std::basic_ostream<Char_t>&... ostreams)
+		{
+			RegisterLogUpdateEventFunc([&ostreams...](natEventBase& event)
+			{
+				auto&& eventLogUpdated(static_cast<EventLogUpdated&>(event));
+				auto time = std::chrono::system_clock::to_time_t(eventLogUpdated.GetTime());
+				tm timeStruct;
+				localtime_s(&timeStruct, &time);
+				auto logType = static_cast<LogType>(eventLogUpdated.GetLogType());
+				auto logStr = natUtil::FormatString(_T("[{0}] [{1}] {2}"), std::put_time(&timeStruct, _T("%F %T")), GetDefaultLogTypeName(logType), eventLogUpdated.GetData());
+				switch (logType)
+				{
+				case Msg:
+				case Warn:
+					OutputToOStream::Impl(logStr.c_str(), std::wclog, ostreams...);
+					break;
+				case Err:
+					OutputToOStream::Impl(logStr.c_str(), std::wcerr, ostreams...);
+					break;
+				default:
+					break;
+				}
+			});
+		}
 
 		static ncTStr GetDefaultLogTypeName(LogType logtype);
 

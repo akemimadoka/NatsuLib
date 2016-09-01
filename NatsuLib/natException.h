@@ -29,7 +29,7 @@ namespace NatsuLib
 	{
 	public:
 		template <typename... Args>
-		natException(ncTStr Src, ncTStr File, nuInt Line, ncTStr Desc, Args&&... args) noexcept
+		constexpr natException(ncTStr Src, ncTStr File, nuInt Line, ncTStr Desc, Args&&... args) noexcept
 #ifdef UNICODE
 			: exception(natUtil::W2Cstr(natUtil::FormatString(Desc, std::forward<Args>(args)...)).c_str()), m_Time(std::chrono::system_clock::now()), m_File(File), m_Line(Line), m_Source(Src), m_Description(natUtil::C2Wstr(exception::what()))
 #else
@@ -82,6 +82,7 @@ namespace NatsuLib
 		: public natException
 	{
 	public:
+		// bug in Visual Studio 2015 Community, see http://stackoverflow.com/questions/32489702/constexpr-with-delegating-constructors
 		template <typename... Args>
 		natWinException(ncTStr Src, ncTStr File, nuInt Line, ncTStr Desc, Args&&... args) noexcept
 			: natWinException(Src, File, Line, GetLastError(), Desc, std::forward<Args>(args)...)
@@ -89,8 +90,8 @@ namespace NatsuLib
 		}
 
 		template <typename... Args>
-		natWinException(ncTStr Src, ncTStr File, nuInt Line, DWORD LastErr, ncTStr Desc, Args&&... args) noexcept
-			: natException(Src, File, Line, Desc, std::forward<Args>(args)...), m_LastErr(LastErr)
+		constexpr natWinException(ncTStr Src, ncTStr File, nuInt Line, DWORD LastErr, ncTStr Desc, Args&&... args) noexcept
+			: natException(Src, File, Line, Desc, std::forward<Args>(args)...), m_LastErr(LastErr), m_ErrMsg()
 		{
 			m_Description = move(natUtil::FormatString((m_Description + _T(" (LastErr = {0})")).c_str(), m_LastErr));
 		}
@@ -127,7 +128,7 @@ namespace NatsuLib
 	{
 	public:
 		template <typename... Args>
-		natErrException(ncTStr Src, ncTStr File, nuInt Line, NatErr ErrNo, ncTStr Desc, Args&&... args) noexcept
+		constexpr natErrException(ncTStr Src, ncTStr File, nuInt Line, NatErr ErrNo, ncTStr Desc, Args&&... args) noexcept
 			: natException(Src, File, Line, Desc, std::forward<Args>(args)...), m_Errno(ErrNo)
 		{
 			m_Description = move(natUtil::FormatString((m_Description + _T(" (Errno = {0})")).c_str(), m_Errno));

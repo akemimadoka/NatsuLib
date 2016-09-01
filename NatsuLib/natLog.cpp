@@ -34,7 +34,7 @@ ncTStr natLog::GetDefaultLogTypeName(LogType logtype)
 	}
 }
 
-void natLog::RegisterLogUpdateEventFunc(natEventBus::EventListenerFunc func)
+void natLog::RegisterLogUpdateEventFunc(natEventBus::EventListenerDelegate func)
 {
 	m_EventBus.RegisterEventListener<EventLogUpdated>(func);
 }

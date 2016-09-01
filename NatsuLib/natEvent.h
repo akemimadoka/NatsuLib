@@ -14,7 +14,7 @@
 #include <unordered_map>
 #include <typeindex>
 
-#include "natType.h"
+#include "natDelegate.h"
 #include "natStringUtil.h"
 
 namespace NatsuLib
@@ -43,12 +43,12 @@ namespace NatsuLib
 		}
 		virtual ~natEventBase() = default;
 
-		virtual bool CanCancel() const noexcept
+		virtual nBool CanCancel() const noexcept
 		{
 			return false;
 		}
 
-		virtual void SetCancel(bool value) noexcept
+		virtual void SetCancel(nBool value) noexcept
 		{
 			if (CanCancel())
 			{
@@ -56,19 +56,21 @@ namespace NatsuLib
 			}
 		}
 
-		virtual bool IsCanceled() const noexcept
+		virtual nBool IsCanceled() const noexcept
 		{
 			return m_Canceled;
 		}
 
 	private:
-		bool m_Canceled;
+		nBool m_Canceled;
 	};
 
 	class natEventBus final
 	{
 	public:
-		typedef std::function<void(natEventBase&)> EventListenerFunc;
+		typedef Delegate<void(natEventBase&)> EventListenerDelegate;
+		typedef nInt PriorityType;
+		typedef nuInt ListenerIDType;
 
 		template <typename EventClass>
 		std::enable_if_t<std::is_base_of<natEventBase, EventClass>::value, void> RegisterEvent()
@@ -82,8 +84,8 @@ namespace NatsuLib
 			}
 		}
 
-		template <typename EventClass, typename EventListener>
-		nuInt RegisterEventListener(EventListener listener, int priority = Priority::Normal)
+		template <typename EventClass>
+		ListenerIDType RegisterEventListener(EventListenerDelegate const& listener, PriorityType priority = Priority::Normal)
 		{
 			auto iter = m_EventHandlerMap.find(typeid(EventClass));
 			if (iter == m_EventHandlerMap.end())
@@ -93,12 +95,12 @@ namespace NatsuLib
 
 			auto&& listeners = iter->second[priority];
 			auto ret = listeners.empty() ? 0u : listeners.rbegin()->first + 1u;
-			listeners[ret] = listener;
+			listeners.try_emplace(ret, listener);
 			return ret;
 		}
 
 		template <typename EventClass>
-		void UnregisterEventListener(int priority, nuInt Handle)
+		void UnregisterEventListener(PriorityType priority, ListenerIDType ListenerID)
 		{
 			auto iter = m_EventHandlerMap.find(typeid(EventClass));
 			if (iter == m_EventHandlerMap.end())
@@ -109,12 +111,12 @@ namespace NatsuLib
 			auto listeneriter = iter->second.find(priority);
 			if (listeneriter != iter->second.end())
 			{
-				listeneriter->second.erase(Handle);
+				listeneriter->second.erase(ListenerID);
 			}
 		}
 
 		template <typename EventClass>
-		bool Post(EventClass& event)
+		nBool Post(EventClass& event)
 		{
 			auto iter = m_EventHandlerMap.find(typeid(EventClass));
 			if (iter == m_EventHandlerMap.end())
@@ -134,6 +136,6 @@ namespace NatsuLib
 		}
 
 	private:
-		std::unordered_map<std::type_index, std::map<int, std::map<nuInt, std::function<void(natEventBase&)>>>> m_EventHandlerMap;
+		std::unordered_map<std::type_index, std::map<PriorityType, std::map<ListenerIDType, EventListenerDelegate>>> m_EventHandlerMap;
 	};
 }
