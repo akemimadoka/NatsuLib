@@ -76,7 +76,7 @@ std::vector<nByte> natUtil::GetResourceData(DWORD ResourceID, ncTStr lpType, HIN
 		}
 	}
 
-	return std::vector<nByte>();
+	nat_Throw(natException, _T("No such resource."));
 }
 #else
 // TODO

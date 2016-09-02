@@ -38,7 +38,7 @@ namespace NatsuLib
 		: public T
 	{
 	public:
-		natRefObjImpl()
+		constexpr natRefObjImpl() noexcept
 			: m_cRef(1u)
 		{
 #ifdef TRACEREFOBJ
@@ -92,12 +92,12 @@ namespace NatsuLib
 	class natRefPointer final
 	{
 	public:
-		natRefPointer()
+		constexpr natRefPointer() noexcept
 			: m_pPointer(nullptr)
 		{
 		}
 
-		explicit natRefPointer(T* ptr)
+		constexpr explicit natRefPointer(T* ptr) noexcept
 			: m_pPointer(ptr)
 		{
 			if (m_pPointer)
@@ -106,7 +106,7 @@ namespace NatsuLib
 			}
 		}
 
-		natRefPointer(natRefPointer const& other)
+		constexpr natRefPointer(natRefPointer const& other) noexcept
 			: m_pPointer(other.m_pPointer)
 		{
 			if (m_pPointer)
@@ -115,7 +115,7 @@ namespace NatsuLib
 			}
 		}
 
-		natRefPointer(natRefPointer && other)
+		constexpr natRefPointer(natRefPointer && other) noexcept
 			: m_pPointer(other.m_pPointer)
 		{
 			other.m_pPointer = nullptr;
@@ -132,6 +132,10 @@ namespace NatsuLib
 			{
 				SafeRelease(m_pPointer);
 				m_pPointer = ptr;
+				if (m_pPointer)
+				{
+					m_pPointer->AddRef();
+				}
 			}
 
 			return *this;
@@ -144,20 +148,12 @@ namespace NatsuLib
 
 		natRefPointer& operator=(natRefPointer const& other)&
 		{
-			if (m_pPointer != other.m_pPointer)
-			{
-				SafeRelease(m_pPointer);
-				m_pPointer = other.m_pPointer;
-				if (m_pPointer)
-				{
-					m_pPointer->AddRef();
-				}
-			}
+			RawSet(other.m_pPointer);
 
 			return *this;
 		}
 
-		natRefPointer& operator=(natRefPointer && other)&
+		natRefPointer& operator=(natRefPointer && other)& noexcept
 		{
 			std::swap(m_pPointer, other.m_pPointer);
 			return *this;
