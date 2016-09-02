@@ -81,4 +81,3 @@ std::vector<nByte> natUtil::GetResourceData(DWORD ResourceID, ncTStr lpType, HIN
 #else
 // TODO
 #endif
-
