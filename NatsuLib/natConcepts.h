@@ -1,4 +1,5 @@
 #pragma once
+#include "natConfig.h"
 #include <type_traits>
 
 namespace NatsuLib

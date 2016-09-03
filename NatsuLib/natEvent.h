@@ -3,7 +3,7 @@
 ///	@brief	Event¿‡ µœ÷
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-
+#include "natConfig.h"
 #pragma warning(push)
 #pragma warning(disable : 4180)
 #include <functional>

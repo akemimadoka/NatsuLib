@@ -1,7 +1,5 @@
 #include <iostream>
 
-#define TRACEREFOBJ 1
-
 #include <natUtil.h>
 #include <natMisc.h>
 #include <natConcepts.h>
@@ -90,7 +88,8 @@ int main()
 			logger.LogMsg(_T("Call stack:"));
 			for (size_t i = 0; i < stackWalker.GetFrameCount(); ++i)
 			{
-				logger.LogMsg(_T("{1}: {2} at address 0x%08X"), stackWalker.GetAddress(i), i, stackWalker.GetSymbolName(i));
+				auto&& symbol = stackWalker.GetSymbol(i);
+				logger.LogMsg(_T("{3}: (0x%08X) {4} at address 0x%08X (file {5}:{6} at address 0x%08X)"), reinterpret_cast<ULONGLONG>(symbol.OriginalAddress), symbol.SymbolAddress, symbol.SourceFileAddress, i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
 			}
 		}
 	}
@@ -98,15 +97,39 @@ int main()
 	catch (natWinException& e)
 	{
 		logger.LogErr(_T("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}\nErrno: {4}, Msg: {5}"), e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc(), e.GetErrNo(), e.GetErrMsg());
+#ifdef EnableExceptionStackTrace
+		logger.LogErr(_T("Call stack:"));
+		for (size_t i = 0; i < e.GetStackWalker().GetFrameCount(); ++i)
+		{
+			auto&& symbol = e.GetStackWalker().GetSymbol(i);
+			logger.LogErr(_T("{3}: (0x%08X) {4} at address 0x%08X (file {5}:{6} at address 0x%08X)"), symbol.OriginalAddress, symbol.SymbolAddress, symbol.SourceFileAddress, i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+		}
+#endif
 	}
 #endif
 	catch (natErrException& e)
 	{
 		logger.LogErr(_T("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}\nErrno: {4}, Msg: {5}"), e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc(), e.GetErrNo(), e.GetErrMsg());
+#ifdef EnableExceptionStackTrace
+		logger.LogErr(_T("Call stack:"));
+		for (size_t i = 0; i < e.GetStackWalker().GetFrameCount(); ++i)
+		{
+			auto&& symbol = e.GetStackWalker().GetSymbol(i);
+			logger.LogErr(_T("{3}: (0x%08X) {4} at address 0x%08X (file {5}:{6} at address 0x%08X)"), symbol.OriginalAddress, symbol.SymbolAddress, symbol.SourceFileAddress, i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+		}
+#endif
 	}
 	catch (natException& e)
 	{
 		logger.LogErr(_T("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}"), e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc());
+#ifdef EnableExceptionStackTrace
+		logger.LogErr(_T("Call stack:"));
+		for (size_t i = 0; i < e.GetStackWalker().GetFrameCount(); ++i)
+		{
+			auto&& symbol = e.GetStackWalker().GetSymbol(i);
+			logger.LogErr(_T("{3}: (0x%08X) {4} at address 0x%08X (file {5}:{6} at address 0x%08X)"), symbol.OriginalAddress, symbol.SymbolAddress, symbol.SourceFileAddress, i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+		}
+#endif
 	}
 
 	system("pause");

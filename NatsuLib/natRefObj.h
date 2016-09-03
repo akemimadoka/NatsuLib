@@ -11,10 +11,10 @@
 #include <atomic>
 #endif
 
-#ifdef TRACEREFOBJ
+#ifdef TraceRefObj
 #include "natUtil.h"
 #include <typeinfo>
-#endif // TRACEREFOBJ
+#endif
 
 namespace NatsuLib
 {
@@ -41,14 +41,14 @@ namespace NatsuLib
 		constexpr natRefObjImpl() noexcept
 			: m_cRef(1u)
 		{
-#ifdef TRACEREFOBJ
+#ifdef TraceRefObj
 			OutputDebugString(natUtil::FormatString(_T("Type %s created at (%p)\n"), natUtil::C2Wstr(typeid(*this).name()).c_str(), this).c_str());
 #endif
 		}
 		virtual ~natRefObjImpl()
 		{
-#ifdef TRACEREFOBJ
-			OutputDebugString(natUtil::FormatString(_T("Type %s destroied at (%p)\n"), natUtil::C2Wstr(typeid(*this).name()).c_str(), this).c_str());
+#ifdef TraceRefObj
+			OutputDebugString(natUtil::FormatString(_T("Type %s destroyed at (%p)\n"), natUtil::C2Wstr(typeid(*this).name()).c_str(), this).c_str());
 #endif
 		}
 

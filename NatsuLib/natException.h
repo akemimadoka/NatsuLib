@@ -3,11 +3,13 @@
 ///	@brief	异常相关头文件
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
-
 #include "natType.h"
 #include <chrono>
 #ifdef WIN32
 #include <Windows.h>
+#endif
+#ifdef EnableExceptionStackTrace
+#include "natStackWalker.h"
 #endif
 
 namespace NatsuLib
@@ -35,7 +37,13 @@ namespace NatsuLib
 #else
 			: exception(natUtil::FormatString(Desc, std::forward<Args>(args)...).c_str()), m_Time(std::chrono::system_clock::now()), m_File(File), m_Line(Line), m_Source(Src), m_Description(exception::what())
 #endif
+#ifdef EnableExceptionStackTrace
+			, m_StackWalker()
+#endif
 		{
+#ifdef EnableExceptionStackTrace
+			m_StackWalker.CaptureStack(1);
+#endif
 		}
 
 		virtual ~natException() = default;
@@ -65,12 +73,22 @@ namespace NatsuLib
 			return m_Description.c_str();
 		}
 
+#ifdef EnableExceptionStackTrace
+		natStackWalker const& GetStackWalker() const noexcept
+		{
+			return m_StackWalker;
+		}
+#endif
+
 	protected:
 		std::chrono::system_clock::time_point m_Time;
 		nTString m_File;
 		nuInt m_Line;
 		nTString m_Source;
 		nTString m_Description;
+#ifdef EnableExceptionStackTrace
+		natStackWalker m_StackWalker;
+#endif
 	};
 
 #ifdef WIN32

@@ -2,6 +2,7 @@
 #include "natType.h"
 #include <functional>
 #include <cassert>
+#include "natException.h"
 
 namespace NatsuLib
 {
@@ -307,11 +308,11 @@ namespace NatsuLib
 		{
 			if (m_Value.Constructed())
 			{
-				m_Value.Get() = std::move(other.m_Value.Get());
+				m_Value.Get() = other.m_Value.Get();
 			}
 			else
 			{
-				m_Value.Init(std::move(other.m_Value.Get()));
+				m_Value.Init(other.m_Value.Get());
 			}
 			
 			return *this;
@@ -590,9 +591,7 @@ namespace NatsuLib
 			return slice(start, size() - start);
 		}
 
-	protected:
-		Range() = default;
-
+	private:
 		void Init(Iter begin, Iter end)
 		{
 			//assert(std::distance(begin, end) >= 0);
@@ -601,7 +600,6 @@ namespace NatsuLib
 			m_IterEnd = std::move(end);
 		}
 
-	private:
 		Iter m_IterBegin, m_IterEnd;
 	};
 
@@ -712,6 +710,26 @@ namespace NatsuLib
 	{
 		return Range<natRange_ptrIterator<decltype(std::begin(r))>>(r);
 	}
+
+	class noncopyable
+	{
+	public:
+		noncopyable(noncopyable const&) = delete;
+		noncopyable& operator=(noncopyable const&) = delete;
+
+	protected:
+		~noncopyable() = default;
+	};
+
+	class nonmovable
+	{
+	public:
+		nonmovable(nonmovable &&) = delete;
+		nonmovable& operator=(nonmovable &&) = delete;
+
+	protected:
+		~nonmovable() = default;
+	};
 }
 
 template <typename T>

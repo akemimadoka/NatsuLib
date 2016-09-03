@@ -1,4 +1,5 @@
 #pragma once
+#include "natConfig.h"
 #ifdef WIN32
 #include <Windows.h>
 #pragma warning (push)
@@ -9,8 +10,6 @@
 #else
 #endif
 #include <limits>
-#include "natType.h"
-#include "natMisc.h"
 #include <vector>
 #include <atomic>
 
@@ -32,12 +31,19 @@ namespace NatsuLib
 #endif
 		};
 
-		typedef decltype(SYMBOL_INFO::Address) AddressType;
+		typedef PVOID AddressType;
+		typedef decltype(SYMBOL_INFO::Address) SymbolAddressType;
+		typedef decltype(IMAGEHLP_LINE64::Address) SourceFileAddressType;
+		typedef decltype(IMAGEHLP_LINE64::LineNumber) SourceFileLineNumberType;
 
-		union Symbol
+		struct Symbol
 		{
-			nByte dummy[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
-			SYMBOL_INFO SymbolInfo;
+			AddressType OriginalAddress;
+			nTString SymbolName;
+			SymbolAddressType SymbolAddress;
+			nTString SourceFileName;
+			SourceFileAddressType SourceFileAddress;
+			SourceFileLineNumberType SourceFileLine;
 		};
 #else
 #endif
@@ -48,18 +54,19 @@ namespace NatsuLib
 #endif
 		~natStackWalker();
 
-		void CaptureStack(size_t skipFrames = 0);
+		void CaptureStack(size_t skipFrames = 0, ncTStr unknownSymbolName = nullptr, ncTStr unknownFileName = nullptr) noexcept;
 		void Clear() noexcept;
 		size_t GetFrameCount() const noexcept;
-		nTString GetSymbolName(size_t frame) const;
-		AddressType GetAddress(size_t frame) const;
+		Symbol const& GetSymbol(size_t frame) const;
 
-		static nBool HasInitialized();
+		static nBool HasInitialized() noexcept;
 
 	private:
+#ifdef WIN32
 		static std::atomic_bool s_Initialized;
-		static natScope<std::function<void()>> s_Uninitializer;
 		std::vector<Symbol> m_StackSymbols;
+#else
+#endif
 	};
 }
 
