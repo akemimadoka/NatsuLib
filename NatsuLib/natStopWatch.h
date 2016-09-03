@@ -23,7 +23,6 @@ namespace NatsuLib
 	{
 	public:
 		natStopWatch();
-		~natStopWatch() = default;
 
 		///	@brief	ÔÝÍ£
 		void Pause();

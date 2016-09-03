@@ -202,6 +202,7 @@
     <ClInclude Include="natNode.h" />
     <ClInclude Include="natQuat.h" />
     <ClInclude Include="natRefObj.h" />
+    <ClInclude Include="natStackWalker.h" />
     <ClInclude Include="natStopWatch.h" />
     <ClInclude Include="natStream.h" />
     <ClInclude Include="natStringUtil.h" />
@@ -246,6 +247,7 @@
     <ClCompile Include="natLog.cpp" />
     <ClCompile Include="natMultiThread.cpp" />
     <ClCompile Include="natNamedPipe.cpp" />
+    <ClCompile Include="natStackWalker.cpp" />
     <ClCompile Include="natStopWatch.cpp" />
     <ClCompile Include="natStream.cpp" />
     <ClCompile Include="natUtil.cpp" />

@@ -13,7 +13,6 @@ namespace NatsuLib
 {
 	////////////////////////////////////////////////////////////////////////////////
 	///	@brief	日志类实现
-	///	@see	n2dGlobal::Logfile
 	////////////////////////////////////////////////////////////////////////////////
 	class natLog final
 	{
@@ -22,7 +21,7 @@ namespace NatsuLib
 			: public natEventBase
 		{
 		public:
-			explicit EventLogUpdated(nuInt logType, std::chrono::system_clock::time_point const& time, ncTStr data)
+			constexpr EventLogUpdated(nuInt logType, std::chrono::system_clock::time_point const& time, ncTStr data) noexcept
 				: m_LogType(logType), m_Time(time), m_Data(data)
 			{
 			}
@@ -89,7 +88,7 @@ namespace NatsuLib
 		template <typename ... Arg>
 		void Log(nuInt type, ncTStr content, Arg &&... arg)
 		{
-			UpdateLog(type, std::move(natUtil::FormatString(content, std::forward<Arg>(arg)...)));
+			UpdateLog(type, natUtil::FormatString(content, std::forward<Arg>(arg)...));
 		}
 
 		///	@brief	注册日志更新事件处理函数
@@ -98,6 +97,7 @@ namespace NatsuLib
 	private:
 		struct OutputToOStream
 		{
+#ifdef _UNICODE
 			template <typename... RestChar_t>
 			static void Impl(ncTStr str, std::basic_ostream<nChar>& currentOStream, std::basic_ostream<RestChar_t>&... _ostreams)
 			{
@@ -111,6 +111,21 @@ namespace NatsuLib
 				currentOStream << str << std::endl;
 				Impl(str, std::forward<std::basic_ostream<RestChar_t>>(_ostreams)...);
 			}
+#else
+			template <typename... RestChar_t>
+			static void Impl(ncTStr str, std::basic_ostream<nChar>& currentOStream, std::basic_ostream<RestChar_t>&... _ostreams)
+			{
+				currentOStream << str << std::endl;
+				Impl(str, std::forward<std::basic_ostream<RestChar_t>>(_ostreams)...);
+			}
+
+			template <typename... RestChar_t>
+			static void Impl(ncTStr str, std::basic_ostream<nWChar>& currentOStream, std::basic_ostream<RestChar_t>&... _ostreams)
+			{
+				currentOStream << natUtil::C2Wstr(str) << std::endl;
+				Impl(str, std::forward<std::basic_ostream<RestChar_t>>(_ostreams)...);
+			}
+#endif
 
 			static void Impl(ncTStr /*str*/)
 			{

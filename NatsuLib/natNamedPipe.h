@@ -3,9 +3,7 @@
 #include <future>
 
 #pragma push_macro("max")
-#ifdef max
-#	undef max
-#endif
+#undef max
 
 namespace NatsuLib
 {

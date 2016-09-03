@@ -16,6 +16,7 @@
 typedef	bool				nBool;		///< @brief	逻辑型
 typedef char				nChar;		///< @brief	字符型
 typedef	wchar_t				nWChar;		///< @brief	宽字符型
+typedef int8_t				nSByte;		///< @brief	有符号字节型
 typedef	uint8_t				nByte;		///< @brief	字节型
 typedef int16_t				nShort;		///< @brief	16位短整数
 typedef	uint16_t			nuShort;	///< @brief	16位无符号短整数
@@ -34,7 +35,7 @@ typedef	const nByte*		ncData;		///< @brief	常量内存数据指针
 typedef	nuLong				nLen;		///< @brief	长度型
 typedef	nInt				nResult;	///< @brief	预定义返回值
 										///< @details
-										///	nResult 定义：\n
+										///	nResult 定义	：\n
 										///	符  号  位	： 0 - 成功 1 - 失败\n
 										///	30 - 16 位	： 保留\n
 										///	15 - 0  位	： 错误描述

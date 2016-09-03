@@ -5,6 +5,7 @@ using namespace NatsuLib;
 
 #ifdef WIN32
 natStopWatch::natStopWatch()
+	: m_cFreq{0}, m_cLast{0}, m_cFixStart{0}, m_cFixAll{0}
 {
 	QueryPerformanceFrequency(&m_cFreq);
 	Reset();

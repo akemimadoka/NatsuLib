@@ -9,6 +9,7 @@
 #include <natMultiThread.h>
 #include <natLinq.h>
 #include <natStream.h>
+#include <natStackWalker.h>
 
 using namespace NatsuLib;
 
@@ -82,8 +83,24 @@ int main()
 			logger.LogMsg(_T("Work finished with result {0}."), result.GetResult().get());
 			pool.WaitAllJobsFinish();
 		}
+
+		{
+			natStackWalker stackWalker;
+			stackWalker.CaptureStack();
+			logger.LogMsg(_T("Call stack:"));
+			for (size_t i = 0; i < stackWalker.GetFrameCount(); ++i)
+			{
+				logger.LogMsg(_T("{1}: {2} at address 0x%08X"), stackWalker.GetAddress(i), i, stackWalker.GetSymbolName(i));
+			}
+		}
 	}
+#ifdef WIN32
 	catch (natWinException& e)
+	{
+		logger.LogErr(_T("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}\nErrno: {4}, Msg: {5}"), e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc(), e.GetErrNo(), e.GetErrMsg());
+	}
+#endif
+	catch (natErrException& e)
 	{
 		logger.LogErr(_T("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}\nErrno: {4}, Msg: {5}"), e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc(), e.GetErrNo(), e.GetErrMsg());
 	}

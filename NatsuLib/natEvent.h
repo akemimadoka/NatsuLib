@@ -37,7 +37,7 @@ namespace NatsuLib
 	class natEventBase
 	{
 	public:
-		natEventBase()
+		constexpr natEventBase() noexcept
 			: m_Canceled(false)
 		{
 		}
