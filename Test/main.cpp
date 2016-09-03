@@ -89,7 +89,7 @@ int main()
 			for (size_t i = 0; i < stackWalker.GetFrameCount(); ++i)
 			{
 				auto&& symbol = stackWalker.GetSymbol(i);
-				logger.LogMsg(_T("{3}: (0x%08X) {4} at address 0x%08X (file {5}:{6} at address 0x%08X)"), reinterpret_cast<ULONGLONG>(symbol.OriginalAddress), symbol.SymbolAddress, symbol.SourceFileAddress, i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+				logger.LogMsg(_T("{3}: (0x%08X) {4} at address 0x%08X (file {5}:{6} at address 0x%08X)"), reinterpret_cast<nuLong>(symbol.OriginalAddress), symbol.SymbolAddress, symbol.SourceFileAddress, i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
 			}
 		}
 	}
@@ -102,7 +102,7 @@ int main()
 		for (size_t i = 0; i < e.GetStackWalker().GetFrameCount(); ++i)
 		{
 			auto&& symbol = e.GetStackWalker().GetSymbol(i);
-			logger.LogErr(_T("{3}: (0x%08X) {4} at address 0x%08X (file {5}:{6} at address 0x%08X)"), symbol.OriginalAddress, symbol.SymbolAddress, symbol.SourceFileAddress, i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+			logger.LogErr(_T("{3}: (0x%08X) {4} at address 0x%08X (file {5}:{6} at address 0x%08X)"), reinterpret_cast<nuLong>(symbol.OriginalAddress), symbol.SymbolAddress, symbol.SourceFileAddress, i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
 		}
 #endif
 	}
@@ -115,7 +115,7 @@ int main()
 		for (size_t i = 0; i < e.GetStackWalker().GetFrameCount(); ++i)
 		{
 			auto&& symbol = e.GetStackWalker().GetSymbol(i);
-			logger.LogErr(_T("{3}: (0x%08X) {4} at address 0x%08X (file {5}:{6} at address 0x%08X)"), symbol.OriginalAddress, symbol.SymbolAddress, symbol.SourceFileAddress, i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+			logger.LogErr(_T("{3}: (0x%08X) {4} at address 0x%08X (file {5}:{6} at address 0x%08X)"), reinterpret_cast<nuLong>(symbol.OriginalAddress), symbol.SymbolAddress, symbol.SourceFileAddress, i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
 		}
 #endif
 	}
@@ -127,7 +127,7 @@ int main()
 		for (size_t i = 0; i < e.GetStackWalker().GetFrameCount(); ++i)
 		{
 			auto&& symbol = e.GetStackWalker().GetSymbol(i);
-			logger.LogErr(_T("{3}: (0x%08X) {4} at address 0x%08X (file {5}:{6} at address 0x%08X)"), symbol.OriginalAddress, symbol.SymbolAddress, symbol.SourceFileAddress, i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+			logger.LogErr(_T("{3}: (0x%08X) {4} at address 0x%08X (file {5}:{6} at address 0x%08X)"), reinterpret_cast<nuLong>(symbol.OriginalAddress), symbol.SymbolAddress, symbol.SourceFileAddress, i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
 		}
 #endif
 	}

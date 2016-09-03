@@ -75,7 +75,7 @@ natThread::natThread(nBool Pause)
 	std::unique_lock<std::mutex> lock(m_Mutex);
 	m_Pause.wait(lock);
 	std::promise<ResultType> Result;
-	m_Result = move(Result.get_future());
+	m_Result = Result.get_future();
 	Result.set_value_at_thread_exit(ThreadJob());
 })
 {

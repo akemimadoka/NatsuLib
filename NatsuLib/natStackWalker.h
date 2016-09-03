@@ -1,5 +1,7 @@
 #pragma once
 #include "natConfig.h"
+
+#ifdef EnableStackWalker
 #ifdef WIN32
 #include <Windows.h>
 #pragma warning (push)
@@ -71,3 +73,4 @@ namespace NatsuLib
 }
 
 #pragma pop_macro("max")
+#endif

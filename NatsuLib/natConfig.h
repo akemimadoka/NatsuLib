@@ -1,3 +1,7 @@
 #pragma once
 
-//#define EnableExceptionStackTrace 1
+#define EnableStackWalker 1
+
+#ifdef EnableStackWalker
+#	define EnableExceptionStackTrace 1
+#endif

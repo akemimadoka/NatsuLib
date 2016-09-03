@@ -1,5 +1,8 @@
 #include "stdafx.h"
 #include "natStackWalker.h"
+
+#ifdef EnableStackWalker
+
 #include "natMisc.h"
 
 using namespace NatsuLib;
@@ -129,4 +132,6 @@ nBool natStackWalker::HasInitialized() noexcept
 }
 
 #else
+#endif
+
 #endif

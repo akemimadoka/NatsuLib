@@ -111,7 +111,7 @@ namespace NatsuLib
 		constexpr natWinException(ncTStr Src, ncTStr File, nuInt Line, DWORD LastErr, ncTStr Desc, Args&&... args) noexcept
 			: natException(Src, File, Line, Desc, std::forward<Args>(args)...), m_LastErr(LastErr), m_ErrMsg()
 		{
-			m_Description = move(natUtil::FormatString((m_Description + _T(" (LastErr = {0})")).c_str(), m_LastErr));
+			m_Description = natUtil::FormatString((m_Description + _T(" (LastErr = {0})")).c_str(), m_LastErr);
 		}
 
 		DWORD GetErrNo() const noexcept
@@ -149,7 +149,7 @@ namespace NatsuLib
 		constexpr natErrException(ncTStr Src, ncTStr File, nuInt Line, NatErr ErrNo, ncTStr Desc, Args&&... args) noexcept
 			: natException(Src, File, Line, Desc, std::forward<Args>(args)...), m_Errno(ErrNo)
 		{
-			m_Description = move(natUtil::FormatString((m_Description + _T(" (Errno = {0})")).c_str(), m_Errno));
+			m_Description = natUtil::FormatString((m_Description + _T(" (Errno = {0})")).c_str(), m_Errno);
 		}
 
 		NatErr GetErrNo() const noexcept

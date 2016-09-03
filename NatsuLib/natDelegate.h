@@ -37,7 +37,7 @@ namespace NatsuLib
 		constexpr Delegate(CallableObj&& callableObj, ThisObj&& thisObj) noexcept
 			: m_Functor([callableObj, &thisObj](Args&&... args)
 			{
-				thisObj.*callableObj(std::forward<Args>(args)...);
+				(thisObj.*callableObj)(std::forward<Args>(args)...);
 			})
 		{
 		}
