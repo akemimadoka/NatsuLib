@@ -22,113 +22,60 @@ namespace NatsuLib
 		};
 
 		///	@brief	string转wstring
-		inline std::wstring C2Wstr(ncStr str, size_t n)
-		{
-			return std::wstring_convert<std::codecvt_utf8<nWChar>>{}.from_bytes(str, str + n);
-		}
-		inline std::wstring C2Wstr(std::string const& str)
-		{
-			return C2Wstr(str.c_str(), str.size());
-		}
+		std::wstring C2Wstr(ncStr str, size_t n);
+		std::wstring C2Wstr(std::string const& str);
 		template <size_t n>
 		std::wstring C2Wstr(const nChar(&str)[n])
 		{
 			return C2Wstr(str, n);
 		}
-		inline std::wstring C2Wstr(ncStr str)
-		{
-			return C2Wstr(str, std::char_traits<nChar>::length(str));
-		}
+		std::wstring C2Wstr(ncStr str);
 		///	@brief	wstring转string
-		inline std::string W2Cstr(ncWStr str, size_t n)
-		{
-			return std::wstring_convert<std::codecvt_utf8<nWChar>>{}.to_bytes(str, str + n);
-		}
-		inline std::string W2Cstr(std::wstring const& str)
-		{
-			return W2Cstr(str.c_str(), str.size());
-		}
+		std::string W2Cstr(ncWStr str, size_t n);
+		std::string W2Cstr(std::wstring const& str);
 		template <size_t n>
 		std::string W2Cstr(const nWChar(&str)[n])
 		{
 			return W2Cstr(str, n);
 		}
-		inline std::string W2Cstr(ncWStr str)
-		{
-			return W2Cstr(str, std::char_traits<nWChar>::length(str));
-		}
+		std::string W2Cstr(ncWStr str);
 
 #ifdef UNICODE
-		inline nTString ToTString(ncStr str, size_t n)
-		{
-			return C2Wstr(str, n);
-		}
-		inline nTString ToTString(std::string const& str)
-		{
-			return C2Wstr(str);
-		}
+		nTString ToTString(ncStr str, size_t n);
+		nTString ToTString(std::string const& str);
 		template <size_t n>
 		nTString ToTString(const nChar(&str)[n])
 		{
 			return C2Wstr(str);
 		}
-		inline nTString ToTString(ncStr str)
-		{
-			return C2Wstr(str);
-		}
-		inline nTString ToTString(ncWStr str, size_t n)
-		{
-			return{ str, n };
-		}
-		inline nTString ToTString(std::wstring const& str)
-		{
-			return ToTString(str.c_str(), str.size());
-		}
+		nTString ToTString(ncStr str);
+
+		nTString ToTString(ncWStr str, size_t n);
+		nTString ToTString(std::wstring const& str);
 		template <size_t n>
 		nTString ToTString(const nWChar(&str)[n])
 		{
 			return ToTString(str, n);
 		}
-		inline nTString ToTString(ncWStr str)
-		{
-			return ToTString(str, std::char_traits<nWChar>::length(str));
-		}
+		nTString ToTString(ncWStr str);
 #else
-		inline nTString ToTString(ncStr str, size_t n)
-		{
-			return{ str, n };
-		}
-		inline nTString ToTString(std::string const& str)
-		{
-			return ToTString(str.c_str(), str.size());
-		}
+		nTString ToTString(ncStr str, size_t n);
+		nTString ToTString(std::string const& str);
 		template <size_t n>
 		nTString ToTString(const nChar(&str)[n])
 		{
 			return ToTString(str, n);
 		}
-		inline nTString ToTString(ncStr str)
-		{
-			return ToTString(str, std::char_traits<nChar>::length(str));
-			
-		}
-		inline nTString ToTString(ncWStr str, size_t n)
-		{
-			return W2Cstr(str, n);
-		}
-		inline nTString ToTString(std::wstring const& str)
-		{
-			return W2Cstr(str);
-		}
+		nTString ToTString(ncStr str);
+
+		nTString ToTString(ncWStr str, size_t n);
+		nTString ToTString(std::wstring const& str);
 		template <size_t n>
 		nTString ToTString(const nWChar(&str)[n])
 		{
 			return W2Cstr(str);
 		}
-		inline nTString ToTString(ncWStr str)
-		{
-			return W2Cstr(str);
-		}
+		nTString ToTString(ncWStr str);
 #endif
 
 		///	@brief	多字节转Unicode

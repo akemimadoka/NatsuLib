@@ -16,6 +16,93 @@ enum : nuInt
 	,
 };
 
+std::wstring natUtil::C2Wstr(ncStr str, size_t n)
+{
+	return std::wstring_convert<std::codecvt_utf8<nWChar>> {}.from_bytes(str, str + n);
+}
+
+std::wstring natUtil::C2Wstr(std::string const& str)
+{
+	return C2Wstr(str.c_str(), str.size());
+}
+
+std::wstring natUtil::C2Wstr(ncStr str)
+{
+	return C2Wstr(str, std::char_traits<nChar>::length(str));
+}
+
+std::string natUtil::W2Cstr(ncWStr str, size_t n)
+{
+	return std::wstring_convert<std::codecvt_utf8<nWChar>> {}.to_bytes(str, str + n);
+}
+
+std::string natUtil::W2Cstr(std::wstring const& str)
+{
+	return W2Cstr(str.c_str(), str.size());
+}
+
+std::string natUtil::W2Cstr(ncWStr str)
+{
+	return W2Cstr(str, std::char_traits<nWChar>::length(str));
+}
+
+#ifdef UNICODE
+nTString natUtil::ToTString(ncStr str, size_t n)
+{
+	return C2Wstr(str, n);
+}
+
+nTString natUtil::ToTString(std::string const& str)
+{
+	return C2Wstr(str);
+}
+
+nTString natUtil::ToTString(ncStr str)
+{
+	return C2Wstr(str);
+}
+
+nTString natUtil::ToTString(ncWStr str, size_t n)
+{
+	return{ str, n };
+}
+
+nTString natUtil::ToTString(std::wstring const& str)
+{
+	return ToTString(str.c_str(), str.size());
+}
+
+nTString natUtil::ToTString(ncWStr str)
+{
+	return ToTString(str, std::char_traits<nWChar>::length(str));
+}
+#else
+nTString natUtil::ToTString(ncStr str, size_t n)
+{
+	return{ str, n };
+}
+nTString natUtil::ToTString(std::string const& str)
+{
+	return ToTString(str.c_str(), str.size());
+}
+nTString natUtil::ToTString(ncStr str)
+{
+	return ToTString(str, std::char_traits<nChar>::length(str));
+}
+nTString natUtil::ToTString(ncWStr str, size_t n)
+{
+	return W2Cstr(str, n);
+}
+nTString natUtil::ToTString(std::wstring const& str)
+{
+	return W2Cstr(str);
+}
+nTString natUtil::ToTString(ncWStr str)
+{
+	return W2Cstr(str);
+}
+#endif
+
 #ifdef WIN32
 std::wstring natUtil::MultibyteToUnicode(ncStr Str, nuInt CodePage)
 {

@@ -319,7 +319,7 @@ std::future<natThreadPool::WorkToken> natThreadPool::QueueWork(WorkFunc workFunc
 	if (Index == std::numeric_limits<nuInt>::max() && m_Threads.size() < m_MaxThreadCount)
 	{
 		auto availableIndex = getNextAvailableIndex();
-		auto&& thread = m_Threads[availableIndex] = move(std::make_unique<WorkerThread>(this, availableIndex));
+		auto&& thread = m_Threads[availableIndex] = std::make_unique<WorkerThread>(this, availableIndex);
 		auto&& result = thread->SetWork(workFunc, param);
 		std::promise<WorkToken> dummyPromise;
 		auto ret = dummyPromise.get_future();
@@ -446,10 +446,10 @@ nuInt natThreadPool::getNextAvailableIndex()
 nuInt natThreadPool::getIdleThreadIndex()
 {
 	m_Section.Lock();
-	auto scope = std::move(make_scope([this]()
+	auto scope = make_scope([this]()
 	{
 		m_Section.UnLock();
-	}));
+	});
 
 	for (auto&& thread : m_Threads)
 	{

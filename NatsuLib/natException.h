@@ -18,8 +18,8 @@ namespace NatsuLib
 	{
 		template <typename... Args>
 		nTString FormatString(ncTStr lpStr, Args&&... args);
-		inline std::wstring C2Wstr(std::string const& str);
-		inline std::string W2Cstr(std::wstring const& str);
+		std::wstring C2Wstr(std::string const& str);
+		std::string W2Cstr(std::wstring const& str);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
