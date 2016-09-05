@@ -5,8 +5,6 @@
 #include <Windows.h>
 #endif
 #include <vector>
-#include <locale>
-#include <codecvt>
 
 namespace NatsuLib
 {

@@ -2,6 +2,9 @@
 #include "natUtil.h"
 #include "natException.h"
 
+#include <locale>
+#include <codecvt>
+
 using namespace NatsuLib;
 using namespace natUtil;
 
@@ -106,8 +109,8 @@ nTString natUtil::ToTString(ncWStr str)
 #ifdef WIN32
 std::wstring natUtil::MultibyteToUnicode(ncStr Str, nuInt CodePage)
 {
-	nInt Num = MultiByteToWideChar(CodePage, 0, Str, -1, nullptr, 0);
-	std::vector<nWChar> tBuffer(Num);
+	auto Num = MultiByteToWideChar(CodePage, 0, Str, -1, nullptr, 0);
+	std::vector<nWChar> tBuffer(static_cast<size_t>(Num));
 	MultiByteToWideChar(CodePage, 0, Str, -1, tBuffer.data(), Num);
 
 	return tBuffer.data();
@@ -115,8 +118,8 @@ std::wstring natUtil::MultibyteToUnicode(ncStr Str, nuInt CodePage)
 
 std::string natUtil::WidecharToMultibyte(ncWStr Str, nuInt CodePage)
 {
-	nInt Num = WideCharToMultiByte(CodePage, 0, Str, -1, nullptr, 0, nullptr, FALSE);
-	std::vector<nChar> tBuffer(Num);
+	auto Num = WideCharToMultiByte(CodePage, 0, Str, -1, nullptr, 0, nullptr, FALSE);
+	std::vector<nChar> tBuffer(static_cast<size_t>(Num));
 	WideCharToMultiByte(CodePage, 0, Str, -1, tBuffer.data(), Num, nullptr, FALSE);
 
 	return tBuffer.data();
