@@ -4,13 +4,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "natConfig.h"
-#pragma warning(push)
-#pragma warning(disable : 4180)
-#include <functional>
-#pragma warning(pop)
 
 #include <map>
-#include <unordered_set>
 #include <unordered_map>
 #include <typeindex>
 
@@ -41,25 +36,11 @@ namespace NatsuLib
 			: m_Canceled(false)
 		{
 		}
-		virtual ~natEventBase() = default;
+		virtual ~natEventBase();
 
-		virtual nBool CanCancel() const noexcept
-		{
-			return false;
-		}
-
-		virtual void SetCancel(nBool value) noexcept
-		{
-			if (CanCancel())
-			{
-				m_Canceled = value;
-			}
-		}
-
-		virtual nBool IsCanceled() const noexcept
-		{
-			return m_Canceled;
-		}
+		virtual nBool CanCancel() const noexcept;
+		virtual void SetCancel(nBool value) noexcept;
+		virtual nBool IsCanceled() const noexcept;
 
 	private:
 		nBool m_Canceled;

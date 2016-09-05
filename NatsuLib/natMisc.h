@@ -714,6 +714,8 @@ namespace NatsuLib
 	class noncopyable
 	{
 	public:
+		noncopyable() = default;
+
 		noncopyable(noncopyable const&) = delete;
 		noncopyable& operator=(noncopyable const&) = delete;
 
@@ -724,6 +726,8 @@ namespace NatsuLib
 	class nonmovable
 	{
 	public:
+		nonmovable() = default;
+
 		nonmovable(nonmovable &&) = delete;
 		nonmovable& operator=(nonmovable &&) = delete;
 

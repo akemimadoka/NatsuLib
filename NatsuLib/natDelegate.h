@@ -1,6 +1,7 @@
 #pragma once
 #include "natType.h"
 #include <functional>
+#include "natException.h"
 
 namespace NatsuLib
 {
@@ -14,6 +15,7 @@ namespace NatsuLib
 	class Delegate<Ret(Args...)>
 	{
 	public:
+		Delegate() noexcept = default;
 		Delegate(Delegate const& other) noexcept
 			: m_Functor(other.m_Functor)
 		{
@@ -27,6 +29,9 @@ namespace NatsuLib
 		{
 		}
 
+		Delegate& operator=(Delegate const& other) = default;
+		Delegate& operator=(Delegate && other) = default;
+
 		template <typename CallableObj>
 		constexpr Delegate(CallableObj&& callableObj) noexcept
 			: m_Functor(std::forward<CallableObj>(callableObj))
@@ -35,15 +40,20 @@ namespace NatsuLib
 
 		template <typename CallableObj, typename ThisObj>
 		constexpr Delegate(CallableObj&& callableObj, ThisObj&& thisObj) noexcept
-			: m_Functor([callableObj, &thisObj](Args&&... args)
+			: m_Functor([callableObj, &thisObj](Args... args)
 			{
-				(thisObj.*callableObj)(std::forward<Args>(args)...);
+				return (thisObj.*callableObj)(std::forward<Args>(args)...);
 			})
 		{
 		}
 
-		Ret operator()(Args&&... args)
+		decltype(auto) operator()(Args... args)
 		{
+			if (!m_Functor)
+			{
+				nat_Throw(natException, _T("Null delegate."));
+			}
+
 			return m_Functor(std::forward<Args>(args)...);
 		}
 

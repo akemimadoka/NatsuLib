@@ -3,9 +3,7 @@
 #include "natException.h"
 #include "natMisc.h"
 
-#ifdef max
-#	undef max
-#endif
+#undef max
 
 using namespace NatsuLib;
 
@@ -340,7 +338,7 @@ std::future<natThreadPool::WorkToken> natThreadPool::QueueWork(WorkFunc workFunc
 
 	auto work = make_tuple(workFunc, param, std::promise<WorkToken>());
 	auto ret = std::get<2>(work).get_future();
-	m_WorkQueue.push(move(work));
+	m_WorkQueue.emplace(move(work));
 	return move(ret);
 }
 
@@ -386,12 +384,12 @@ std::future<nuInt> natThreadPool::WorkerThread::SetWork(WorkFunc CallableObj, vo
 	m_CallableObj = CallableObj;
 	m_Arg = Param;
 	m_Idle = false;
-	m_LastResult = std::promise<nuInt>();
+	m_LastResult = std::promise<nuInt>{};
 	if (!Resume())
 	{
 		nat_Throw(natWinException, _T("Cannot resume worker thread."));
 	}
-	return move(m_LastResult.get_future());
+	return m_LastResult.get_future();
 }
 
 void natThreadPool::WorkerThread::RequestTerminate(nBool value)
@@ -429,10 +427,10 @@ natThread::ResultType natThreadPool::WorkerThread::ThreadJob()
 nuInt natThreadPool::getNextAvailableIndex()
 {
 	m_Section.Lock();
-	auto scope = std::move(make_scope([this]()
+	auto scope = make_scope([this]()
 	{
 		m_Section.UnLock();
-	}));
+	});
 
 	for (nuInt i = 0; i < std::numeric_limits<nuInt>::max(); ++i)
 	{
@@ -467,10 +465,10 @@ nuInt natThreadPool::getIdleThreadIndex()
 void natThreadPool::onWorkerThreadIdle(nuInt Index)
 {
 	m_Section.Lock();
-	auto scope = std::move(make_scope([this]()
+	auto scope = make_scope([this]()
 	{
 		m_Section.UnLock();
-	}));
+	});
 
 	if (!m_WorkQueue.empty())
 	{

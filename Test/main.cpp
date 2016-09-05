@@ -92,6 +92,11 @@ int main()
 				logger.LogMsg(_T("{3}: (0x%08X) {4} at address 0x%08X (file {5}:{6} at address 0x%08X)"), reinterpret_cast<nuLong>(symbol.OriginalAddress), symbol.SymbolAddress, symbol.SourceFileAddress, i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
 			}
 		}
+
+		{
+			natCriticalSection cs;
+			natRefScopeGuard<natCriticalSection> sg(cs);
+		}
 	}
 #ifdef WIN32
 	catch (natWinException& e)

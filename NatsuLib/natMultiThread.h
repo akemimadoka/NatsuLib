@@ -4,15 +4,16 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "natConfig.h"
+#include "natDelegate.h"
 #ifdef WIN32
 #	include <Windows.h>
 #endif
 #include <unordered_map>
 #include <memory>
-#include <functional>
 #include <atomic>
 #include <queue>
 #include <future>
+#include "natMisc.h"
 
 #pragma push_macro("max")
 #ifdef max
@@ -126,6 +127,118 @@ namespace NatsuLib
 #endif
 	};
 
+	namespace _Detail
+	{
+		template <typename T, typename Enable = void>
+		struct IsLockableAndUnlockable
+			: std::false_type
+		{
+		};
+
+		template <typename T>
+		struct IsLockableAndUnlockable<T, std::void_t<decltype(std::declval<T>().Lock()), decltype(std::declval<T>().UnLock()), decltype(std::declval<T>().TryLock())>>
+			: std::true_type
+		{
+		};
+	}
+
+	template <typename T, std::enable_if_t<_Detail::IsLockableAndUnlockable<T>::value, bool> = true>
+	class natScopeGuard
+		: public std::conditional_t<std::disjunction<std::is_move_constructible<T>, std::is_move_assignable<T>>::value, nonmovable, noncopyable>
+	{
+	public:
+		typedef T LockObj;
+
+		template <typename... Args>
+		explicit constexpr natScopeGuard(Args&&... args)
+			: m_LockObj{ std::forward<Args>(args)... }
+		{
+			m_LockObj.Lock();
+		}
+
+		~natScopeGuard()
+		{
+			m_LockObj.UnLock();
+		}
+
+		decltype(auto) TryLock()
+		{
+			return m_LockObj.TryLock();
+		}
+
+		LockObj& GetObj()
+		{
+			return m_LockObj;
+		}
+
+		LockObj const& GetObj() const
+		{
+			return m_LockObj;
+		}
+
+	private:
+		T m_LockObj;
+	};
+
+	template <typename... T>
+	class natRefScopeGuard
+		: public nonmovable
+	{
+		static_assert(std::conjunction<_Detail::IsLockableAndUnlockable<T>...>::value, "Not all types of T... are lockable and unlockable.");
+
+		template <size_t a, size_t b, size_t step = 1>
+		struct GetNext
+			: std::conditional_t<a < b, std::integral_constant<size_t, a + step>, std::integral_constant<size_t, a - step>>
+		{
+		};
+
+		template <size_t current, size_t target>
+		struct LockImpl
+		{
+			template <typename tuple>
+			static void Lock(tuple&& tp)
+			{
+				std::get<current>(tp).Lock();
+				LockImpl<GetNext<current, target>::value, target>::Lock(tp);
+			}
+
+			template <typename tuple>
+			static void UnLock(tuple&& tp)
+			{
+				std::get<current>(tp).UnLock();
+				LockImpl<GetNext<current, target>::value, target>::UnLock(tp);
+			}
+		};
+
+		template <size_t num>
+		struct LockImpl<num, num>
+		{
+			template <typename tuple>
+			static void Lock(tuple&&)
+			{
+			}
+
+			template <typename tuple>
+			static void UnLock(tuple&&)
+			{
+			}
+		};
+
+	public:
+		constexpr explicit natRefScopeGuard(T&... LockObjs)
+			: m_RefObjs(std::tie(LockObjs...))
+		{
+			LockImpl<0, std::tuple_size<decltype(m_RefObjs)>::value - 1>::Lock(m_RefObjs);
+		}
+		~natRefScopeGuard()
+		{
+			LockImpl<std::tuple_size<decltype(m_RefObjs)>::value - 1, 0>::UnLock(m_RefObjs);
+		}
+
+	private:
+		std::tuple<T&...> m_RefObjs;
+	};
+
 	////////////////////////////////////////////////////////////////////////////////
 	///	@brief	Windows的Event包装类
 	///	@note	通过Event对多线程操作进行同步
@@ -180,7 +293,7 @@ namespace NatsuLib
 	{
 		class WorkToken;
 	public:
-		typedef std::function<nuInt(void*)> WorkFunc;
+		typedef Delegate<nuInt(void*)> WorkFunc;
 		enum : nuInt
 		{
 			DefaultMaxThreadCount = 4,

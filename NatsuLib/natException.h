@@ -42,7 +42,7 @@ namespace NatsuLib
 #endif
 		{
 #ifdef EnableExceptionStackTrace
-			m_StackWalker.CaptureStack(1);
+			m_StackWalker.CaptureStack();
 #endif
 		}
 
@@ -192,6 +192,27 @@ namespace NatsuLib
 			}
 		}
 	};
+
+#define DeclareException(ExceptionClass, ExtendException, DefaultDescription) \
+class ExceptionClass : public ExtendException\
+{\
+public:\
+	typedef ExtendException BaseException;\
+\
+	constexpr ExceptionClass(ncTStr Src, ncTStr File, nuInt Line)\
+		: BaseException(Src, File, Line, DefaultDescription)\
+	{\
+	}\
+\
+	template <typename... Args>\
+	constexpr ExceptionClass(ncTStr Src, ncTStr File, nuInt Line, ncTStr Desc, Args&&... args)\
+		: BaseException(Src, File, Line, Desc, std::forward<Args>(args)...)\
+	{\
+	}\
+}
+
+	DeclareException(OutOfRange, natException, _T("Out of range."));
+	DeclareException(MemoryAllocFail, natException, _T("Failed to allocate memory."));
 }
 
 #define nat_Throw(ExceptionClass, ...) do { throw ExceptionClass(_T(__FUNCTION__), _T(__FILE__), __LINE__, __VA_ARGS__); } while (false)

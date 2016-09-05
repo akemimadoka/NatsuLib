@@ -158,5 +158,8 @@
     <ClCompile Include="natStackWalker.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="natEvent.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
