@@ -214,19 +214,21 @@ namespace NatsuLib
 		struct LockImpl<num, num>
 		{
 			template <typename tuple>
-			static void Lock(tuple&&)
+			static void Lock(tuple&& tp)
 			{
+				std::get<num>(tp).Lock();
 			}
 
 			template <typename tuple>
-			static void UnLock(tuple&&)
+			static void UnLock(tuple&& tp)
 			{
+				std::get<num>(tp).UnLock();
 			}
 		};
 
 	public:
 		constexpr explicit natRefScopeGuard(T&... LockObjs)
-			: m_RefObjs(std::tie(LockObjs...))
+			: m_RefObjs(LockObjs...)
 		{
 			LockImpl<0, std::tuple_size<decltype(m_RefObjs)>::value - 1>::Lock(m_RefObjs);
 		}
