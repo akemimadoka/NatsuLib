@@ -1,7 +1,7 @@
 #pragma once
 #include "natStringUtil.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <Windows.h>
 #endif
 #include <vector>
@@ -13,7 +13,7 @@ namespace NatsuLib
 		enum : nuInt
 		{
 			DefaultCodePage
-#ifdef WIN32
+#ifdef _WIN32
 				= CP_INSTALLED
 #endif
 			,
@@ -81,7 +81,7 @@ namespace NatsuLib
 		///	@brief	宽字符转多字节
 		std::string WidecharToMultibyte(ncWStr Str, nuInt CodePage = DefaultCodePage);
 
-#ifdef WIN32
+#ifdef _WIN32
 		///	@brief	获得资源字符串
 		///	@param[in]	ResourceID	资源ID
 		///	@param[in]	hInstance	实例句柄，默认为NULL

@@ -5,7 +5,7 @@
 #pragma once
 #include "natType.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <Windows.h>
 #else
 #include <atomic>
@@ -54,7 +54,7 @@ namespace NatsuLib
 
 		void AddRef() override
 		{
-#ifdef WIN32
+#ifdef _WIN32
 			InterlockedIncrement(&m_cRef);
 #else
 			++m_cRef;
@@ -64,7 +64,7 @@ namespace NatsuLib
 		void Release() override
 		{
 			auto tRet =
-#ifdef WIN32
+#ifdef _WIN32
 				InterlockedDecrement(&m_cRef);
 #else
 				--m_cRef;
@@ -77,7 +77,7 @@ namespace NatsuLib
 		}
 
 	private:
-#ifdef WIN32
+#ifdef _WIN32
 		nuInt m_cRef;
 #else
 		std::atomic<nuInt> m_cRef;

@@ -102,28 +102,28 @@ namespace NatsuLib
 			static void Impl(ncTStr str, std::basic_ostream<nChar>& currentOStream, std::basic_ostream<RestChar_t>&... _ostreams)
 			{
 				currentOStream << natUtil::W2Cstr(str) << std::endl;
-				Impl(str, std::forward<std::basic_ostream<RestChar_t>>(_ostreams)...);
+				Impl(str, _ostreams...);
 			}
 
 			template <typename... RestChar_t>
 			static void Impl(ncTStr str, std::basic_ostream<nWChar>& currentOStream, std::basic_ostream<RestChar_t>&... _ostreams)
 			{
 				currentOStream << str << std::endl;
-				Impl(str, std::forward<std::basic_ostream<RestChar_t>>(_ostreams)...);
+				Impl(str, _ostreams...);
 			}
 #else
 			template <typename... RestChar_t>
 			static void Impl(ncTStr str, std::basic_ostream<nChar>& currentOStream, std::basic_ostream<RestChar_t>&... _ostreams)
 			{
 				currentOStream << str << std::endl;
-				Impl(str, std::forward<std::basic_ostream<RestChar_t>>(_ostreams)...);
+				Impl(str, _ostreams...);
 			}
 
 			template <typename... RestChar_t>
 			static void Impl(ncTStr str, std::basic_ostream<nWChar>& currentOStream, std::basic_ostream<RestChar_t>&... _ostreams)
 			{
 				currentOStream << natUtil::C2Wstr(str) << std::endl;
-				Impl(str, std::forward<std::basic_ostream<RestChar_t>>(_ostreams)...);
+				Impl(str, _ostreams...);
 			}
 #endif
 

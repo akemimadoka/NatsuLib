@@ -6,7 +6,6 @@
 #include <natLog.h>
 #include <natMultiThread.h>
 #include <natLinq.h>
-#include <natStream.h>
 #include <natStackWalker.h>
 
 using namespace NatsuLib;
@@ -89,7 +88,7 @@ int main()
 			for (size_t i = 0; i < stackWalker.GetFrameCount(); ++i)
 			{
 				auto&& symbol = stackWalker.GetSymbol(i);
-				logger.LogMsg(_T("{3}: (0x%08X) {4} at address 0x%08X (file {5}:{6} at address 0x%08X)"), reinterpret_cast<nuLong>(symbol.OriginalAddress), symbol.SymbolAddress, symbol.SourceFileAddress, i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+				logger.LogMsg(_T("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"), symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
 			}
 		}
 
@@ -98,7 +97,7 @@ int main()
 			natRefScopeGuard<natCriticalSection> sg(cs);
 		}
 	}
-#ifdef WIN32
+#ifdef _WIN32
 	catch (natWinException& e)
 	{
 		logger.LogErr(_T("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}\nErrno: {4}, Msg: {5}"), e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc(), e.GetErrNo(), e.GetErrMsg());
@@ -107,7 +106,7 @@ int main()
 		for (size_t i = 0; i < e.GetStackWalker().GetFrameCount(); ++i)
 		{
 			auto&& symbol = e.GetStackWalker().GetSymbol(i);
-			logger.LogErr(_T("{3}: (0x%08X) {4} at address 0x%08X (file {5}:{6} at address 0x%08X)"), reinterpret_cast<nuLong>(symbol.OriginalAddress), symbol.SymbolAddress, symbol.SourceFileAddress, i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+			logger.LogMsg(_T("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"), symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
 		}
 #endif
 	}
@@ -120,7 +119,7 @@ int main()
 		for (size_t i = 0; i < e.GetStackWalker().GetFrameCount(); ++i)
 		{
 			auto&& symbol = e.GetStackWalker().GetSymbol(i);
-			logger.LogErr(_T("{3}: (0x%08X) {4} at address 0x%08X (file {5}:{6} at address 0x%08X)"), reinterpret_cast<nuLong>(symbol.OriginalAddress), symbol.SymbolAddress, symbol.SourceFileAddress, i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+			logger.LogMsg(_T("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"), symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
 		}
 #endif
 	}
@@ -132,7 +131,7 @@ int main()
 		for (size_t i = 0; i < e.GetStackWalker().GetFrameCount(); ++i)
 		{
 			auto&& symbol = e.GetStackWalker().GetSymbol(i);
-			logger.LogErr(_T("{3}: (0x%08X) {4} at address 0x%08X (file {5}:{6} at address 0x%08X)"), reinterpret_cast<nuLong>(symbol.OriginalAddress), symbol.SymbolAddress, symbol.SourceFileAddress, i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+			logger.LogMsg(_T("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"), symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
 		}
 #endif
 	}

@@ -97,6 +97,8 @@ enum NatErr
 	NatErr_OutOfRange	=	NATMAKEERR(5),	///< @brief	超出范围
 	NatErr_NotImpl		=	NATMAKEERR(6),	///< @brief	未实现
 	NatErr_NotSupport	=	NATMAKEERR(7),	///< @brief	不支持的功能
+	NatErr_Duplicated	=	NATMAKEERR(8),	///< @brief	发生重复
+	NatErr_NotFound		=	NATMAKEERR(9),	///< @brief	未找到
 };
 
 ///	@}

@@ -5,7 +5,7 @@
 #pragma once
 #include "natType.h"
 #include <chrono>
-#ifdef WIN32
+#ifdef _WIN32
 #include <Windows.h>
 #endif
 #ifdef EnableExceptionStackTrace
@@ -91,7 +91,7 @@ namespace NatsuLib
 #endif
 	};
 
-#ifdef WIN32
+#ifdef _WIN32
 	////////////////////////////////////////////////////////////////////////////////
 	///	@brief	NatsuLib WinAPI调用异常
 	///	@note	可以自动附加LastErr信息
@@ -187,6 +187,10 @@ namespace NatsuLib
 				return _T("Not implemented");
 			case NatErr_NotSupport:
 				return _T("Not supported");
+			case NatErr_Duplicated:
+				return _T("Duplicated");
+			case NatErr_NotFound:
+				return _T("Not found");
 			default:
 				return _T("No description");
 			}

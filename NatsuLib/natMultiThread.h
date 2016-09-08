@@ -5,7 +5,7 @@
 #pragma once
 #include "natConfig.h"
 #include "natDelegate.h"
-#ifdef WIN32
+#ifdef _WIN32
 #	include <Windows.h>
 #endif
 #include <unordered_map>
@@ -35,7 +35,7 @@ namespace NatsuLib
 	class natThread
 	{
 	public:
-#ifdef WIN32
+#ifdef _WIN32
 		typedef DWORD ThreadIdType;
 		typedef DWORD ResultType;
 		typedef HANDLE UnsafeHandle;
@@ -86,7 +86,7 @@ namespace NatsuLib
 		virtual ResultType ThreadJob() = 0;
 
 	private:
-#ifdef WIN32
+#ifdef _WIN32
 		///	@brief	执行线程的包装函数
 		///	@param[in]	p	指向Thread类的指针
 		static ResultType CALLBACK execute(void* p);
@@ -120,7 +120,7 @@ namespace NatsuLib
 		///	@brief	解锁临界区
 		void UnLock();
 	private:
-#ifdef WIN32
+#ifdef _WIN32
 		CRITICAL_SECTION m_Section;
 #else
 		std::recursive_mutex m_Mutex;
@@ -248,7 +248,7 @@ namespace NatsuLib
 	class natEventWrapper final
 	{
 	public:
-#ifdef WIN32
+#ifdef _WIN32
 		typedef HANDLE UnsafeHandle;
 #else
 		typedef nUnsafePtr<void> UnsafeHandle;
@@ -283,7 +283,7 @@ namespace NatsuLib
 		///	@return		是否成功
 		nBool Wait(nuInt WaitTime = Infinity);
 	private:
-#ifdef WIN32
+#ifdef _WIN32
 		UnsafeHandle m_hEvent;
 #else
 		std::mutex m_Mutex;

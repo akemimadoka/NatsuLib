@@ -106,7 +106,7 @@ nTString natUtil::ToTString(ncWStr str)
 }
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 std::wstring natUtil::MultibyteToUnicode(ncStr Str, nuInt CodePage)
 {
 	auto Num = MultiByteToWideChar(CodePage, 0, Str, -1, nullptr, 0);

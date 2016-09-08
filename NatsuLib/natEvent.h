@@ -10,7 +10,7 @@
 #include <typeindex>
 
 #include "natDelegate.h"
-#include "natStringUtil.h"
+#include "natUtil.h"
 
 namespace NatsuLib
 {
@@ -61,7 +61,7 @@ namespace NatsuLib
 
 			if (!Succeeded)
 			{
-				nat_Throw(natException, _T("Cannot register event \"{0}\""), natUtil::C2Wstr(typeid(EventClass).name()));
+				nat_Throw(natException, _T("Cannot register event \"{0}\""), natUtil::ToTString(typeid(EventClass).name()));
 			}
 		}
 

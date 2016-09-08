@@ -3,7 +3,7 @@
 
 using namespace NatsuLib;
 
-#ifdef WIN32
+#ifdef _WIN32
 natStopWatch::natStopWatch()
 	: m_cFreq{0}, m_cLast{0}, m_cFixStart{0}, m_cFixAll{0}
 {
@@ -61,4 +61,4 @@ nDouble natStopWatch::GetElpased()
 {
 	return static_cast<nDouble>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - m_Last - m_FixAll.time_since_epoch()).count());
 }
-#endif // WIN32
+#endif // _WIN32

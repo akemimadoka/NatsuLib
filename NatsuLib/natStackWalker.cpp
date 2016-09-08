@@ -9,7 +9,7 @@ using namespace NatsuLib;
 
 std::atomic_bool natStackWalker::s_Initialized{ false };
 
-#ifdef WIN32
+#ifdef _WIN32
 natScope<std::function<void()>> StackWalkerUninitializer{[]
 {
 	if (natStackWalker::HasInitialized())
@@ -63,7 +63,7 @@ void natStackWalker::CaptureStack(size_t skipFrames, ncTStr unknownSymbolName, n
 	symbol.SymbolInfo.SizeOfStruct = sizeof(SYMBOL_INFO);
 	symbol.SymbolInfo.MaxNameLen = MAX_SYM_NAME;
 	IMAGEHLP_LINE64 line{ 0 };
-	line.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+	line.SizeOfStruct = sizeof line;
 	DWORD displacement;
 
 	m_StackSymbols.reserve(frames);

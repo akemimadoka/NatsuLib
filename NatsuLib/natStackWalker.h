@@ -2,7 +2,7 @@
 #include "natConfig.h"
 
 #ifdef EnableStackWalker
-#ifdef WIN32
+#ifdef _WIN32
 #include <Windows.h>
 #pragma warning (push)
 #pragma warning (disable : 4091)
@@ -22,7 +22,7 @@ namespace NatsuLib
 {
 	class natStackWalker final
 	{
-#ifdef WIN32
+#ifdef _WIN32
 		enum
 		{
 			CaptureFrames =
@@ -50,7 +50,7 @@ namespace NatsuLib
 #else
 #endif
 	public:
-#ifdef WIN32
+#ifdef _WIN32
 		explicit natStackWalker(ncTStr userSearchPath = nullptr);
 #else
 #endif
@@ -64,7 +64,7 @@ namespace NatsuLib
 		static nBool HasInitialized() noexcept;
 
 	private:
-#ifdef WIN32
+#ifdef _WIN32
 		static std::atomic_bool s_Initialized;
 		std::vector<Symbol> m_StackSymbols;
 #else

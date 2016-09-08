@@ -32,7 +32,7 @@ namespace NatsuLib
 		: public natRefObjImpl<natStream>
 	{
 	public:
-#ifdef WIN32
+#ifdef _WIN32
 		typedef HANDLE UnsafeHandle;
 #else
 		typedef nUnsafePtr<void> UnsafeHandle;

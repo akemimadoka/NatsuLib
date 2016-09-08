@@ -5,7 +5,7 @@
 
 using namespace NatsuLib;
 
-#ifdef WIN32
+#ifdef _WIN32
 natFileStream::natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable)
 	: m_hMappedFile(NULL), m_Filename(lpFilename), m_bReadable(bReadable), m_bWritable(bWritable), m_LastErr(NatErr_OK)
 {

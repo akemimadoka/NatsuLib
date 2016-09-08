@@ -5,7 +5,7 @@
 
 using namespace NatsuLib;
 
-#ifdef WIN32
+#ifdef _WIN32
 
 natNamedPipeServerStream::natNamedPipeServerStream(ncTStr Pipename, PipeDirection Direction, nuInt MaxInstances, nuInt OutBuffer, nuInt InBuffer, nuInt TimeOut, PipeMode TransmissionMode, PipeMode ReadMode, PipeOptions Options)
 	: m_hPipe(nullptr), m_bAsync(Options == PipeOptions::Asynchronous), m_bConnected(false), m_bMessageComplete(false), m_bReadable(false), m_bWritable(false), m_LastErr(NatErr_OK)

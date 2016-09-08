@@ -7,7 +7,7 @@
 
 using namespace NatsuLib;
 
-#ifdef WIN32
+#ifdef _WIN32
 natThread::natThread(nBool Pause)
 {
 	m_hThread = CreateThread(NULL, NULL, &execute, static_cast<void *>(this), Pause ? CREATE_SUSPENDED : 0, &m_hThreadID);
@@ -125,7 +125,7 @@ nuInt natThread::GetExitCode()
 }
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 natCriticalSection::natCriticalSection()
 {
 	InitializeCriticalSection(&m_Section);
@@ -176,7 +176,7 @@ void natCriticalSection::UnLock()
 
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 natEventWrapper::natEventWrapper(nBool AutoReset, nBool InitialState)
 {
 	m_hEvent = CreateEvent(NULL, !AutoReset, InitialState, NULL);
