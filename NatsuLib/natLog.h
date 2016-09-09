@@ -64,31 +64,55 @@ namespace NatsuLib
 		~natLog();
 
 		///	@brief	记录信息
-		template <typename ...Arg>
+		template <typename... Arg>
 		void LogMsg(ncTStr content, Arg &&... arg)
 		{
 			Log(Msg, content, std::forward<Arg>(arg)...);
 		}
 
+		template <typename... Arg>
+		void LogMsg(nTString const& content, Arg &&... arg)
+		{
+			Log(Msg, content.c_str(), std::forward<Arg>(arg)...);
+		}
+
 		///	@brief	记录错误
-		template <typename ... Arg>
+		template <typename... Arg>
 		void LogErr(ncTStr content, Arg &&... arg)
 		{
 			Log(Err, content, std::forward<Arg>(arg)...);
 		}
 
+		template <typename... Arg>
+		void LogErr(nTString const& content, Arg &&... arg)
+		{
+			Log(Err, content.c_str(), std::forward<Arg>(arg)...);
+		}
+
 		///	@brief	记录警告
-		template <typename ... Arg>
+		template <typename... Arg>
 		void LogWarn(ncTStr content, Arg &&... arg)
 		{
 			Log(Warn, content, std::forward<Arg>(arg)...);
 		}
 
+		template <typename... Arg>
+		void LogWarn(nTString const& content, Arg &&... arg)
+		{
+			Log(Warn, content.c_str(), std::forward<Arg>(arg)...);
+		}
+
 		///	@brief	记录
-		template <typename ... Arg>
+		template <typename... Arg>
 		void Log(nuInt type, ncTStr content, Arg &&... arg)
 		{
 			UpdateLog(type, natUtil::FormatString(content, std::forward<Arg>(arg)...));
+		}
+
+		template <typename... Arg>
+		void Log(nuInt type, nTString const& content, Arg &&... arg)
+		{
+			UpdateLog(type, natUtil::FormatString(content.c_str(), std::forward<Arg>(arg)...));
 		}
 
 		///	@brief	注册日志更新事件处理函数

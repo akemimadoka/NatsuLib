@@ -76,7 +76,7 @@ namespace NatsuLib
 
 				std::shared_ptr<IteratorInterface> Clone() const override
 				{
-					return std::move(std::static_pointer_cast<IteratorInterface>(std::make_shared<IteratorImpl>(m_Iterator)));
+					return std::static_pointer_cast<IteratorInterface>(std::make_shared<IteratorImpl>(m_Iterator));
 				}
 
 				void MoveNext() override
@@ -389,7 +389,7 @@ namespace NatsuLib
 					nat_Throw(natException, _T("Out of range."));
 				}
 
-				m_Target = std::move(std::next(m_Iterator, count));
+				m_Target = std::next(m_Iterator, count);
 			}
 
 			Self_t& operator++() &
@@ -1056,13 +1056,13 @@ namespace NatsuLib
 	template <typename T, size_t size>
 	Linq<T> from_values(T (&array)[size])
 	{
-		return from_values(std::move(std::vector<T>(array, array + size)));
+		return from_values(std::vector<T>(array, array + size));
 	}
 
 	template <typename T>
 	Linq<T> from_values(std::initializer_list<T> const& il)
 	{
-		return from_values(std::move(std::vector<T>(il.begin(), il.end())));
+		return from_values(std::vector<T>(il.begin(), il.end()));
 	}
 
 	template <typename T>
