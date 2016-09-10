@@ -57,7 +57,7 @@ namespace NatsuLib
 		std::enable_if_t<std::is_base_of<natEventBase, EventClass>::value, void> RegisterEvent()
 		{
 			bool Succeeded;
-			tie(std::ignore, Succeeded) = m_EventHandlerMap.try_emplace(typeid(EventClass));
+			tie(std::ignore, Succeeded) = m_EventListenerMap.try_emplace(typeid(EventClass));
 
 			if (!Succeeded)
 			{
@@ -68,8 +68,8 @@ namespace NatsuLib
 		template <typename EventClass>
 		ListenerIDType RegisterEventListener(EventListenerDelegate const& listener, PriorityType priority = Priority::Normal)
 		{
-			auto iter = m_EventHandlerMap.find(typeid(EventClass));
-			if (iter == m_EventHandlerMap.end())
+			auto iter = m_EventListenerMap.find(typeid(EventClass));
+			if (iter == m_EventListenerMap.end())
 			{
 				nat_Throw(natException, _T("Unregistered event."));
 			}
@@ -83,8 +83,8 @@ namespace NatsuLib
 		template <typename EventClass>
 		void UnregisterEventListener(PriorityType priority, ListenerIDType ListenerID)
 		{
-			auto iter = m_EventHandlerMap.find(typeid(EventClass));
-			if (iter == m_EventHandlerMap.end())
+			auto iter = m_EventListenerMap.find(typeid(EventClass));
+			if (iter == m_EventListenerMap.end())
 			{
 				nat_Throw(natException, _T("Unregistered event."));
 			}
@@ -99,8 +99,8 @@ namespace NatsuLib
 		template <typename EventClass>
 		nBool Post(EventClass& event)
 		{
-			auto iter = m_EventHandlerMap.find(typeid(EventClass));
-			if (iter == m_EventHandlerMap.end())
+			auto iter = m_EventListenerMap.find(typeid(EventClass));
+			if (iter == m_EventListenerMap.end())
 			{
 				nat_Throw(natException, _T("Unregistered event."));
 			}
@@ -117,6 +117,6 @@ namespace NatsuLib
 		}
 
 	private:
-		std::unordered_map<std::type_index, std::map<PriorityType, std::map<ListenerIDType, EventListenerDelegate>>> m_EventHandlerMap;
+		std::unordered_map<std::type_index, std::map<PriorityType, std::map<ListenerIDType, EventListenerDelegate>>> m_EventListenerMap;
 	};
 }

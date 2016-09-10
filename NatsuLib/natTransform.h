@@ -19,30 +19,33 @@ namespace NatsuLib
 	////////////////////////////////////////////////////////////////////////////////
 	namespace natTransform
 	{
-		///	@brief	角度转弧度
-		template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
-		T DegtoRad(T num) noexcept
+		struct Constants final
 		{
-			return num / static_cast<T>(180.0) * static_cast<T>(
+			static constexpr nDouble PI =
 #ifdef M_PI
 				M_PI
 #else
 				3.14159265358979323846
 #endif
-				);
+				;
+
+			static constexpr nDouble DegtoRad = PI / 180.0;
+
+			static constexpr nDouble RadtoDeg = 180.0 / PI;
+		};
+
+		///	@brief	角度转弧度
+		template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
+		constexpr T DegtoRad(T num) noexcept
+		{
+			return static_cast<T>(num * Constants::DegtoRad);
 		}
 
 		///	@brief	弧度转角度
 		template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
-		T RadtoDeg(T num) noexcept
+		constexpr T RadtoDeg(T num) noexcept
 		{
-			return num * static_cast<T>(180.0) / static_cast<T>(
-#ifdef M_PI
-				M_PI
-#else
-				3.14159265358979323846
-#endif
-				);
+			return static_cast<T>(num * Constants::RadtoDeg);
 		}
 
 		template <typename T>
