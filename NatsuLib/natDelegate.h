@@ -47,7 +47,7 @@ namespace NatsuLib
 		{
 		}
 
-		decltype(auto) operator()(Args... args)
+		decltype(auto) operator()(Args... args) const
 		{
 			if (!m_Functor)
 			{
@@ -55,6 +55,16 @@ namespace NatsuLib
 			}
 
 			return m_Functor(std::forward<Args>(args)...);
+		}
+
+		explicit operator bool() const noexcept
+		{
+			return static_cast<bool>(m_Functor);
+		}
+
+		nBool operator!() const noexcept
+		{
+			return !m_Functor;
 		}
 
 	private:

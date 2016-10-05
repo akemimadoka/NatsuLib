@@ -32,7 +32,7 @@ namespace NatsuLib
 				}
 			};
 
-			template <bool test, typename T>
+			template <bool test, bool test2, typename T>
 			struct ExpectImpl
 			{
 				template <typename U>
@@ -46,13 +46,23 @@ namespace NatsuLib
 				}
 			};
 
-			template <typename T>
-			struct ExpectImpl<true, T>
+			template <bool test2, typename T>
+			struct ExpectImpl<true, test2, T>
 			{
 				template <typename U>
 				constexpr static T Get(U&& value)
 				{
 					return static_cast<T>(value);
+				}
+			};
+
+			template <typename T>
+			struct ExpectImpl<false, true, T>
+			{
+				template <typename U>
+				constexpr static T Get(U&& value)
+				{
+					return dynamic_cast<T>(value);
 				}
 			};
 		}
@@ -63,10 +73,31 @@ namespace NatsuLib
 			template <typename U>
 			constexpr static T Get(U&& value)
 			{
-				return _Detail::ExpectImpl<std::is_convertible<U, T>::value, T>::Get(value);
+				return _Detail::ExpectImpl<std::is_convertible<U, T>::value, false, T>::Get(value);
 			}
 
 			constexpr static T&& Get(T&& value)
+			{
+				return value;
+			}
+		};
+
+		template <typename T>
+		struct Expect<T*>
+		{
+			template <typename U>
+			constexpr static T* Get(U&& value)
+			{
+				return _Detail::ExpectImpl<std::is_convertible<U, T*>::value, false, T*>::Get(value);
+			}
+
+			template <typename U>
+			constexpr static T* Get(U* value)
+			{
+				return _Detail::ExpectImpl<std::is_convertible<U*, T*>::value, std::is_base_of<U, T>::value, T*>::Get(value);
+			}
+
+			constexpr static T* Get(T* value)
 			{
 				return value;
 			}

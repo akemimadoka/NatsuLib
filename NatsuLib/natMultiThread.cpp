@@ -395,15 +395,9 @@ std::future<nuInt> natThreadPool::WorkerThread::SetWork(WorkFunc CallableObj, vo
 void natThreadPool::WorkerThread::RequestTerminate(nBool value)
 {
 	m_ShouldTerminate = value;
-	if (m_Idle)
+	if (m_Idle && !Resume() && !Terminate(0))
 	{
-		if (!Resume())
-		{
-			if (!Terminate(0))
-			{
-				nat_Throw(natWinException, _T("Cannot terminate worker thread."));
-			}
-		}
+		nat_Throw(natWinException, _T("Cannot terminate worker thread."));
 	}
 }
 

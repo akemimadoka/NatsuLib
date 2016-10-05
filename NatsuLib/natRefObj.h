@@ -148,9 +148,7 @@ namespace NatsuLib
 
 		natRefPointer& operator=(natRefPointer const& other)&
 		{
-			RawSet(other.m_pPointer);
-
-			return *this;
+			return RawSet(other.m_pPointer);
 		}
 
 		natRefPointer& operator=(natRefPointer && other)& noexcept
@@ -177,6 +175,7 @@ namespace NatsuLib
 
 		T** operator&()
 		{
+			RawSet(nullptr);
 			return &m_pPointer;
 		}
 
