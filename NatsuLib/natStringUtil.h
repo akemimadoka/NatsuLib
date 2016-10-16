@@ -9,7 +9,7 @@ namespace NatsuLib
 {
 	namespace natUtil
 	{
-		namespace _Detail
+		namespace detail_
 		{
 			template <size_t I>
 			struct visit_impl
@@ -73,7 +73,7 @@ namespace NatsuLib
 			template <typename U>
 			constexpr static T Get(U&& value)
 			{
-				return _Detail::ExpectImpl<std::is_convertible<U, T>::value, false, T>::Get(value);
+				return detail_::ExpectImpl<std::is_convertible<U, T>::value, false, T>::Get(value);
 			}
 
 			constexpr static T&& Get(T&& value)
@@ -88,13 +88,13 @@ namespace NatsuLib
 			template <typename U>
 			constexpr static T* Get(U&& value)
 			{
-				return _Detail::ExpectImpl<std::is_convertible<U, T*>::value, false, T*>::Get(value);
+				return detail_::ExpectImpl<std::is_convertible<U, T*>::value, false, T*>::Get(value);
 			}
 
 			template <typename U>
 			constexpr static T* Get(U* value)
 			{
-				return _Detail::ExpectImpl<std::is_convertible<U*, T*>::value, std::is_base_of<U, T>::value, T*>::Get(value);
+				return detail_::ExpectImpl<std::is_convertible<U*, T*>::value, std::is_base_of<U, T>::value, T*>::Get(value);
 			}
 
 			constexpr static T* Get(T* value)
@@ -107,14 +107,14 @@ namespace NatsuLib
 		void visit_at(T<Ts...> const& tup, size_t idx, F fun)
 		{
 			assert(idx < sizeof...(Ts));
-			_Detail::visit_impl<sizeof...(Ts)>::visit(tup, idx, fun);
+			detail_::visit_impl<sizeof...(Ts)>::visit(tup, idx, fun);
 		}
 
 		template <typename F, template <typename...> class T, typename... Ts>
 		void visit_at(T<Ts...>&& tup, size_t idx, F fun)
 		{
 			assert(idx < sizeof...(Ts));
-			_Detail::visit_impl<sizeof...(Ts)>::visit(tup, idx, fun);
+			detail_::visit_impl<sizeof...(Ts)>::visit(tup, idx, fun);
 		}
 
 		template <typename... Args>

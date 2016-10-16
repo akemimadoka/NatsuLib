@@ -125,7 +125,7 @@ namespace NatsuLib
 #endif
 	};
 
-	namespace _Detail
+	namespace detail_
 	{
 		template <typename T, typename Enable = void>
 		struct IsLockableAndUnlockable
@@ -140,7 +140,7 @@ namespace NatsuLib
 		};
 	}
 
-	template <typename T, std::enable_if_t<_Detail::IsLockableAndUnlockable<T>::value, bool> = true>
+	template <typename T, std::enable_if_t<detail_::IsLockableAndUnlockable<T>::value, bool> = true>
 	class natScopeGuard
 		: public std::conditional_t<std::disjunction<std::is_move_constructible<T>, std::is_move_assignable<T>>::value, nonmovable, noncopyable>
 	{
@@ -182,7 +182,7 @@ namespace NatsuLib
 	class natRefScopeGuard
 		: public nonmovable
 	{
-		static_assert(std::conjunction<_Detail::IsLockableAndUnlockable<T>...>::value, "Not all types of T... are lockable and unlockable.");
+		static_assert(std::conjunction<detail_::IsLockableAndUnlockable<T>...>::value, "Not all types of T... are lockable and unlockable.");
 
 		template <size_t a, size_t b, size_t step = 1>
 		struct GetNext

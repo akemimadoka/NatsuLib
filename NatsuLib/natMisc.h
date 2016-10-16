@@ -6,7 +6,7 @@
 
 namespace NatsuLib
 {
-	namespace _Detail
+	namespace detail_
 	{
 		template <class F, class Tuple, size_t... I>
 		constexpr decltype(auto) apply_impl(F&& f, Tuple&& t, std::index_sequence<I...>)
@@ -201,7 +201,7 @@ namespace NatsuLib
 	template <class F, class Tuple>
 	constexpr decltype(auto) apply(F&& f, Tuple&& t)
 	{
-		return _Detail::apply_impl(std::forward<F>(f), std::forward<Tuple>(t),
+		return detail_::apply_impl(std::forward<F>(f), std::forward<Tuple>(t),
 			std::make_index_sequence<std::tuple_size<std::decay_t<Tuple>>::value>{});
 	}
 
@@ -240,11 +240,11 @@ namespace NatsuLib
 		return natScope<T, Args&&...>{ CallableObj, std::forward<Args>(args)... };
 	}
 
-	using _Detail::nullopt_t;
-	using _Detail::nullopt;
+	using detail_::nullopt_t;
+	using detail_::nullopt;
 
-	using _Detail::defaultconstruct_t;
-	using _Detail::defaultconstruct;
+	using detail_::defaultconstruct_t;
+	using detail_::defaultconstruct;
 
 	template <typename T>
 	class Optional final
@@ -467,7 +467,7 @@ namespace NatsuLib
 		}
 
 	private:
-		_Detail::CommonStorage<T> m_Value;
+		detail_::CommonStorage<T> m_Value;
 	};
 
 	template <typename Iter>

@@ -126,7 +126,7 @@ NATINLINE void SafeDelArr(T*& ptr)
 
 namespace NatsuLib
 {
-	namespace _Detail
+	namespace detail_
 	{
 		template <typename T, typename Enable = void>
 		struct CanAddRef
@@ -156,7 +156,7 @@ namespace NatsuLib
 
 ///	@brief	°²È«ÊÍ·Å
 template <typename T>
-NATINLINE std::enable_if_t<NatsuLib::_Detail::IsReleasable<T>::value> SafeRelease(T*& ptr)
+NATINLINE std::enable_if_t<NatsuLib::detail_::IsReleasable<T>::value> SafeRelease(T*& ptr)
 {
 	if (ptr != nullptr)
 	{

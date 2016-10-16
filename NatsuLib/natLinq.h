@@ -46,7 +46,7 @@ bool operator!=(std::function<Func1> const&, std::function<Func2> const&)
 
 namespace NatsuLib
 {
-	namespace _Detail
+	namespace detail_
 	{
 		template <typename T>
 		using deref_t = std::decay_t<decltype(*std::declval<T>())>;
@@ -647,17 +647,17 @@ namespace NatsuLib
 		}
 
 		template <typename CallableObj>
-		LinqEnumerable<_Detail::SelectIterator<Iter_t, CallableObj>> select(CallableObj const& callableObj) const
+		LinqEnumerable<detail_::SelectIterator<Iter_t, CallableObj>> select(CallableObj const& callableObj) const
 		{
-			return LinqEnumerable<_Detail::SelectIterator<Iter_t, CallableObj>>(_Detail::SelectIterator<Iter_t, CallableObj>(m_Range.begin(), callableObj),
-				_Detail::SelectIterator<Iter_t, CallableObj>(m_Range.end(), callableObj));
+			return LinqEnumerable<detail_::SelectIterator<Iter_t, CallableObj>>(detail_::SelectIterator<Iter_t, CallableObj>(m_Range.begin(), callableObj),
+				detail_::SelectIterator<Iter_t, CallableObj>(m_Range.end(), callableObj));
 		}
 
 		template <typename CallableObj>
-		LinqEnumerable<_Detail::WhereIterator<Iter_t, CallableObj>> where(CallableObj const& callableObj) const
+		LinqEnumerable<detail_::WhereIterator<Iter_t, CallableObj>> where(CallableObj const& callableObj) const
 		{
-			return LinqEnumerable<_Detail::WhereIterator<Iter_t, CallableObj>>(_Detail::WhereIterator<Iter_t, CallableObj>(m_Range.begin(), m_Range.end(), callableObj),
-				_Detail::WhereIterator<Iter_t, CallableObj>(m_Range.end(), m_Range.end(), callableObj));
+			return LinqEnumerable<detail_::WhereIterator<Iter_t, CallableObj>>(detail_::WhereIterator<Iter_t, CallableObj>(m_Range.begin(), m_Range.end(), callableObj),
+				detail_::WhereIterator<Iter_t, CallableObj>(m_Range.end(), m_Range.end(), callableObj));
 		}
 
 		LinqEnumerable skip(difference_type count)
@@ -668,30 +668,30 @@ namespace NatsuLib
 		}
 
 		template <typename CallableObj>
-		LinqEnumerable<_Detail::SkipWhileIterator<Iter_t>> skip_while(CallableObj const& callableObj) const
+		LinqEnumerable<detail_::SkipWhileIterator<Iter_t>> skip_while(CallableObj const& callableObj) const
 		{
-			return LinqEnumerable<_Detail::SkipWhileIterator<Iter_t>>(_Detail::SkipWhileIterator<Iter_t>(m_Range.begin(), m_Range.end(), callableObj),
-				_Detail::SkipWhileIterator<Iter_t>(m_Range.end(), m_Range.end(), callableObj));
+			return LinqEnumerable<detail_::SkipWhileIterator<Iter_t>>(detail_::SkipWhileIterator<Iter_t>(m_Range.begin(), m_Range.end(), callableObj),
+				detail_::SkipWhileIterator<Iter_t>(m_Range.end(), m_Range.end(), callableObj));
 		}
 
-		LinqEnumerable<_Detail::TakeIterator<Iter_t>> take(difference_type count)
+		LinqEnumerable<detail_::TakeIterator<Iter_t>> take(difference_type count)
 		{
-			return LinqEnumerable<_Detail::TakeIterator<Iter_t>>(_Detail::TakeIterator<Iter_t>(m_Range.begin(), m_Range.end(), count),
-				_Detail::TakeIterator<Iter_t>(m_Range.end(), m_Range.end(), count));
+			return LinqEnumerable<detail_::TakeIterator<Iter_t>>(detail_::TakeIterator<Iter_t>(m_Range.begin(), m_Range.end(), count),
+				detail_::TakeIterator<Iter_t>(m_Range.end(), m_Range.end(), count));
 		}
 
 		template <typename CallableObj>
-		LinqEnumerable<_Detail::TakeWhileIterator<Iter_t, CallableObj>> take_while(CallableObj const& callableObj) const
+		LinqEnumerable<detail_::TakeWhileIterator<Iter_t, CallableObj>> take_while(CallableObj const& callableObj) const
 		{
-			return LinqEnumerable<_Detail::TakeWhileIterator<Iter_t, CallableObj>>(_Detail::TakeWhileIterator<Iter_t, CallableObj>(m_Range.begin(), m_Range.end(), callableObj),
-				_Detail::TakeWhileIterator<Iter_t, CallableObj>(m_Range.end(), m_Range.end(), callableObj));
+			return LinqEnumerable<detail_::TakeWhileIterator<Iter_t, CallableObj>>(detail_::TakeWhileIterator<Iter_t, CallableObj>(m_Range.begin(), m_Range.end(), callableObj),
+				detail_::TakeWhileIterator<Iter_t, CallableObj>(m_Range.end(), m_Range.end(), callableObj));
 		}
 
 		template <typename Iter2_t>
-		LinqEnumerable<_Detail::ConcatIterator<Iter_t, Iter2_t>> concat(LinqEnumerable<Iter2_t> const& other) const
+		LinqEnumerable<detail_::ConcatIterator<Iter_t, Iter2_t>> concat(LinqEnumerable<Iter2_t> const& other) const
 		{
-			return LinqEnumerable<_Detail::ConcatIterator<Iter_t, Iter2_t>>(_Detail::ConcatIterator<Iter_t, Iter2_t>(m_Range.begin(), m_Range.end(), other.begin(), other.end()),
-				_Detail::ConcatIterator<Iter_t, Iter2_t>(m_Range.end(), m_Range.end(), other.end(), other.end()));
+			return LinqEnumerable<detail_::ConcatIterator<Iter_t, Iter2_t>>(detail_::ConcatIterator<Iter_t, Iter2_t>(m_Range.begin(), m_Range.end(), other.begin(), other.end()),
+				detail_::ConcatIterator<Iter_t, Iter2_t>(m_Range.end(), m_Range.end(), other.end(), other.end()));
 		}
 
 		template <typename T>
@@ -1007,8 +1007,8 @@ namespace NatsuLib
 		template <typename Iter2_t>
 		auto zip(LinqEnumerable<Iter2_t> const& e) const
 		{
-			return LinqEnumerable<_Detail::ZipIterator<Iter_t, Iter2_t>>(_Detail::ZipIterator<Iter_t, Iter2_t>(m_Range.begin(), m_Range.end(), e.begin(), e.end()),
-				_Detail::ZipIterator<Iter_t, Iter2_t>(m_Range.end(), m_Range.end(), e.end(), e.end()));
+			return LinqEnumerable<detail_::ZipIterator<Iter_t, Iter2_t>>(detail_::ZipIterator<Iter_t, Iter2_t>(m_Range.begin(), m_Range.end(), e.begin(), e.end()),
+				detail_::ZipIterator<Iter_t, Iter2_t>(m_Range.end(), m_Range.end(), e.end(), e.end()));
 		}
 
 		template <typename Container>
@@ -1020,14 +1020,14 @@ namespace NatsuLib
 
 	template <typename T>
 	class Linq final
-		: public LinqEnumerable<_Detail::CommonIterator<T>>
+		: public LinqEnumerable<detail_::CommonIterator<T>>
 	{
-		typedef LinqEnumerable<_Detail::CommonIterator<T>> _Base;
+		typedef LinqEnumerable<detail_::CommonIterator<T>> _Base;
 	public:
 		template <typename Iter_t>
 		Linq(LinqEnumerable<Iter_t> const& linqEnumerable)
-			: _Base(_Detail::CommonIterator<T>(linqEnumerable.begin()),
-				_Detail::CommonIterator<T>(linqEnumerable.end()))
+			: _Base(detail_::CommonIterator<T>(linqEnumerable.begin()),
+				detail_::CommonIterator<T>(linqEnumerable.end()))
 		{
 		}
 	};
@@ -1035,8 +1035,8 @@ namespace NatsuLib
 	template <typename Container>
 	auto from_pointertocontainer(std::shared_ptr<Container> const& pContainer)
 	{
-		return LinqEnumerable<_Detail::StorageIterator<Container>>(_Detail::StorageIterator<Container>(pContainer, std::begin(*pContainer)),
-			_Detail::StorageIterator<Container>(pContainer, std::end(*pContainer)));
+		return LinqEnumerable<detail_::StorageIterator<Container>>(detail_::StorageIterator<Container>(pContainer, std::begin(*pContainer)),
+			detail_::StorageIterator<Container>(pContainer, std::end(*pContainer)));
 	}
 
 	template <typename Container>
@@ -1068,7 +1068,7 @@ namespace NatsuLib
 	template <typename T>
 	Linq<T> from_empty()
 	{
-		return LinqEnumerable<_Detail::EmptyIterator<T>>(_Detail::EmptyIterator<T>(), _Detail::EmptyIterator<T>());
+		return LinqEnumerable<detail_::EmptyIterator<T>>(detail_::EmptyIterator<T>(), detail_::EmptyIterator<T>());
 	}
 
 	template <typename Arg, typename... Args, std::enable_if_t<std::conjunction<std::is_same<Arg, Args>...>::value, nBool> = true>
