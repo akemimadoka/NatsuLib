@@ -48,6 +48,126 @@ namespace NatsuLib
 {
 	namespace detail_
 	{
+		template <typename T, typename U = T, typename = void>
+		struct Addable
+			: std::false_type
+		{
+		};
+
+		template <typename T, typename U>
+		struct Addable<T, U, std::void_t<decltype(std::declval<T>() + std::declval<U>())>>
+			: std::true_type
+		{
+		};
+
+		template <typename T, typename U = T, typename = void>
+		struct Subable
+			: std::false_type
+		{
+		};
+
+		template <typename T, typename U>
+		struct Subable<T, U, std::void_t<decltype(std::declval<T>() - std::declval<U>())>>
+			: std::true_type
+		{
+		};
+
+		template <typename T, typename U = T, typename = void>
+		struct Multipliable
+			: std::false_type
+		{
+		};
+
+		template <typename T, typename U>
+		struct Multipliable<T, U, std::void_t<decltype(std::declval<T>() * std::declval<U>())>>
+			: std::true_type
+		{
+		};
+
+		template <typename T, typename U = T, typename = void>
+		struct Dividable
+			: std::false_type
+		{
+		};
+
+		template <typename T, typename U>
+		struct Dividable<T, U, std::void_t<decltype(std::declval<T>() / std::declval<U>())>>
+			: std::true_type
+		{
+		};
+
+		template <typename T, typename U = T, typename = void>
+		struct CanEqual
+			: std::false_type
+		{
+		};
+
+		template <typename T, typename U>
+		struct CanEqual<T, U, std::void_t<std::enable_if_t<std::is_same<decltype(std::declval<T>() == std::declval<U>()), bool>::value>>>
+			: std::true_type
+		{
+		};
+
+		template <typename T, typename U = T, typename = void>
+		struct CanNotEqual
+			: std::false_type
+		{
+		};
+
+		template <typename T, typename U>
+		struct CanNotEqual<T, U, std::void_t<std::enable_if_t<std::is_same<decltype(std::declval<T>() != std::declval<U>()), bool>::value>>>
+			: std::true_type
+		{
+		};
+
+		template <typename T, typename U = T, typename = void>
+		struct CanGreater
+			: std::false_type
+		{
+		};
+
+		template <typename T, typename U>
+		struct CanGreater<T, U, std::void_t<std::enable_if_t<std::is_same<decltype(std::declval<T>() > std::declval<U>()), bool>::value>>>
+			: std::true_type
+		{
+		};
+
+		template <typename T, typename U = T, typename = void>
+		struct CanLesser
+			: std::false_type
+		{
+		};
+
+		template <typename T, typename U>
+		struct CanLesser<T, U, std::void_t<std::enable_if_t<std::is_same<decltype(std::declval<T>() < std::declval<U>()), bool>::value>>>
+			: std::true_type
+		{
+		};
+
+		template <typename T, typename U = T, typename = void>
+		struct CanNotLesser
+			: std::false_type
+		{
+		};
+
+		template <typename T, typename U>
+		struct CanNotLesser<T, U, std::void_t<std::enable_if_t<std::is_same<decltype(std::declval<T>() >= std::declval<U>()), bool>::value>>>
+			: std::true_type
+		{
+		};
+
+		template <typename T, typename U = T, typename = void>
+		struct CanNotGreater
+			: std::false_type
+		{
+		};
+
+		template <typename T, typename U>
+		struct CanNotGreater<T, U, std::void_t<std::enable_if_t<std::is_same<decltype(std::declval<T>() <= std::declval<U>()), bool>::value>>>
+			: std::true_type
+		{
+		};
+
 		template <typename T>
 		using deref_t = std::decay_t<decltype(*std::declval<T>())>;
 
@@ -606,6 +726,8 @@ namespace NatsuLib
 		typedef typename std::iterator_traits<Iter_t>::reference reference;
 		typedef typename std::iterator_traits<Iter_t>::pointer pointer;
 
+		typedef LinqEnumerable<Iter_t> Self_t;
+
 	private:
 		Range<Iter_t> m_Range;
 		mutable Optional<size_t> m_Size;
@@ -754,7 +876,7 @@ namespace NatsuLib
 		{
 			if (m_Range.empty())
 			{
-				nat_Throw(natException, _T("Range is empty and there is no default constructor for type Element_t({0})."), natUtil::C2Wstr(typeid(Element_t).name()));
+				nat_Throw(natException, _T("Range is empty and there is no default constructor for this type."));
 			}
 
 			auto iter = m_Range.begin();
@@ -785,7 +907,7 @@ namespace NatsuLib
 		template <typename CallableObj>
 		nBool all(CallableObj const& callableObj) const
 		{
-			return select(callableObj).aggregate(true, [](nBool a, nBool b) { return a&&b; });
+			return select(callableObj).aggregate(true, [](nBool a, nBool b) { return a && b; });
 		}
 
 		template <typename CallableObj>
@@ -794,34 +916,134 @@ namespace NatsuLib
 			return !where(callableObj).empty();
 		}
 
-		template <typename Result_t = Element_t>
-		Result_t average() const
+	private:
+		template <typename Result_t, bool Test = std::conjunction<detail_::Addable<Result_t, Element_t>, detail_::Dividable<Result_t>>::value>
+		struct GetAverage
 		{
-			Result_t result{};
-			return aggregate(result, [](Result_t const& res, Element_t const& item)
+			[[noreturn]] static void Get(Self_t const& self)
 			{
-				return res + item;
-			}) / static_cast<Result_t>(m_Range.size());
+				nat_Throw(natException, _T("Cannot apply such operation to this type."));
+			}
+		};
+
+		template <typename Result_t>
+		struct GetAverage<Result_t, true>
+		{
+			static Result_t Get(Self_t const& self)
+			{
+				Result_t result{};
+				return self.aggregate(result, [](Result_t const& res, Element_t const& item)
+				{
+					return res + item;
+				}) / static_cast<Result_t>(self.m_Range.size());
+			}
+		};
+
+	public:
+		template <typename Result_t = Element_t>
+		auto average() const
+		{
+			return GetAverage<Result_t>::Get<Result_t>(*this);
 		}
 
-		Element_t max() const
+	private:
+		template <bool Test = detail_::CanGreater<Element_t>::value>
+		struct GetMax
 		{
-			return aggregate([](const Element_t& a, const Element_t& b) { return a > b ? a : b; });
+			[[noreturn]] static void Get(Self_t const& self)
+			{
+				nat_Throw(natException, _T("Cannot apply such operation to this type."));
+			}
+		};
+
+		template <>
+		struct GetMax<true>
+		{
+			static Element_t Get(Self_t const& self)
+			{
+				return self.aggregate([](const Element_t& a, const Element_t& b) { return a > b ? a : b; });
+			}
+		};
+
+	public:
+		auto max() const
+		{
+			return GetMax<>::Get(*this);
 		}
 
-		Element_t min() const
+	private:
+		template <bool Test = detail_::CanLesser<Element_t>::value>
+		struct GetMin
 		{
-			return aggregate([](const Element_t& a, const Element_t& b) { return a < b ? a : b; });
+			[[noreturn]] static void Get(Self_t const& self)
+			{
+				nat_Throw(natException, _T("Cannot apply such operation to this type."));
+			}
+		};
+
+		template <>
+		struct GetMin<true>
+		{
+			static Element_t Get(Self_t const& self)
+			{
+				return self.aggregate([](const Element_t& a, const Element_t& b) { return a < b ? a : b; });
+			}
+		};
+
+	public:
+		auto min() const
+		{
+			return GetMin<>::Get(*this);
 		}
 
-		Element_t sum() const
+	private:
+		template <bool Test = detail_::Addable<Element_t>::value>
+		struct GetSum
 		{
-			return aggregate(0, [](const Element_t& a, const Element_t& b) { return a + b; });
+			[[noreturn]] static void Get(Self_t const& self)
+			{
+				nat_Throw(natException, _T("Cannot apply such operation to this type."));
+			}
+		};
+
+		template <>
+		struct GetSum<true>
+		{
+			static Element_t Get(Self_t const& self)
+			{
+				return self.aggregate(0, [](const Element_t& a, const Element_t& b) { return a + b; });
+			}
+		};
+
+	public:
+		auto sum() const
+		{
+			return GetSum<>::Get(*this);
 		}
 
-		Element_t product() const
+	private:
+		template <bool Test = detail_::Multipliable<Element_t>::value>
+		struct GetProduct
 		{
-			return aggregate([](const Element_t& a, const Element_t& b) { return a * b; });
+			[[noreturn]] static void Get(Self_t const& self)
+			{
+				nat_Throw(natException, _T("Cannot apply such operation to this type."));
+			}
+		};
+
+		template <>
+		struct GetProduct<true>
+		{
+			static Element_t Get(Self_t const& self)
+			{
+				return self.aggregate(0, [](const Element_t& a, const Element_t& b) { return a * b; });
+			}
+		};
+
+	public:
+		auto product() const
+		{
+			return GetProduct<>::Get(*this);
 		}
 
 		template <typename CallableObj>
@@ -1085,9 +1307,9 @@ namespace NatsuLib
 	}
 
 	template <typename Container>
-	auto from(Container const& container) -> LinqEnumerable<decltype(*std::begin(container))>
+	auto from(Container const& container) -> LinqEnumerable<decltype(std::begin(container))>
 	{
-		return LinqEnumerable<decltype(*std::begin(container))>(std::begin(container), std::end(container));
+		return LinqEnumerable<decltype(std::begin(container))>(std::begin(container), std::end(container));
 	}
 
 	template <typename Iter_t>
