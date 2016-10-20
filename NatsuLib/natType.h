@@ -6,8 +6,17 @@
 
 #include "natConfig.h"
 #include <cstdint>
-#include <tchar.h>
 #include <string>
+#if defined(_MSC_VER)
+#	include <tchar.h>
+#else
+#	ifdef UNICODE
+#		define TIMPL(x) L##x
+#	else
+#		define TIMPL(x) x
+#	endif
+#	define _T(x) TIMPL(x)
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 ///	@addtogroup	Natsu库基本数据类型
@@ -63,10 +72,17 @@ using nUnsafePtr = std::add_pointer_t<T>;
 ///	@brief		Natsu库基本宏定义
 ///	@{
 
+#ifdef _MSC_VER
 ///	@brief	强制内联
 #define	NATINLINE			__forceinline
 ///	@brief	拒绝内联
 #define NATNOINLINE			__declspec(noinline)
+#else
+///	@brief	强制内联
+#define	NATINLINE			inline
+///	@brief	拒绝内联
+#define NATNOINLINE
+#endif
 
 ///	@brief	是否成功
 #define NATOK(x)			(((nResult)(x)) >= 0)

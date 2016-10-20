@@ -91,9 +91,10 @@ namespace NatsuLib
 		UnsafeHandle m_hThread;
 		ThreadIdType m_hThreadID;
 #else
+		std::promise<void> m_Pause;
 		std::future<ResultType> m_Result;
-		std::mutex m_Mutex;
-		std::condition_variable m_Pause;
+		//std::mutex m_Mutex;
+		//std::condition_variable m_Pause;
 		std::thread m_Thread;
 #endif
 	};
@@ -376,7 +377,7 @@ namespace NatsuLib
 
 		nuInt getNextAvailableIndex();
 		nuInt getIdleThreadIndex();
-		void onWorkerThreadIdle(nuInt Index);
+		void onWorkerThreadIdle(nuInt Index, bool isTerminating);
 
 		const nuInt m_MaxThreadCount;
 		std::unordered_map<nuInt, std::unique_ptr<WorkerThread>> m_Threads;

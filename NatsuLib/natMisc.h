@@ -20,7 +20,9 @@ namespace NatsuLib
 		struct defaultconstruct_t {};
 		constexpr defaultconstruct_t defaultconstruct{};
 
+#ifdef _MSC_VER
 #pragma pack(1)
+#endif
 		template <typename T>
 		class CommonStorage final
 		{
@@ -30,7 +32,7 @@ namespace NatsuLib
 			{
 			}
 
-			CommonStorage(CommonStorage const& other) noexcept(Init(std::declval<T const&>()))
+			CommonStorage(CommonStorage const& other) noexcept(noexcept(Init(std::declval<T const&>())))
 				: CommonStorage()
 			{
 				if (other.m_Constructed)
@@ -39,7 +41,7 @@ namespace NatsuLib
 				}
 			}
 
-			CommonStorage(CommonStorage && other) noexcept(Init(std::declval<T &&>()))
+			CommonStorage(CommonStorage && other) noexcept(noexcept(Init(std::declval<T &&>())))
 				: CommonStorage()
 			{
 				if (other.m_Constructed)
@@ -54,20 +56,20 @@ namespace NatsuLib
 				Init(defaultconstruct);
 			}
 
-			constexpr explicit CommonStorage(const T& obj) noexcept(Init(obj))
+			constexpr explicit CommonStorage(const T& obj) noexcept(noexcept(Init(obj)))
 				: CommonStorage()
 			{
 				Init(obj);
 			}
 
-			constexpr explicit CommonStorage(T&& obj) noexcept(Init(std::move(obj)))
+			constexpr explicit CommonStorage(T&& obj) noexcept(noexcept(Init(std::move(obj))))
 				: CommonStorage()
 			{
 				Init(std::move(obj));
 			}
 
 			template <typename... Args>
-			constexpr explicit CommonStorage(Args&&... args) noexcept(Init(std::forward<Args>(args)...))
+			constexpr explicit CommonStorage(Args&&... args) noexcept(noexcept(Init(std::forward<Args>(args)...)))
 				: CommonStorage()
 			{
 				Init(std::forward<Args>(args)...);
@@ -195,7 +197,9 @@ namespace NatsuLib
 			nBool m_Constructed;
 			nByte m_Storage[sizeof(T)];
 		};
+#ifdef _MSC_VER
 #pragma pack()
+#endif
 	}
 
 	template <class F, class Tuple>
@@ -736,11 +740,14 @@ namespace NatsuLib
 	};
 }
 
-template <typename T>
-struct std::hash<NatsuLib::Optional<T>>
+namespace std
 {
-	size_t operator()(NatsuLib::Optional<T> const& _Keyval) const
+	template <typename T>
+	struct hash<NatsuLib::Optional<T>>
 	{
-		return _Keyval ? hash<T>{}(*_Keyval) : 0u;
-	}
-};
+		size_t operator()(NatsuLib::Optional<T> const& _Keyval) const
+		{
+			return _Keyval ? hash<T>{}(*_Keyval) : 0u;
+		}
+	};
+}

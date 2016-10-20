@@ -2,6 +2,7 @@
 #include "natStream.h"
 #include "natException.h"
 #include <algorithm>
+#include <cstring>
 
 using namespace NatsuLib;
 
@@ -270,15 +271,15 @@ natMemoryStream::natMemoryStream(ncData pData, nLen Length, nBool bReadable, nBo
 {
 	try
 	{
-		m_pData = new nByte[static_cast<nuInt>(Length)];
+		m_pData = new nByte[static_cast<nuInt>(Length)]{};
 		m_Length = Length;
 		if (pData)
 		{
+#ifdef _MSC_VER
 			memcpy_s(m_pData, static_cast<rsize_t>(Length), pData, static_cast<rsize_t>(Length));
-		}
-		else
-		{
-			memset(m_pData, 0, static_cast<size_t>(m_Length));
+#else
+			memcpy(m_pData, pData, static_cast<size_t>(Length));
+#endif
 		}
 	}
 	catch (std::bad_alloc&)
@@ -410,7 +411,12 @@ nLen natMemoryStream::ReadBytes(nData pData, nLen Length)
 	}
 
 	tReadBytes = std::min(Length, m_Length - m_CurPos);
+#ifdef _MSC_VER
 	memcpy_s(pData + m_CurPos, static_cast<rsize_t>(m_Length - m_CurPos), m_pData, static_cast<rsize_t>(tReadBytes));
+#else
+	memcpy(pData + m_CurPos, m_pData, static_cast<size_t>(tReadBytes));
+#endif
+	
 	m_CurPos += tReadBytes;
 
 	if (tReadBytes != Length)
@@ -444,7 +450,11 @@ nLen natMemoryStream::WriteBytes(ncData pData, nLen Length)
 	}
 
 	tWriteBytes = std::min(Length, m_Length - m_CurPos);
+#ifdef _MSC_VER
 	memcpy_s(m_pData, static_cast<rsize_t>(tWriteBytes), pData + m_CurPos, static_cast<rsize_t>(tWriteBytes));
+#else
+	memcpy(m_pData, pData + m_CurPos, static_cast<size_t>(tWriteBytes));
+#endif
 	m_CurPos += tWriteBytes;
 
 	if (tWriteBytes != Length)

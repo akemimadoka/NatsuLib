@@ -11,14 +11,17 @@
 #undef max
 #undef min
 
-template <typename Func>
-struct std::hash<std::function<Func>>
+namespace std
 {
-	size_t operator()(function<Func> const& _Keyval) const
+	template <typename Func>
+	struct hash<function<Func>>
 	{
-		return hash<decay_t<Func>>()(_Keyval.template target<Func>());
-	}
-};
+		size_t operator()(function<Func> const& _Keyval) const
+		{
+			return hash<decay_t<Func>>()(_Keyval.template target<Func>());
+		}
+	};
+}
 
 template <typename Func>
 bool operator==(std::function<Func> const& left, std::function<Func> const& right)
@@ -168,6 +171,100 @@ namespace NatsuLib
 		{
 		};
 
+		template <typename T, typename Result_t, bool Test = std::conjunction<Addable<Result_t, typename T::Element_t>, Dividable<Result_t>>::value>
+		struct GetAverage
+		{
+			[[noreturn]] static void Get(T const& self)
+			{
+				nat_Throw(natException, _T("Cannot apply such operation to this type."));
+			}
+		};
+
+		template <typename T, typename Result_t>
+		struct GetAverage<T, Result_t, true>
+		{
+			static Result_t Get(T const& self)
+			{
+				Result_t result{};
+				return self.aggregate(result, [](Result_t const& res, typename T::Element_t const& item)
+				{
+					return res + item;
+				}) / static_cast<Result_t>(self.m_Range.size());
+			}
+		};
+
+		template <typename T, bool Test = CanGreater<typename T::Element_t>::value>
+		struct GetMax
+		{
+			[[noreturn]] static void Get(T const& self)
+			{
+				nat_Throw(natException, _T("Cannot apply such operation to this type."));
+			}
+		};
+
+		template <typename T>
+		struct GetMax<T, true>
+		{
+			static typename T::Element_t Get(T const& self)
+			{
+				return self.aggregate([](const typename T::Element_t& a, const typename T::Element_t& b) { return a > b ? a : b; });
+			}
+		};
+
+		template <typename T, bool Test = CanLesser<typename T::Element_t>::value>
+		struct GetMin
+		{
+			[[noreturn]] static void Get(T const& self)
+			{
+				nat_Throw(natException, _T("Cannot apply such operation to this type."));
+			}
+		};
+
+		template <typename T>
+		struct GetMin<T, true>
+		{
+			static typename T::Element_t Get(T const& self)
+			{
+				return self.aggregate([](const typename T::Element_t& a, const typename T::Element_t& b) { return a < b ? a : b; });
+			}
+		};
+
+		template <typename T, bool Test = Addable<typename T::Element_t>::value>
+		struct GetSum
+		{
+			[[noreturn]] static void Get(T const& self)
+			{
+				nat_Throw(natException, _T("Cannot apply such operation to this type."));
+			}
+		};
+
+		template <typename T>
+		struct GetSum<T, true>
+		{
+			static typename T::Element_t Get(T const& self)
+			{
+				return self.aggregate(0, [](const typename T::Element_t& a, const typename T::Element_t& b) { return a + b; });
+			}
+		};
+
+		template <typename T, bool Test = Multipliable<typename T::Element_t>::value>
+		struct GetProduct
+		{
+			[[noreturn]] static void Get(T const& self)
+			{
+				nat_Throw(natException, _T("Cannot apply such operation to this type."));
+			}
+		};
+
+		template <typename T>
+		struct GetProduct<T, true>
+		{
+			static typename T::Element_t Get(T const& self)
+			{
+				return self.aggregate(0, [](const typename T::Element_t& a, const typename T::Element_t& b) { return a * b; });
+			}
+		};
+
 		template <typename T>
 		using deref_t = std::decay_t<decltype(*std::declval<T>())>;
 
@@ -222,7 +319,7 @@ namespace NatsuLib
 		public:
 			typedef std::forward_iterator_tag iterator_category;
 			typedef std::remove_reference_t<T> value_type;
-			typedef ptrdiff_t difference_type;
+			typedef std::ptrdiff_t difference_type;
 			typedef std::add_lvalue_reference_t<value_type> reference;
 			typedef std::add_pointer_t<value_type> pointer;
 
@@ -916,134 +1013,30 @@ namespace NatsuLib
 			return !where(callableObj).empty();
 		}
 
-	private:
-		template <typename Result_t, bool Test = std::conjunction<detail_::Addable<Result_t, Element_t>, detail_::Dividable<Result_t>>::value>
-		struct GetAverage
-		{
-			[[noreturn]] static void Get(Self_t const& self)
-			{
-				nat_Throw(natException, _T("Cannot apply such operation to this type."));
-			}
-		};
-
-		template <typename Result_t>
-		struct GetAverage<Result_t, true>
-		{
-			static Result_t Get(Self_t const& self)
-			{
-				Result_t result{};
-				return self.aggregate(result, [](Result_t const& res, Element_t const& item)
-				{
-					return res + item;
-				}) / static_cast<Result_t>(self.m_Range.size());
-			}
-		};
-
-	public:
 		template <typename Result_t = Element_t>
 		auto average() const
 		{
-			return GetAverage<Result_t>::Get<Result_t>(*this);
+			return detail_::GetAverage<Self_t, Result_t>::Get(*this);
 		}
 
-	private:
-		template <bool Test = detail_::CanGreater<Element_t>::value>
-		struct GetMax
-		{
-			[[noreturn]] static void Get(Self_t const& self)
-			{
-				nat_Throw(natException, _T("Cannot apply such operation to this type."));
-			}
-		};
-
-		template <>
-		struct GetMax<true>
-		{
-			static Element_t Get(Self_t const& self)
-			{
-				return self.aggregate([](const Element_t& a, const Element_t& b) { return a > b ? a : b; });
-			}
-		};
-
-	public:
 		auto max() const
 		{
-			return GetMax<>::Get(*this);
+			return detail_::GetMax<Self_t>::Get(*this);
 		}
 
-	private:
-		template <bool Test = detail_::CanLesser<Element_t>::value>
-		struct GetMin
-		{
-			[[noreturn]] static void Get(Self_t const& self)
-			{
-				nat_Throw(natException, _T("Cannot apply such operation to this type."));
-			}
-		};
-
-		template <>
-		struct GetMin<true>
-		{
-			static Element_t Get(Self_t const& self)
-			{
-				return self.aggregate([](const Element_t& a, const Element_t& b) { return a < b ? a : b; });
-			}
-		};
-
-	public:
 		auto min() const
 		{
-			return GetMin<>::Get(*this);
+			return detail_::GetMin<Self_t>::Get(*this);
 		}
 
-	private:
-		template <bool Test = detail_::Addable<Element_t>::value>
-		struct GetSum
-		{
-			[[noreturn]] static void Get(Self_t const& self)
-			{
-				nat_Throw(natException, _T("Cannot apply such operation to this type."));
-			}
-		};
-
-		template <>
-		struct GetSum<true>
-		{
-			static Element_t Get(Self_t const& self)
-			{
-				return self.aggregate(0, [](const Element_t& a, const Element_t& b) { return a + b; });
-			}
-		};
-
-	public:
 		auto sum() const
 		{
-			return GetSum<>::Get(*this);
+			return detail_::GetSum<Self_t>::Get(*this);
 		}
 
-	private:
-		template <bool Test = detail_::Multipliable<Element_t>::value>
-		struct GetProduct
-		{
-			[[noreturn]] static void Get(Self_t const& self)
-			{
-				nat_Throw(natException, _T("Cannot apply such operation to this type."));
-			}
-		};
-
-		template <>
-		struct GetProduct<true>
-		{
-			static Element_t Get(Self_t const& self)
-			{
-				return self.aggregate(0, [](const Element_t& a, const Element_t& b) { return a * b; });
-			}
-		};
-
-	public:
 		auto product() const
 		{
-			return GetProduct<>::Get(*this);
+			return detail_::GetProduct<Self_t>::Get(*this);
 		}
 
 		template <typename CallableObj>

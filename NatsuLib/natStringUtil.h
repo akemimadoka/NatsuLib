@@ -4,6 +4,8 @@
 #include <sstream>
 #include <tuple>
 #include <iomanip>
+#include <locale>
+#include <typeinfo>
 
 namespace NatsuLib
 {
@@ -309,17 +311,17 @@ namespace NatsuLib
 						}
 						break;
 					default:
-						if (!_istdigit(*lpStr))
-						{
-							nat_Throw(natException, _T("Unknown token '%c'"), *lpStr);
-						}
-						else if (*lpStr == _T('0'))
+						if (*lpStr == _T('0'))
 						{
 							ss << std::setfill(*lpStr++);
 						}
+						else
+						{
+							nat_Throw(natException, _T("Unknown token '%c'"), *lpStr);
+						}
 
 						nuInt tmpWidth = 0;
-						while (_istdigit(*lpStr))
+						while (std::isdigit(*lpStr, std::locale{}))
 						{
 							tmpWidth = tmpWidth * 10 + (*lpStr++ - _T('0'));
 						}
@@ -336,13 +338,13 @@ namespace NatsuLib
 					++lpStr;
 					while (*lpStr)
 					{
-						if (_istblank(*lpStr))
+						if (std::isblank(*lpStr, std::locale{}))
 						{
 							++lpStr;
 							continue;
 						}
 
-						if (_istdigit(*lpStr))
+						if (std::isdigit(*lpStr, std::locale{}))
 						{
 							tmpIndex = tmpIndex * 10 + (*lpStr++ - _T('0'));
 							continue;
@@ -351,7 +353,7 @@ namespace NatsuLib
 						break;
 					}
 
-					while (_istblank(*lpStr)) { ++lpStr; }
+					while (std::isblank(*lpStr, std::locale{})) { ++lpStr; }
 					if (*lpStr != _T('}'))
 					{
 						nat_Throw(natException, _T("Expected '}', got '%c'"), *lpStr);
@@ -370,7 +372,7 @@ namespace NatsuLib
 		}
 
 		template <>
-		inline nTString FormatString(ncTStr lpStr) noexcept
+		inline nTString FormatString(ncTStr lpStr)
 		{
 			return lpStr;
 		}

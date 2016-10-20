@@ -70,18 +70,17 @@ natThread::ResultType natThread::execute(void* p)
 natThread::natThread(nBool Pause)
 	: m_Thread([this]()
 {
-	std::unique_lock<std::mutex> lock(m_Mutex);
-	m_Pause.wait(lock);
+	m_Pause.get_future().get();
 	std::promise<ResultType> Result;
 	m_Result = Result.get_future();
 	Result.set_value_at_thread_exit(ThreadJob());
 })
 {
-	m_Thread.join();
 	if (!Pause)
 	{
-		m_Pause.notify_all();
+		Resume();
 	}
+	//m_Thread.join();
 }
 
 natThread::~natThread()
@@ -90,7 +89,7 @@ natThread::~natThread()
 
 natThread::UnsafeHandle natThread::GetHandle() noexcept
 {
-	return m_Thread.native_handle();
+	return reinterpret_cast<UnsafeHandle>(m_Thread.native_handle());
 }
 
 natThread::ThreadIdType natThread::GetThreadId() const noexcept
@@ -100,7 +99,7 @@ natThread::ThreadIdType natThread::GetThreadId() const noexcept
 
 nBool natThread::Resume() noexcept
 {
-	m_Pause.notify_all();
+	m_Pause.set_value();
 	return true;
 }
 
@@ -284,7 +283,11 @@ void natThreadPool::KillIdleThreads(nBool Force)
 			{
 				if (!thread.second->Terminate(0))
 				{
+#ifdef _WIN32
 					nat_Throw(natWinException, _T("Cannot terminate thread."));
+#else
+					nat_Throw(natException, _T("Cannot terminate thread."));
+#endif
 				}
 			}
 			else
@@ -303,7 +306,11 @@ void natThreadPool::KillAllThreads(nBool Force)
 		{
 			if (!thread.second->Terminate(0))
 			{
+#ifdef _WIN32
 				nat_Throw(natWinException, _T("Cannot terminate thread."));
+#else
+				nat_Throw(natException, _T("Cannot terminate thread."));
+#endif
 			}
 		}
 		else
@@ -387,7 +394,11 @@ std::future<nuInt> natThreadPool::WorkerThread::SetWork(WorkFunc CallableObj, vo
 	m_LastResult = std::promise<nuInt>{};
 	if (!Resume())
 	{
+#ifdef _WIN32
 		nat_Throw(natWinException, _T("Cannot resume worker thread."));
+#else
+		nat_Throw(natException, _T("Cannot resume worker thread."));
+#endif
 	}
 	return m_LastResult.get_future();
 }
@@ -397,7 +408,11 @@ void natThreadPool::WorkerThread::RequestTerminate(nBool value)
 	m_ShouldTerminate = value;
 	if (m_Idle && !Resume() && !Terminate(0))
 	{
+#ifdef _WIN32
 		nat_Throw(natWinException, _T("Cannot terminate worker thread."));
+#else
+		nat_Throw(natException, _T("Cannot terminate worker thread."));
+#endif
 	}
 }
 
@@ -408,10 +423,14 @@ natThread::ResultType natThreadPool::WorkerThread::ThreadJob()
 		m_Idle = false;
 		m_LastResult.set_value(m_CallableObj(m_Arg));
 		m_Idle = true;
-		m_pPool->onWorkerThreadIdle(m_Index);
+		m_pPool->onWorkerThreadIdle(m_Index, m_ShouldTerminate);
 		if (!m_ShouldTerminate && m_Idle && !Suspend())
 		{
+#ifdef _WIN32
 			nat_Throw(natWinException, _T("Cannot suspend worker thread."));
+#else
+			nat_Throw(natException, _T("Cannot suspend worker thread."));
+#endif
 		}
 	}
 	
@@ -439,11 +458,7 @@ nuInt natThreadPool::getNextAvailableIndex()
 
 nuInt natThreadPool::getIdleThreadIndex()
 {
-	m_Section.Lock();
-	auto scope = make_scope([this]()
-	{
-		m_Section.UnLock();
-	});
+	natRefScopeGuard<natCriticalSection> guard{ m_Section };
 
 	for (auto&& thread : m_Threads)
 	{
@@ -456,15 +471,11 @@ nuInt natThreadPool::getIdleThreadIndex()
 	return std::numeric_limits<nuInt>::max();
 }
 
-void natThreadPool::onWorkerThreadIdle(nuInt Index)
+void natThreadPool::onWorkerThreadIdle(nuInt Index, bool isTerminating)
 {
-	m_Section.Lock();
-	auto scope = make_scope([this]()
-	{
-		m_Section.UnLock();
-	});
+	natRefScopeGuard<natCriticalSection> guard{ m_Section };
 
-	if (!m_WorkQueue.empty())
+	if (!isTerminating && !m_WorkQueue.empty())
 	{
 		auto&& work = m_WorkQueue.front();
 		auto&& ret = m_Threads[Index]->SetWork(std::get<0>(work), std::get<1>(work));

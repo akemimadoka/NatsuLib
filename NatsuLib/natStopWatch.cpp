@@ -47,7 +47,6 @@ void natStopWatch::Pause()
 
 void natStopWatch::Resume()
 {
-	m_cFixAll.QuadPart += tNow.QuadPart - m_cFixStart.QuadPart;
 	m_FixAll += std::chrono::high_resolution_clock::now() - m_FixStart;
 }
 
@@ -57,7 +56,7 @@ void natStopWatch::Reset()
 	m_Last = std::chrono::high_resolution_clock::now();
 }
 
-nDouble natStopWatch::GetElpased()
+nDouble natStopWatch::GetElpased() const
 {
 	return static_cast<nDouble>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - m_Last - m_FixAll.time_since_epoch()).count());
 }

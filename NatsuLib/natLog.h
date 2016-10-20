@@ -165,7 +165,11 @@ namespace NatsuLib
 				auto&& eventLogUpdated(static_cast<EventLogUpdated&>(event));
 				auto time = std::chrono::system_clock::to_time_t(eventLogUpdated.GetTime());
 				tm timeStruct;
+#ifdef _MSC_VER
 				localtime_s(&timeStruct, &time);
+#else
+				timeStruct = *localtime(&time);
+#endif
 				auto logType = static_cast<LogType>(eventLogUpdated.GetLogType());
 				auto logStr = natUtil::FormatString(_T("[{0}] [{1}] {2}"), std::put_time(&timeStruct, _T("%F %T")), GetDefaultLogTypeName(logType), eventLogUpdated.GetData());
 				switch (logType)

@@ -157,7 +157,7 @@ namespace NatsuLib
 			return *this;
 		}
 
-		natRefPointer& operator=(nullptr_t)
+		natRefPointer& operator=(std::nullptr_t)
 		{
 			SafeRelease(m_pPointer);
 			return *this;
@@ -208,11 +208,15 @@ namespace NatsuLib
 	}
 }
 
-template <typename T>
-struct std::hash<NatsuLib::natRefPointer<T>>
+namespace std
 {
-	size_t operator()(NatsuLib::natRefPointer<T> const& _Keyval) const
+	template <typename T>
+	struct hash<NatsuLib::natRefPointer<T>>
 	{
-		return hash<T*>()(_Keyval.Get());
-	}
-};
+		size_t operator()(NatsuLib::natRefPointer<T> const& _Keyval) const
+		{
+			return hash<T*>()(_Keyval.Get());
+		}
+	};
+}
+
