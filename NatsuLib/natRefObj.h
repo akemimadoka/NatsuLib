@@ -106,6 +106,11 @@ namespace NatsuLib
 			}
 		}
 
+		constexpr natRefPointer(std::nullptr_t) noexcept
+			: m_pPointer(nullptr)
+		{
+		}
+
 		constexpr natRefPointer(natRefPointer const& other) noexcept
 			: m_pPointer(other.m_pPointer)
 		{

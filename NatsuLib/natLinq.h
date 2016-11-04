@@ -840,6 +840,14 @@ namespace NatsuLib
 		{
 		}
 
+		LinqEnumerable& operator=(LinqEnumerable const& other)
+		{
+			m_Range = other.m_Range;
+			m_Size = other.m_Size;
+
+			return *this;
+		}
+
 		constexpr Iter_t begin() const
 		{
 			return m_Range.begin();

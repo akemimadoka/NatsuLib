@@ -59,7 +59,7 @@ int main()
 
 		{
 			int arr[] = { 1, 2, 3, 4, 5 };
-			for (auto&& item : from(make_range(arr)).select([](int i){ return i + 1; }).where([](int i){ return i > 3; }))
+			for (auto&& item : from(arr).select([](int i){ return i + 1; }).where([](int i){ return i > 3; }))
 			{
 				logger.LogMsg(_T("%d"), item);
 			}
@@ -67,7 +67,7 @@ int main()
 		}
 
 		{
-			natThreadPool pool(2, 4);
+			natThreadPool pool{ 2, 4 };
 			auto ret = pool.QueueWork([](void* Param)
 			{
 				using namespace std::chrono_literals;
@@ -80,7 +80,7 @@ int main()
 			logger.LogMsg(_T("Work finished with result {0}."), result.GetResult().get());
 			pool.WaitAllJobsFinish();
 		}
-
+#ifdef EnableStackWalker
 		{
 			natStackWalker stackWalker;
 			stackWalker.CaptureStack();
@@ -91,7 +91,7 @@ int main()
 				logger.LogMsg(_T("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"), symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
 			}
 		}
-
+#endif
 		{
 			natCriticalSection cs;
 			natRefScopeGuard<natCriticalSection> sg(cs);
@@ -136,5 +136,9 @@ int main()
 #endif
 	}
 
+#ifdef _WIN32
 	system("pause");
+#else
+	getchar();
+#endif
 }

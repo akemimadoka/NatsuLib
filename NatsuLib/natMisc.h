@@ -298,11 +298,21 @@ namespace NatsuLib
 		{
 			if (m_Value.Constructed())
 			{
-				m_Value.Get() = other.m_Value.Get();
+				if (other.m_Value.Constructed())
+				{
+					m_Value.Get() = other.m_Value.Get();
+				}
+				else
+				{
+					m_Value.Init();
+				}
 			}
 			else
 			{
-				m_Value.Init(other.m_Value.Get());
+				if (other.m_Value.Constructed())
+				{
+					m_Value.Init(other.m_Value.Get());
+				}
 			}
 			
 			return *this;
@@ -312,18 +322,28 @@ namespace NatsuLib
 		{
 			if (m_Value.Constructed())
 			{
-				m_Value.Get() = other.m_Value.Get();
+				if (other.m_Value.Constructed())
+				{
+					m_Value.Get() = other.m_Value.Get();
+				}
+				else
+				{
+					m_Value.Init();
+				}
 			}
 			else
 			{
-				m_Value.Init(other.m_Value.Get());
+				if (other.m_Value.Constructed())
+				{
+					m_Value.Init(other.m_Value.Get());
+				}
 			}
 			
 			return *this;
 		}
 
 		template <typename U>
-		Optional& operator=(U&& value) &
+		std::enable_if_t<std::is_same<std::decay_t<U>, T>::value, Optional&> operator=(U&& value) &
 		{
 			if (m_Value.Constructed())
 			{
