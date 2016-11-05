@@ -18,3 +18,8 @@ namespace NatsuLib
 }
 
 #define REQUIRES(OriginalReturnType, ...) std::enable_if_t<(__VA_ARGS__), OriginalReturnType>
+
+#define HasMemberTrait(membername) template <typename T, typename Test = void>\
+struct HasMemberNamed##membername : std::false_type {};\
+template <typename T>\
+struct HasMemberNamed##membername<T, std::void_t<decltype(T::membername)>> : std::true_type {}

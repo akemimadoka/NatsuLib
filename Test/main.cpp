@@ -14,6 +14,8 @@ struct Incrementable
 {
 	template <typename T>
 	auto requires_(T&& x) -> decltype(++x);
+
+	int foo;
 };
 
 template <typename T>
@@ -21,6 +23,8 @@ REQUIRES(void, std::conjunction<Models<Incrementable(T)>>::value) increment(T& x
 {
 	++x;
 }
+
+HasMemberTrait(foo);
 
 int main()
 {
@@ -38,6 +42,8 @@ int main()
 	{
 		logger.LogMsg(_T("{1} {0}"), _T("≤‚ ‘÷–Œƒ"), 123);
 		
+		constexpr auto test = HasMemberNamedfoo<Incrementable>::value;
+
 		int t = 5;
 		increment(t);
 		auto scope = make_scope([&logger](int i)
