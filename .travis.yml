@@ -2,4 +2,4 @@ language: cpp
 compiler: g++
 
 script:
-  - cmake
+  - cmake --build
