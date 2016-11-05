@@ -1,0 +1,43 @@
+cmake_minimum_required(VERSION 3.3)
+project(NatsuLib)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+
+set(SOURCE_FILES
+    NatsuLib/natConcepts.h
+    NatsuLib/natConfig.h
+    NatsuLib/natDelegate.h
+    NatsuLib/natEvent.cpp
+    NatsuLib/natEvent.h
+    NatsuLib/natException.h
+    NatsuLib/natInterface.h
+    NatsuLib/natLinq.h
+    NatsuLib/natLog.cpp
+    NatsuLib/natLog.h
+    NatsuLib/natMat.h
+    NatsuLib/natMath.h
+    NatsuLib/natMisc.h
+    NatsuLib/natMultiThread.cpp
+    NatsuLib/natMultiThread.h
+    NatsuLib/natNamedPipe.cpp
+    NatsuLib/natNamedPipe.h
+    NatsuLib/natNode.h
+    NatsuLib/natQuat.h
+    NatsuLib/natRefObj.h
+    NatsuLib/natStackWalker.cpp
+    NatsuLib/natStackWalker.h
+    NatsuLib/natStopWatch.cpp
+    NatsuLib/natStopWatch.h
+    NatsuLib/natStream.cpp
+    NatsuLib/natStream.h
+    NatsuLib/natStringUtil.h
+    NatsuLib/natTransform.h
+    NatsuLib/natType.h
+    NatsuLib/natUtil.cpp
+    NatsuLib/natUtil.h
+    NatsuLib/natVec.h
+    NatsuLib/stdafx.cpp
+    NatsuLib/stdafx.h
+    NatsuLib/targetver.h)
+
+add_library(NatsuLib STATIC ${SOURCE_FILES})
