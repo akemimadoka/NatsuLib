@@ -46,11 +46,6 @@ namespace NatsuLib
 		natNamedPipeServerStream(ncTStr Pipename, PipeDirection Direction, nuInt MaxInstances, nuInt OutBuffer = 1024, nuInt InBuffer = 1024, nuInt TimeOut = 0, PipeMode TransmissionMode = PipeMode::Message, PipeMode ReadMode = PipeMode::Message, PipeOptions Options = PipeOptions::WriteThrough);
 		~natNamedPipeServerStream();
 
-		NatErr GetLastErr() const override
-		{
-			return m_LastErr;
-		}
-
 		nBool CanWrite() const override
 		{
 			return m_bWritable;
@@ -76,9 +71,9 @@ namespace NatsuLib
 			return 0ul;
 		}
 
-		nResult SetSize(nLen /*Size*/) override
+		void SetSize(nLen /*Size*/) override
 		{
-			return m_LastErr = NatErr_NotSupport;
+			nat_Throw(natErrException, NatErr_NotSupport, _T("This type of stream does not support SetSize."));
 		}
 
 		nLen GetPosition() const override
@@ -86,17 +81,16 @@ namespace NatsuLib
 			return 0ul;
 		}
 
-		nResult SetPosition(NatSeek /*Origin*/, nLong /*Offset*/) override
+		void SetPosition(NatSeek /*Origin*/, nLong /*Offset*/) override
 		{
-			return m_LastErr = NatErr_NotSupport;
+			nat_Throw(natErrException, NatErr_NotSupport, _T("This type of stream does not support SetPosition."));
 		}
 
 		nLen ReadBytes(nData pData, nLen Length) override;
+		std::future<nLen> ReadBytesAsync(nData pData, nLen Length) override;
 		nLen WriteBytes(ncData pData, nLen Length) override;
+		std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) override;
 		void Flush() override;
-		void Lock() override;
-		nResult TryLock() override;
-		void Unlock() override;
 
 		void WaitForConnection();
 		std::future<void> WaitForConnectionAsync();
@@ -118,9 +112,7 @@ namespace NatsuLib
 
 	private:
 		UnsafeHandle m_hPipe;
-		natCriticalSection m_Section;
 		nBool m_bAsync, m_bConnected, m_bMessageComplete, m_bReadable, m_bWritable;
-		NatErr m_LastErr;
 	};
 
 	class natNamedPipeClientStream
@@ -150,9 +142,9 @@ namespace NatsuLib
 			return 0ul;
 		}
 
-		nResult SetSize(nLen /*Size*/) override
+		void SetSize(nLen /*Size*/) override
 		{
-			return m_LastErr = NatErr_NotSupport;
+			nat_Throw(natErrException, NatErr_NotSupport, _T("This type of stream does not support SetSize."));
 		}
 
 		nLen GetPosition() const override
@@ -160,26 +152,23 @@ namespace NatsuLib
 			return 0ul;
 		}
 
-		nResult SetPosition(NatSeek /*Origin*/, nLong /*Offset*/) override
+		void SetPosition(NatSeek /*Origin*/, nLong /*Offset*/) override
 		{
-			return m_LastErr = NatErr_NotSupport;
+			nat_Throw(natErrException, NatErr_NotSupport, _T("This type of stream does not support SetPosition."));
 		}
 
-		NatErr GetLastErr() const override;
 		nBool CanWrite() const override;
 		nBool CanRead() const override;
 		nLen ReadBytes(nData pData, nLen Length) override;
+		std::future<nLen> ReadBytesAsync(nData pData, nLen Length) override;
 		nLen WriteBytes(ncData pData, nLen Length) override;
+		std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) override;
 		void Flush() override;
-		void Lock() override;
-		nResult TryLock() override;
-		void Unlock() override;
 
-		nResult Wait(nuInt timeOut = Infinity);
+		void Wait(nuInt timeOut = Infinity);
 
 	private:
 		std::unique_ptr<natFileStream> m_InternalStream;
-		NatErr m_LastErr;
 		nTString m_PipeName;
 		nBool m_bReadable, m_bWritable;
 	};

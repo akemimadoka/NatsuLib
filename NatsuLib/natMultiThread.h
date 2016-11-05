@@ -31,17 +31,12 @@ namespace NatsuLib
 	///			请确保线程类在执行期间保持有效
 	////////////////////////////////////////////////////////////////////////////////
 	class natThread
+		: public noncopyable
 	{
 	public:
-#ifdef _WIN32
-		typedef DWORD ThreadIdType;
-		typedef DWORD ResultType;
-		typedef HANDLE UnsafeHandle;
-#else
 		typedef std::thread::id ThreadIdType;
 		typedef unsigned long ResultType;
 		typedef nUnsafePtr<void> UnsafeHandle;
-#endif
 
 		enum : nuInt
 		{
@@ -61,42 +56,25 @@ namespace NatsuLib
 
 		///	@brief	继续线程执行
 		///	@return	是否成功
-		nBool Resume() noexcept;
-
-		///	@brief	阻塞线程执行
-		///	@return	是否成功
-		nBool Suspend() noexcept;
+		void Resume() noexcept;
 
 		///	@brief	等待线程执行
 		///	@param[in]	WaitTime	等待时间
 		///	@return	返回时是否未超时
-		nBool Wait(nuInt WaitTime = Infinity) noexcept;
-
-		///	@brief	结束线程
-		///	@param[in]	ExitCode	退出码
-		///	@return	是否成功
-		nBool Terminate(nuInt ExitCode = nuInt(-1)) noexcept;
+		nBool Wait(nuInt WaitTime = Infinity) const noexcept;
 
 		///	@brief	获得退出码
 		nuInt GetExitCode();
+
 	protected:
 		///	@brief	重写此方法以实现线程工作
 		virtual ResultType ThreadJob() = 0;
 
 	private:
-#ifdef _WIN32
-		///	@brief	执行线程的包装函数
-		///	@param[in]	p	指向Thread类的指针
-		static ResultType CALLBACK execute(void* p);
-		UnsafeHandle m_hThread;
-		ThreadIdType m_hThreadID;
-#else
+		std::atomic_bool m_Paused;
 		std::promise<void> m_Pause;
 		std::future<ResultType> m_Result;
-		//std::mutex m_Mutex;
-		//std::condition_variable m_Pause;
 		std::thread m_Thread;
-#endif
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -315,26 +293,26 @@ namespace NatsuLib
 			: public natThread
 		{
 		public:
-			WorkerThread(natThreadPool* pPool, nuInt Index);
-			WorkerThread(natThreadPool* pPool, nuInt Index, WorkFunc CallableObj, void* Param = nullptr);
+			WorkerThread(natThreadPool& pool, nuInt Index);
+			WorkerThread(natThreadPool& pool, nuInt Index, WorkFunc CallableObj, void* Param = nullptr);
 			~WorkerThread() = default;
-
-			WorkerThread(WorkerThread const&) = delete;
-			WorkerThread& operator=(WorkerThread const&) = delete;
 
 			nBool IsIdle() const;
 			std::future<nuInt> SetWork(WorkFunc CallableObj, void* Param = nullptr);
 
-			void RequestTerminate(nBool value = true);
+			void RequestTerminate();
 
 		private:
 			ResultType ThreadJob() override;
 
-			natThreadPool* m_pPool;
+			natThreadPool& m_Pool;
 			const nuInt m_Index;
 			WorkFunc m_CallableObj;
 			void* m_Arg;
+			bool m_First;
 			std::promise<nuInt> m_LastResult;
+			std::mutex m_Mutex;
+			std::condition_variable m_Cond;
 
 			std::atomic<nBool> m_Idle, m_ShouldTerminate;
 		};

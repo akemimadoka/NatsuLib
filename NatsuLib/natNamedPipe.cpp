@@ -8,7 +8,7 @@ using namespace NatsuLib;
 #ifdef _WIN32
 
 natNamedPipeServerStream::natNamedPipeServerStream(ncTStr Pipename, PipeDirection Direction, nuInt MaxInstances, nuInt OutBuffer, nuInt InBuffer, nuInt TimeOut, PipeMode TransmissionMode, PipeMode ReadMode, PipeOptions Options)
-	: m_hPipe(nullptr), m_bAsync(Options == PipeOptions::Asynchronous), m_bConnected(false), m_bMessageComplete(false), m_bReadable(false), m_bWritable(false), m_LastErr(NatErr_OK)
+	: m_hPipe(nullptr), m_bAsync(Options == PipeOptions::Asynchronous), m_bConnected(false), m_bMessageComplete(false), m_bReadable(false), m_bWritable(false)
 {
 	DWORD dir;
 	switch (Direction)
@@ -58,8 +58,7 @@ nLen natNamedPipeServerStream::ReadBytes(nData pData, nLen Length)
 	DWORD tReadBytes = 0ul;
 	if (!m_bReadable || !m_bConnected)
 	{
-		m_LastErr = NatErr_IllegalState;
-		return tReadBytes;
+		nat_Throw(natErrException, NatErr_IllegalState, _T("Stream is not readable or not connected."));
 	}
 
 	if (Length == 0ul)
@@ -69,22 +68,23 @@ nLen natNamedPipeServerStream::ReadBytes(nData pData, nLen Length)
 
 	if (pData == nullptr)
 	{
-		m_LastErr = NatErr_InvalidArg;
-		return tReadBytes;
+		nat_Throw(natErrException, NatErr_InvalidArg, _T("pData cannot be nullptr"));
 	}
 
 	if (ReadFile(m_hPipe, pData, static_cast<DWORD>(Length), &tReadBytes, NULL) == FALSE)
 	{
-		m_LastErr = NatErr_InternalErr;
-		return tReadBytes;
-	}
-
-	if (tReadBytes != Length)
-	{
-		m_LastErr = NatErr_OutOfRange;
+		nat_Throw(natWinException, _T("ReadFile failed."));
 	}
 
 	return tReadBytes;
+}
+
+std::future<nLen> natNamedPipeServerStream::ReadBytesAsync(nData pData, nLen Length)
+{
+	return std::async([=]()
+	{
+		return ReadBytes(pData, Length);
+	});
 }
 
 nLen natNamedPipeServerStream::WriteBytes(ncData pData, nLen Length)
@@ -92,8 +92,7 @@ nLen natNamedPipeServerStream::WriteBytes(ncData pData, nLen Length)
 	DWORD tWriteBytes = 0ul;
 	if (!m_bWritable || !m_bConnected)
 	{
-		m_LastErr = NatErr_IllegalState;
-		return tWriteBytes;
+		nat_Throw(natErrException, NatErr_IllegalState, _T("Stream is not writable or not connected."));
 	}
 
 	if (Length == 0ul)
@@ -103,42 +102,28 @@ nLen natNamedPipeServerStream::WriteBytes(ncData pData, nLen Length)
 
 	if (pData == nullptr)
 	{
-		m_LastErr = NatErr_InvalidArg;
-		return tWriteBytes;
+		nat_Throw(natErrException, NatErr_InvalidArg, _T("pData cannot be nullptr"));
 	}
 
 	if (WriteFile(m_hPipe, pData, static_cast<DWORD>(Length), &tWriteBytes, NULL) == FALSE)
 	{
-		m_LastErr = NatErr_InternalErr;
-		return tWriteBytes;
-	}
-
-	if (tWriteBytes != Length)
-	{
-		m_LastErr = NatErr_OutOfRange;
+		nat_Throw(natWinException, _T("WriteFile failed."));
 	}
 
 	return tWriteBytes;
 }
 
+std::future<nLen> natNamedPipeServerStream::WriteBytesAsync(ncData pData, nLen Length)
+{
+	return std::async([=]()
+	{
+		return WriteBytes(pData, Length);
+	});
+}
+
 void natNamedPipeServerStream::Flush()
 {
 	FlushFileBuffers(m_hPipe);
-}
-
-void natNamedPipeServerStream::Lock()
-{
-	m_Section.Lock();
-}
-
-nResult natNamedPipeServerStream::TryLock()
-{
-	return m_Section.TryLock();
-}
-
-void natNamedPipeServerStream::Unlock()
-{
-	m_Section.UnLock();
 }
 
 void natNamedPipeServerStream::WaitForConnection()
@@ -214,13 +199,8 @@ std::future<void> natNamedPipeServerStream::WaitForConnectionAsync()
 }
 
 natNamedPipeClientStream::natNamedPipeClientStream(ncTStr Pipename, nBool bReadable, nBool bWritable)
-	: m_LastErr(NatErr_OK), m_PipeName(Pipename), m_bReadable(bReadable), m_bWritable(bWritable)
+	: m_PipeName(Pipename), m_bReadable(bReadable), m_bWritable(bWritable)
 {
-}
-
-NatErr natNamedPipeClientStream::GetLastErr() const
-{
-	return m_LastErr == NatErr_OK ? (m_InternalStream ? m_InternalStream->GetLastErr() : NatErr_IllegalState) : m_LastErr;
 }
 
 nBool natNamedPipeClientStream::CanWrite() const
@@ -247,12 +227,21 @@ nLen natNamedPipeClientStream::ReadBytes(nData pData, nLen Length)
 {
 	if (!m_InternalStream)
 	{
-		m_LastErr = NatErr_IllegalState;
-		return 0ul;
+		nat_Throw(natErrException, NatErr_IllegalState, _T("Internal stream is not ready."));
 	}
 
 	auto ret = m_InternalStream->ReadBytes(pData, Length);
-	m_LastErr = NatErr_OK;
+	return ret;
+}
+
+std::future<nLen> natNamedPipeClientStream::ReadBytesAsync(nData pData, nLen Length)
+{
+	if (!m_InternalStream)
+	{
+		nat_Throw(natErrException, NatErr_IllegalState, _T("Internal stream is not ready."));
+	}
+
+	auto ret = m_InternalStream->ReadBytesAsync(pData, Length);
 	return ret;
 }
 
@@ -260,12 +249,21 @@ nLen natNamedPipeClientStream::WriteBytes(ncData pData, nLen Length)
 {
 	if (!m_InternalStream)
 	{
-		m_LastErr = NatErr_IllegalState;
-		return 0ul;
+		nat_Throw(natErrException, NatErr_IllegalState, _T("Internal stream is not ready."));
 	}
 
 	auto ret = m_InternalStream->WriteBytes(pData, Length);
-	m_LastErr = NatErr_OK;
+	return ret;
+}
+
+std::future<nLen> natNamedPipeClientStream::WriteBytesAsync(ncData pData, nLen Length)
+{
+	if (!m_InternalStream)
+	{
+		nat_Throw(natErrException, NatErr_IllegalState, _T("Internal stream is not ready."));
+	}
+
+	auto ret = m_InternalStream->WriteBytesAsync(pData, Length);
 	return ret;
 }
 
@@ -274,36 +272,19 @@ void natNamedPipeClientStream::Flush()
 	m_InternalStream->Flush();
 }
 
-void natNamedPipeClientStream::Lock()
-{
-	m_InternalStream->Lock();
-}
-
-nResult natNamedPipeClientStream::TryLock()
-{
-	return m_InternalStream->TryLock();
-}
-
-void natNamedPipeClientStream::Unlock()
-{
-	m_InternalStream->Unlock();
-}
-
-nResult natNamedPipeClientStream::Wait(nuInt timeOut)
+void natNamedPipeClientStream::Wait(nuInt timeOut)
 {
 	if (m_InternalStream)
 	{
-		return m_LastErr = NatErr_IllegalState;
+		nat_Throw(natErrException, NatErr_IllegalState, _T("Internal stream is not ready."));
 	}
 
 	if (!WaitNamedPipe(m_PipeName.c_str(), timeOut == Infinity ? NMPWAIT_WAIT_FOREVER : timeOut))
 	{
-		return m_LastErr = NatErr_InternalErr;
+		nat_Throw(natWinException, _T("WaitNamedPipe failed."));
 	}
 
-	m_InternalStream = move(std::make_unique<natFileStream>(m_PipeName.c_str(), m_bReadable, m_bWritable));
-
-	return m_LastErr = NatErr_OK;
+	m_InternalStream = std::make_unique<natFileStream>(m_PipeName.c_str(), m_bReadable, m_bWritable);
 }
 
 #endif

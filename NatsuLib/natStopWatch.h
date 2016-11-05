@@ -4,6 +4,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "natConfig.h"
+#include "natType.h"
 #ifdef _WIN32
 #include <Windows.h>
 #else
