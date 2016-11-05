@@ -2,4 +2,5 @@ language: cpp
 compiler: g++
 
 script:
-  - cmake
+  - mkdir bin
+  - cmake . --build bin
