@@ -13,7 +13,7 @@ ddons:
       - gcc-6
       - g++-6
       - cmake
-compiler: g++
+compiler: g++-6
 
 script:
   - cmake .
