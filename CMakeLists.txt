@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 project(NatsuLib)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra")
 
 set(SOURCE_FILES
     NatsuLib/natConcepts.h

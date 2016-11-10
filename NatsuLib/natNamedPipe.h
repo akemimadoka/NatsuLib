@@ -2,8 +2,10 @@
 #include "natStream.h"
 #include <future>
 
-#pragma push_macro("max")
-#undef max
+#ifdef _MSC_VER
+#	pragma push_macro("max")
+#	undef max
+#endif
 
 namespace NatsuLib
 {
@@ -62,6 +64,11 @@ namespace NatsuLib
 		}
 
 		nBool CanSeek() const override
+		{
+			return false;
+		}
+
+		nBool IsEndOfStream() const override
 		{
 			return false;
 		}
@@ -142,6 +149,11 @@ namespace NatsuLib
 			return 0ul;
 		}
 
+		nBool IsEndOfStream() const override
+		{
+			return false;
+		}
+
 		void SetSize(nLen /*Size*/) override
 		{
 			nat_Throw(natErrException, NatErr_NotSupport, _T("This type of stream does not support SetSize."));
@@ -174,4 +186,6 @@ namespace NatsuLib
 	};
 }
 
-#pragma pop_macro("max")
+#ifdef _MSC_VER
+#	pragma pop_macro("max")
+#endif

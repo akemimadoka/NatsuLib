@@ -55,6 +55,11 @@ nBool natFileStream::CanSeek() const
 	return true;
 }
 
+nBool natFileStream::IsEndOfStream() const
+{
+	return GetSize() == GetPosition();
+}
+
 nLen natFileStream::GetSize() const
 {
 	return GetFileSize(m_hFile, NULL);
@@ -241,7 +246,198 @@ natFileStream::~natFileStream()
 	CloseHandle(m_hFile);
 }
 #else
-	// TODO
+natFileStream::natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable)
+	: m_CurrentPos(0), m_Filename(lpFilename), m_bReadable(bReadable), m_bWritable(bWritable)
+{
+	std::ios_base::openmode openmode{};
+	if (bReadable)
+	{
+		openmode |= std::ios_base::in;
+	}
+	if (bWritable)
+	{
+		openmode |= std::ios_base::out;
+	}
+
+	m_File.open(lpFilename, openmode);
+	if (!m_File.is_open())
+	{
+		nat_Throw(natErrException, NatErr_InternalErr, _T("Cannot open file \"{0}\"."), lpFilename);
+	}
+
+	auto current = m_File.tellg();
+	m_File.seekg(0, std::ios_base::end);
+	m_Size = static_cast<nLen>(m_File.tellg() - current);
+	m_File.seekg(current);
+}
+
+nBool natFileStream::CanWrite() const
+{
+	return m_bWritable;
+}
+
+nBool natFileStream::CanRead() const
+{
+	return m_bReadable;
+}
+
+nBool natFileStream::CanResize() const
+{
+	return m_bWritable;
+}
+
+nBool natFileStream::CanSeek() const
+{
+	return true;
+}
+
+nBool natFileStream::IsEndOfStream() const
+{
+	return m_File.eof();
+}
+
+nLen natFileStream::GetSize() const
+{
+	return m_Size;
+}
+
+void natFileStream::SetSize(nLen Size)
+{
+	if (!m_bWritable)
+	{
+		nat_Throw(natErrException, NatErr_IllegalState, _T("Stream is not writable."));
+	}
+
+	if (Size < m_Size)
+	{
+		nat_Throw(natErrException, NatErr_InvalidArg, _T("Cannot truncate file."));
+	}
+
+	if (Size == m_Size)
+	{
+		return;
+	}
+
+	auto current = m_File.tellp();
+	m_File.seekp(Size);
+	m_File.seekp(current);
+	m_Size = Size;
+}
+
+nLen natFileStream::GetPosition() const
+{
+	return m_CurrentPos;
+}
+
+void natFileStream::SetPosition(NatSeek Origin, nLong Offset)
+{
+	std::ios_base::seekdir tOrigin;
+	switch (Origin)
+	{
+	case NatSeek::Beg:
+		tOrigin = std::ios_base::beg;
+		break;
+	case NatSeek::Cur:
+		tOrigin = std::ios_base::cur;
+		break;
+	case NatSeek::End:
+		tOrigin = std::ios_base::end;
+		break;
+	default:
+		nat_Throw(natErrException, NatErr_InvalidArg, _T("Origin is not a valid NatSeek."));
+	}
+
+	m_File.seekp(Offset, tOrigin);
+	m_CurrentPos = static_cast<nLen>(m_File.tellp());
+}
+
+nLen natFileStream::ReadBytes(nData pData, nLen Length)
+{
+	if (!m_bReadable)
+	{
+		nat_Throw(natErrException, NatErr_IllegalState, _T("Stream is not readable."));
+	}
+
+	if (Length == 0ul)
+	{
+		return 0;
+	}
+
+	if (pData == nullptr)
+	{
+		nat_Throw(natErrException, NatErr_InvalidArg, _T("pData cannot be nullptr."));
+	}
+
+	auto size = m_File.readsome(reinterpret_cast<char*>(pData), static_cast<std::streamsize>(Length));
+	if (m_File.fail())
+	{
+		nat_Throw(natErrException, NatErr_InternalErr, _T("Reading file failed after readed {0} bytes."), size);
+	}
+
+	m_CurrentPos = static_cast<nLen>(m_File.tellg());
+	return size;
+}
+
+std::future<nLen> natFileStream::ReadBytesAsync(nData pData, nLen Length)
+{
+	return std::async([=]()
+	{
+		return ReadBytes(pData, Length);
+	});
+}
+
+nLen natFileStream::WriteBytes(ncData pData, nLen Length)
+{
+	if (!m_bWritable)
+	{
+		nat_Throw(natErrException, NatErr_IllegalState, _T("Stream is not writable."));
+	}
+
+	if (Length == 0ul)
+	{
+		return 0;
+	}
+
+	if (pData == nullptr)
+	{
+		nat_Throw(natErrException, NatErr_InvalidArg, _T("pData cannot be nullptr."));
+	}
+
+	m_File.write(reinterpret_cast<const char*>(pData), static_cast<std::streamsize>(Length));
+	auto current = m_File.tellp();
+	auto size = current - static_cast<std::streamoff>(m_CurrentPos);
+
+	if (m_File.fail())
+	{
+		nat_Throw(natErrException, NatErr_InternalErr, _T("Writing file failed after wrote {0} bytes."), size);
+	}
+
+	m_CurrentPos = static_cast<nLen>(current);
+	return size;
+}
+
+std::future<nLen> natFileStream::WriteBytesAsync(ncData pData, nLen Length)
+{
+	return std::async([=]()
+	{
+		return WriteBytes(pData, Length);
+	});
+}
+
+void natFileStream::Flush()
+{
+	m_File.flush();
+}
+
+ncTStr natFileStream::GetFilename() const noexcept
+{
+	return m_Filename.c_str();
+}
+
+natFileStream::~natFileStream()
+{
+}
+
 #endif
 
 natMemoryStream::natMemoryStream(ncData pData, nLen Length, nBool bReadable, nBool bWritable, nBool bResizable)
@@ -284,6 +480,11 @@ nBool natMemoryStream::CanResize() const
 nBool natMemoryStream::CanSeek() const
 {
 	return true;
+}
+
+nBool natMemoryStream::IsEndOfStream() const
+{
+	return m_CurPos >= m_Length;
 }
 
 nLen natMemoryStream::GetSize() const
@@ -330,17 +531,17 @@ void natMemoryStream::SetPosition(NatSeek Origin, nLong Offset)
 	switch (Origin)
 	{
 	case NatSeek::Beg:
-		if (m_Length - Offset < 0 || Offset < 0)
+		if (Offset < 0 || m_Length < static_cast<nLen>(Offset))
 			nat_Throw(natErrException, NatErr_OutOfRange, _T("Out of range."));
 		m_CurPos = Offset;
 		break;
 	case NatSeek::Cur:
-		if (m_Length - m_CurPos - Offset > 0 || m_CurPos + Offset < 0)
+		if ((Offset < 0 && m_CurPos < static_cast<nLen>(-Offset)) || m_Length > static_cast<nLen>(m_CurPos + Offset))
 			nat_Throw(natErrException, NatErr_OutOfRange, _T("Out of range."));
 		m_CurPos += Offset;
 		break;
 	case NatSeek::End:
-		if (Offset > 0 || m_Length + Offset < 0)
+		if (Offset > 0 || m_Length < static_cast<nLen>(-Offset))
 			nat_Throw(natErrException, NatErr_OutOfRange, _T("Out of range."));
 		m_CurPos = m_Length + Offset;
 		break;

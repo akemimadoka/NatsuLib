@@ -21,6 +21,8 @@ namespace NatsuLib
 	{
 		struct Constants final
 		{
+			Constants() = delete;
+
 			static constexpr nDouble PI =
 #ifdef M_PI
 				M_PI
@@ -30,7 +32,6 @@ namespace NatsuLib
 				;
 
 			static constexpr nDouble DegtoRad = PI / 180.0;
-
 			static constexpr nDouble RadtoDeg = 180.0 / PI;
 		};
 

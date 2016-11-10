@@ -6,6 +6,10 @@
 #include "natRefObj.h"
 #include "natMultiThread.h"
 
+#ifndef _WIN32
+#	include <fstream>
+#endif
+
 namespace NatsuLib
 {
 	////////////////////////////////////////////////////////////////////////////////
@@ -37,6 +41,9 @@ namespace NatsuLib
 
 		///	@brief		流是否可寻址
 		virtual nBool CanSeek() const = 0;
+
+		///	@brief		流是否已到达结尾
+		virtual nBool IsEndOfStream() const = 0;
 
 		///	@brief		获得流的大小
 		virtual nLen GetSize() const = 0;
@@ -99,6 +106,7 @@ namespace NatsuLib
 		nBool CanRead() const override;
 		nBool CanResize() const override;
 		nBool CanSeek() const override;
+		nBool IsEndOfStream() const override;
 		nLen GetSize() const override;
 		void SetSize(nLen Size) override;
 		nLen GetPosition() const override;
@@ -131,18 +139,20 @@ namespace NatsuLib
 	public:
 #ifdef _WIN32
 		typedef HANDLE UnsafeHandle;
-#else
-		typedef nUnsafePtr<void> UnsafeHandle;
 #endif
 
 		natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable);
+#ifdef _WIN32
 		natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable);
+#endif
+
 		~natFileStream();
 
 		nBool CanWrite() const override;
 		nBool CanRead() const override;
 		nBool CanResize() const override;
 		nBool CanSeek() const override;
+		nBool IsEndOfStream() const override;
 		nLen GetSize() const override;
 		void SetSize(nLen Size) override;
 		nLen GetPosition() const override;
@@ -154,15 +164,21 @@ namespace NatsuLib
 		void Flush() override;
 
 		ncTStr GetFilename() const noexcept;
-		UnsafeHandle GetUnsafeHandle() const noexcept;
 
 #ifdef _WIN32
+		UnsafeHandle GetUnsafeHandle() const noexcept;
 		natRefPointer<natMemoryStream> MapToMemoryStream();
 #endif
 
 	private:
+#ifdef _WIN32
 		UnsafeHandle m_hFile, m_hMappedFile;
 		natRefPointer<natMemoryStream> m_pMappedFile;
+#else
+		std::fstream m_File;
+		nLen m_Size, m_CurrentPos;
+#endif
+		
 		nTString m_Filename;
 		nBool m_bReadable, m_bWritable;
 	};

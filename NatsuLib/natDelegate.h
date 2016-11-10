@@ -8,8 +8,10 @@ namespace NatsuLib
 	template <typename Func>
 	class Delegate;
 
-#pragma warning (push)
-#pragma warning (disable : 4521)
+#ifdef _MSC_VER
+#	pragma warning (push)
+#	pragma warning (disable : 4521)
+#endif
 
 	template <typename Ret, typename... Args>
 	class Delegate<Ret(Args...)>
@@ -71,6 +73,7 @@ namespace NatsuLib
 		std::function<Ret(Args...)> m_Functor;
 	};
 
-#pragma warning (pop)
-
+#ifdef _MSC_VER
+#	pragma warning (pop)
+#endif
 }

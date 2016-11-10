@@ -20,7 +20,7 @@ natScope<std::function<void()>> StackWalkerUninitializer{[]
 
 natStackWalker::natStackWalker(ncTStr userSearchPath)
 {
-	if (!s_Initialized)
+	if (!s_Initialized.load(std::memory_order_acquire))
 	{
 		SymSetOptions(SYMOPT_LOAD_LINES);
 		if (!SymInitialize(GetCurrentProcess(),
@@ -34,7 +34,7 @@ natStackWalker::natStackWalker(ncTStr userSearchPath)
 			nat_Throw(natWinException, _T("SymInitialize failed."));
 		}
 
-		s_Initialized = true;
+		s_Initialized.store(true, std::memory_order_release);
 	}
 }
 
@@ -128,7 +128,7 @@ natStackWalker::Symbol const& natStackWalker::GetSymbol(size_t frame) const
 
 nBool natStackWalker::HasInitialized() noexcept
 {
-	return s_Initialized;
+	return s_Initialized.load(std::memory_order_acquire);
 }
 
 #else

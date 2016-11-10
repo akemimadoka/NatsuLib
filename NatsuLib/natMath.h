@@ -19,10 +19,12 @@
 #include "natTransform.h"
 #include <algorithm>
 
-#pragma push_macro("max")
-#pragma push_macro("min")
-#undef max
-#undef min
+#ifdef _MSC_VER
+#	pragma push_macro("max")
+#	pragma push_macro("min")
+#	undef max
+#	undef min
+#endif
 
 namespace NatsuLib
 {
@@ -85,5 +87,7 @@ namespace NatsuLib
 	///	@}
 }
 
-#pragma pop_macro("min")
-#pragma pop_macro("max")
+#ifdef _MSC_VER
+#	pragma pop_macro("min")
+#	pragma pop_macro("max")
+#endif

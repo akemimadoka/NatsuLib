@@ -15,8 +15,10 @@
 #include <future>
 #include "natMisc.h"
 
-#pragma push_macro("max")
-#undef max
+#ifdef _MSC_VER
+#	pragma push_macro("max")
+#	undef max
+#endif
 
 namespace NatsuLib
 {
@@ -218,56 +220,6 @@ namespace NatsuLib
 		std::tuple<T&...> m_RefObjs;
 	};
 
-	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	Windows的Event包装类
-	///	@note	通过Event对多线程操作进行同步
-	////////////////////////////////////////////////////////////////////////////////
-	class natEventWrapper final
-	{
-	public:
-#ifdef _WIN32
-		typedef HANDLE UnsafeHandle;
-#else
-		typedef nUnsafePtr<void> UnsafeHandle;
-#endif
-		
-		enum : nuInt
-		{
-			Infinity = std::numeric_limits<nuInt>::max(),
-		};
-
-		natEventWrapper(nBool AutoReset, nBool InitialState);
-		~natEventWrapper();
-
-		///	@brief		获得句柄
-		///	@warning	请勿手动释放
-		UnsafeHandle GetHandle();
-
-		///	@brief		标记事件
-		///	@return		是否成功
-		nBool Set();
-
-		///	@brief		取消事件标记
-		///	@return		是否成功
-		nBool Reset();
-
-		///	@brief		事件脉冲
-		///	@return		是否成功
-		nBool Pulse();
-
-		///	@brief		等待事件
-		///	@param[in]	WaitTime	等待时间
-		///	@return		是否成功
-		nBool Wait(nuInt WaitTime = Infinity);
-	private:
-#ifdef _WIN32
-		UnsafeHandle m_hEvent;
-#else
-		std::mutex m_Mutex;
-		std::condition_variable m_Condition;
-#endif
-	};
-
 	class natThreadPool final
 	{
 		class WorkToken;
@@ -282,8 +234,8 @@ namespace NatsuLib
 		explicit natThreadPool(nuInt InitialThreadCount = 0, nuInt MaxThreadCount = DefaultMaxThreadCount);
 		~natThreadPool();
 
-		void KillIdleThreads(nBool Force = false);
-		void KillAllThreads(nBool Force = false);
+		void KillIdleThreads();
+		void KillAllThreads();
 		std::future<WorkToken> QueueWork(WorkFunc workFunc, void* param = nullptr);
 		natThread::ThreadIdType GetThreadId(nuInt Index) const;
 		void WaitAllJobsFinish(nuInt WaitTime = Infinity);
@@ -366,4 +318,6 @@ namespace NatsuLib
 	///	@}
 }
 
-#pragma pop_macro("max")
+#ifdef _MSC_VER
+#	pragma pop_macro("max")
+#endif

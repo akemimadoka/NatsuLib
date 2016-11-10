@@ -107,83 +107,6 @@ void natCriticalSection::UnLock()
 
 #endif
 
-#ifdef _WIN32
-natEventWrapper::natEventWrapper(nBool AutoReset, nBool InitialState)
-{
-	m_hEvent = CreateEvent(NULL, !AutoReset, InitialState, NULL);
-	if (m_hEvent == NULL)
-	{
-		nat_Throw(natWinException, _T("Create event failed"));
-	}
-}
-
-natEventWrapper::~natEventWrapper()
-{
-	CloseHandle(m_hEvent);
-}
-
-natEventWrapper::UnsafeHandle natEventWrapper::GetHandle()
-{
-	return m_hEvent;
-}
-
-nBool natEventWrapper::Set()
-{
-	return SetEvent(m_hEvent) != FALSE;
-}
-
-nBool natEventWrapper::Reset()
-{
-	return ResetEvent(m_hEvent) != FALSE;
-}
-
-nBool natEventWrapper::Pulse()
-{
-	return PulseEvent(m_hEvent) != FALSE;
-}
-
-nBool natEventWrapper::Wait(nuInt WaitTime)
-{
-	return WaitForSingleObject(m_hEvent, WaitTime) != DWORD(-1);
-}
-#else
-natEventWrapper::natEventWrapper(nBool AutoReset, nBool InitialState)
-{
-}
-
-natEventWrapper::~natEventWrapper()
-{
-}
-
-natEventWrapper::UnsafeHandle natEventWrapper::GetHandle()
-{
-	return m_Condition.native_handle();
-}
-
-nBool natEventWrapper::Set()
-{
-	m_Condition.notify_all();
-	return true;
-}
-
-nBool natEventWrapper::Reset()
-{
-	return false;
-}
-
-nBool natEventWrapper::Pulse()
-{
-	m_Condition.notify_all();
-	return true;
-}
-
-nBool natEventWrapper::Wait(nuInt WaitTime)
-{
-	std::unique_lock<std::mutex> m_lock(m_Mutex);
-	return m_Condition.wait_for(m_lock, std::chrono::milliseconds(WaitTime)) != std::cv_status::timeout;
-}
-#endif
-
 natThreadPool::natThreadPool(nuInt InitialThreadCount, nuInt MaxThreadCount)
 	: m_MaxThreadCount(MaxThreadCount)
 {
@@ -205,7 +128,7 @@ natThreadPool::~natThreadPool()
 {
 }
 
-void natThreadPool::KillIdleThreads(nBool Force)
+void natThreadPool::KillIdleThreads()
 {
 	for (auto&& thread : m_Threads)
 	{
@@ -216,7 +139,7 @@ void natThreadPool::KillIdleThreads(nBool Force)
 	}
 }
 
-void natThreadPool::KillAllThreads(nBool Force)
+void natThreadPool::KillAllThreads()
 {
 	for (auto&& thread : m_Threads)
 	{

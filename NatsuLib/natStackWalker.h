@@ -16,8 +16,10 @@
 #include <vector>
 #include <atomic>
 
-#pragma push_macro("max")
-#undef max
+#ifdef _MSC_VER
+#	pragma push_macro("max")
+#	undef max
+#endif
 
 namespace NatsuLib
 {
@@ -73,5 +75,8 @@ namespace NatsuLib
 	};
 }
 
-#pragma pop_macro("max")
+#ifdef _MSC_VER
+#	pragma pop_macro("max")
+#endif
+
 #endif

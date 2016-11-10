@@ -4,16 +4,14 @@ dist: trusty
 ddons:
   apt:
     sources:
-    # add PPAs with more up-to-date toolchains
       - ubuntu-toolchain-r-test
       - llvm-toolchain-precise-3.6
       - kalakris-cmake
     packages:
-    # install toolchains
-      - gcc-6
       - g++-6
       - cmake
-compiler: g++-6
+env: COMILER=g++-6
+compiler: gcc
 
 script:
   - cmake .

@@ -6,10 +6,12 @@
 #include <set>
 #include <map>
 
-#pragma push_macro("max")
-#pragma push_macro("min")
-#undef max
-#undef min
+#ifdef _MSC_VER
+#	pragma push_macro("max")
+#	pragma push_macro("min")
+#	undef max
+#	undef min
+#endif
 
 namespace std
 {
@@ -1320,5 +1322,8 @@ namespace NatsuLib
 	}
 }
 
+#ifdef _MSC_VER
 #pragma pop_macro("min")
 #pragma pop_macro("max")
+#endif
+

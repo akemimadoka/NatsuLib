@@ -135,9 +135,13 @@ void natNamedPipeServerStream::WaitForConnection()
 
 	if (IsAsync())
 	{
-		natEventWrapper event(true, false);
+		auto event = CreateEvent(NULL, FALSE, FALSE, NULL);
+		if (!event || event == INVALID_HANDLE_VALUE)
+		{
+			nat_Throw(natWinException, _T("CreateEvent failed."));
+		}
 		OVERLAPPED opd = { 0 };
-		opd.hEvent = event.GetHandle();
+		opd.hEvent = event;
 
 		if (!ConnectNamedPipe(m_hPipe, &opd))
 		{
@@ -148,7 +152,7 @@ void natNamedPipeServerStream::WaitForConnection()
 			}
 		}
 
-		if (!event.Wait())
+		if (!WaitForSingleObject(event, INFINITE))
 		{
 			nat_Throw(natWinException, _T("Cannot connect to pipe."));
 		}
@@ -177,9 +181,13 @@ std::future<void> natNamedPipeServerStream::WaitForConnectionAsync()
 	{
 		return std::async([this]()
 		{
-			natEventWrapper event(true, false);
+			auto event = CreateEvent(NULL, FALSE, FALSE, NULL);
+			if (!event || event == INVALID_HANDLE_VALUE)
+			{
+				nat_Throw(natWinException, _T("CreateEvent failed."));
+			}
 			OVERLAPPED opd = { 0 };
-			opd.hEvent = event.GetHandle();
+			opd.hEvent = event;
 
 			if (!ConnectNamedPipe(m_hPipe, &opd))
 			{
@@ -190,7 +198,7 @@ std::future<void> natNamedPipeServerStream::WaitForConnectionAsync()
 				}
 			}
 
-			event.Wait();
+			WaitForSingleObject(event, INFINITE);
 			m_bConnected = true;
 		});
 	}
