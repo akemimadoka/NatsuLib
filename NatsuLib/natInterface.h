@@ -1,8 +1,12 @@
 #pragma once
 #include "natConfig.h"
-#include <utility>
 
-struct Interface
+namespace NatsuLib
 {
-	virtual ~Interface() = default;
-};
+	struct Interface
+	{
+		virtual ~Interface() = 0
+		{
+		}
+	};
+}

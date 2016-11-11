@@ -121,6 +121,8 @@ namespace NatsuLib
 		ncData GetInternalBuffer() const noexcept;
 
 	private:
+		natCriticalSection m_CriSection;
+
 		nData m_pData;
 		nLen m_Length;
 		nLen m_CurPos;

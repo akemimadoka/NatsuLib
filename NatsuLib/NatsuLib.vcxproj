@@ -243,6 +243,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="natEvent.cpp" />
+    <ClCompile Include="natException.cpp" />
     <ClCompile Include="natLog.cpp" />
     <ClCompile Include="natMultiThread.cpp" />
     <ClCompile Include="natNamedPipe.cpp" />

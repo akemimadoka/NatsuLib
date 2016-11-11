@@ -26,13 +26,7 @@ namespace NatsuLib
 	{
 		struct natExceptionStorage
 		{
-			natExceptionStorage(std::exception_ptr nestedException, std::chrono::system_clock::time_point const& time, nTString const& file, nuInt line, nTString const& src, nTString const& desc)
-				: m_NestedException(nestedException), m_Time(time), m_File(file), m_Line(line), m_Source(src), m_Description(desc)
-#ifdef UNICODE
-				, m_MBDescription(natUtil::W2Cstr(m_Description))
-#endif
-			{
-			}
+			natExceptionStorage(std::exception_ptr nestedException, std::chrono::system_clock::time_point const& time, nTString const& file, nuInt line, nTString const& src, nTString const& desc);
 
 			std::exception_ptr m_NestedException;
 			std::chrono::system_clock::time_point m_Time;
@@ -78,53 +72,20 @@ namespace NatsuLib
 		{
 		}
 
-		virtual ~natException() = default;
+		virtual ~natException();
 
-		std::chrono::system_clock::time_point GetTime() const noexcept
-		{
-			return m_Time;
-		}
-
-		ncTStr GetFile() const noexcept
-		{
-			return m_File.c_str();
-		}
-
-		nuInt GetLine() const noexcept
-		{
-			return m_Line;
-		}
-
-		ncTStr GetSource() const noexcept
-		{
-			return m_Source.c_str();
-		}
-
-		ncTStr GetDesc() const noexcept
-		{
-			return m_Description.c_str();
-		}
-
-		std::exception_ptr GetNestedException() const noexcept
-		{
-			return m_NestedException;
-		}
+		std::chrono::system_clock::time_point GetTime() const noexcept;
+		ncTStr GetFile() const noexcept;
+		nuInt GetLine() const noexcept;
+		ncTStr GetSource() const noexcept;
+		ncTStr GetDesc() const noexcept;
+		std::exception_ptr GetNestedException() const noexcept;
 
 #ifdef EnableExceptionStackTrace
-		natStackWalker const& GetStackWalker() const noexcept
-		{
-			return m_StackWalker;
-		}
+		natStackWalker const& GetStackWalker() const noexcept;
 #endif
 
-		ncStr what() const noexcept override
-		{
-#ifdef UNICODE
-			return m_MBDescription.c_str();
-#else
-			return m_Description.c_str();
-#endif
-		}
+		ncStr what() const noexcept override;
 
 	protected:
 #ifdef EnableExceptionStackTrace
@@ -167,26 +128,8 @@ namespace NatsuLib
 			m_Description = natUtil::FormatString((m_Description + _T(" (LastErr = {0})")).c_str(), m_LastErr);
 		}
 
-		DWORD GetErrNo() const noexcept
-		{
-			return m_LastErr;
-		}
-
-		ncTStr GetErrMsg() const noexcept
-		{
-			if (m_ErrMsg.empty())
-			{
-				LPVOID pBuf = nullptr;
-				FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, m_LastErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<nTStr>(&pBuf), 0, nullptr);
-				if (pBuf)
-				{
-					m_ErrMsg = static_cast<ncTStr>(pBuf);
-					LocalFree(pBuf);
-				}
-			}
-
-			return m_ErrMsg.c_str();
-		}
+		DWORD GetErrNo() const noexcept;
+		ncTStr GetErrMsg() const noexcept;
 
 	private:
 		DWORD m_LastErr;
@@ -212,20 +155,13 @@ namespace NatsuLib
 			m_Description = natUtil::FormatString((m_Description + _T(" (Errno = {0})")).c_str(), m_Errno);
 		}
 
-		NatErr GetErrNo() const noexcept
-		{
-			return m_Errno;
-		}
-
-		ncTStr GetErrMsg() const noexcept
-		{
-			return GetErrDescription(m_Errno);
-		}
+		NatErr GetErrNo() const noexcept;
+		ncTStr GetErrMsg() const noexcept;
 
 	private:
 		NatErr m_Errno;
 
-		static ncTStr GetErrDescription(NatErr Errno)
+		static NATINLINE ncTStr GetErrDescription(NatErr Errno)
 		{
 			switch (Errno)
 			{

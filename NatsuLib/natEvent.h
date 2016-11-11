@@ -36,7 +36,7 @@ namespace NatsuLib
 			: m_Canceled(false)
 		{
 		}
-		virtual ~natEventBase();
+		virtual ~natEventBase() = 0;
 
 		virtual nBool CanCancel() const noexcept;
 		virtual void SetCancel(nBool value) noexcept;

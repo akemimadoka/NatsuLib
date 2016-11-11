@@ -585,6 +585,7 @@ std::future<nLen> natMemoryStream::ReadBytesAsync(nData pData, nLen Length)
 {
 	return std::async([=]()
 	{
+		natRefScopeGuard<natCriticalSection> guard(m_CriSection);
 		return ReadBytes(pData, Length);
 	});
 }
@@ -623,6 +624,7 @@ std::future<nLen> natMemoryStream::WriteBytesAsync(ncData pData, nLen Length)
 {
 	return std::async([=]()
 	{
+		natRefScopeGuard<natCriticalSection> guard(m_CriSection);
 		return WriteBytes(pData, Length);
 	});
 }
