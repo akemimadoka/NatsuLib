@@ -10,7 +10,7 @@ ddons:
     packages:
       - g++-6
       - cmake
-env: COMPILER_NAME=g++
+env: 
 compiler: gcc
 install:
   - sudo ln -s /usr/bin/g++-6 /usr/bin/g++ -f
