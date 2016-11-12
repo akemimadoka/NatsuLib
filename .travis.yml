@@ -8,6 +8,7 @@ ddons:
       - llvm-toolchain-precise-3.6
       - kalakris-cmake
     packages:
+      - gcc-6
       - g++-6
       - cmake
 env: 

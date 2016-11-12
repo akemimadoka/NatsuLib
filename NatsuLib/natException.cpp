@@ -62,6 +62,8 @@ ncStr natException::what() const noexcept
 #endif
 }
 
+#ifdef _WIN32
+
 DWORD natWinException::GetErrNo() const noexcept
 {
 	return m_LastErr;
@@ -85,6 +87,8 @@ ncTStr natWinException::GetErrMsg() const noexcept
 
 	return m_ErrMsg.c_str();
 }
+
+#endif
 
 NatErr natErrException::GetErrNo() const noexcept
 {

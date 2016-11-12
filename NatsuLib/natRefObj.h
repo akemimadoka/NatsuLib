@@ -4,6 +4,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "natType.h"
+#include <cassert>
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -170,11 +171,13 @@ namespace NatsuLib
 
 		T* operator->() const
 		{
+			assert(m_pPointer && "m_pPointer is nullptr.");
 			return m_pPointer;
 		}
 
 		T& operator*() const
 		{
+			assert(m_pPointer && "m_pPointer is nullptr.");
 			return *m_pPointer;
 		}
 
@@ -195,10 +198,8 @@ namespace NatsuLib
 		}
 
 		template <typename P>
-		operator natRefPointer<P>() const
-		{
-			return natRefPointer<P>(dynamic_cast<P*>(m_pPointer));
-		}
+		operator natRefPointer<P>() const;
+
 	private:
 		T* m_pPointer;
 	};
@@ -225,3 +226,27 @@ namespace std
 	};
 }
 
+#include "natException.h"
+
+namespace NatsuLib
+{
+	template <typename T>
+	template <typename P>
+	natRefPointer<T>::operator natRefPointer<P>() const
+	{
+		static_assert(std::disjunction<std::is_base_of<T, P>, std::is_base_of<P, T>>::value, "Type P cannot be converted to T.");
+
+		if (!m_pPointer)
+		{
+			return{};
+		}
+
+		auto pTarget = dynamic_cast<P*>(m_pPointer);
+		if (pTarget)
+		{
+			return natRefPointer<P> { pTarget };
+		}
+
+		nat_Throw(natException, _T("Type P cannot be converted to T."));
+	}
+}
