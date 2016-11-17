@@ -39,7 +39,7 @@ namespace NatsuLib
 		: public T
 	{
 	public:
-		constexpr natRefObjImpl() noexcept
+		natRefObjImpl() noexcept
 			: m_cRef(1u)
 		{
 #ifdef TraceRefObj
