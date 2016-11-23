@@ -9,6 +9,7 @@ set(SOURCE_FILES
     NatsuLib/natDelegate.h
     NatsuLib/natEvent.cpp
     NatsuLib/natEvent.h
+    NatsuLib/natException.cpp
     NatsuLib/natException.h
     NatsuLib/natInterface.h
     NatsuLib/natLinq.h
