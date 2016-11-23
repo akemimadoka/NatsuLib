@@ -30,6 +30,8 @@ set(SOURCE_FILES
     NatsuLib/natStopWatch.h
     NatsuLib/natStream.cpp
     NatsuLib/natStream.h
+    NatsuLib/natString.cpp
+    NatsuLib/natString.h
     NatsuLib/natStringUtil.h
     NatsuLib/natTransform.h
     NatsuLib/natType.h

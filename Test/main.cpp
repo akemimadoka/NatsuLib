@@ -7,6 +7,7 @@
 #include <natMultiThread.h>
 #include <natLinq.h>
 #include <natStackWalker.h>
+#include <natString.h>
 
 using namespace NatsuLib;
 
@@ -28,11 +29,13 @@ HasMemberTrait(foo);
 
 int main()
 {
+#ifdef _WIN32
 	std::locale defaultLocale("", LC_CTYPE);
 	std::locale::global(defaultLocale);
 	std::wcout.imbue(defaultLocale);
 	std::wclog.imbue(defaultLocale);
 	std::wcerr.imbue(defaultLocale);
+#endif
 
 	natEventBus eventBus;
 	natLog logger(eventBus);
@@ -102,6 +105,14 @@ int main()
 			natCriticalSection cs;
 			natRefScopeGuard<natCriticalSection> sg(cs);
 		}
+
+#ifdef _WIN32
+		{
+			U8String str = AnsiStringView{ "¸ò¸ò" };
+			std::cout << str << std::endl;
+		}
+#endif
+
 	}
 #ifdef _WIN32
 	catch (natWinException& e)

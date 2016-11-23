@@ -109,18 +109,40 @@ nTString natUtil::ToTString(ncWStr str)
 #ifdef _WIN32
 std::wstring natUtil::MultibyteToUnicode(ncStr Str, nuInt CodePage)
 {
-	auto Num = MultiByteToWideChar(CodePage, 0, Str, -1, nullptr, 0);
+	auto Num = MultiByteToWideChar(CodePage, MB_ERR_INVALID_CHARS, Str, -1, nullptr, 0);
+	if (Num == 0)
+	{
+		nat_Throw(natWinException, _T("MultiByteToWideChar failed."));
+	}
+
 	std::vector<nWChar> tBuffer(static_cast<size_t>(Num));
-	MultiByteToWideChar(CodePage, 0, Str, -1, tBuffer.data(), Num);
+	if (!MultiByteToWideChar(CodePage, MB_ERR_INVALID_CHARS, Str, -1, tBuffer.data(), Num))
+	{
+		nat_Throw(natWinException, _T("MultiByteToWideChar failed."));
+	}
 
 	return tBuffer.data();
 }
 
 std::string natUtil::WidecharToMultibyte(ncWStr Str, nuInt CodePage)
 {
-	auto Num = WideCharToMultiByte(CodePage, 0, Str, -1, nullptr, 0, nullptr, FALSE);
+	const DWORD flags = CodePage == CP_UTF8 || CodePage == 54936 ? WC_ERR_INVALID_CHARS : 0;
+	DWORD lastError;
+	SetLastError(ERROR_SUCCESS); // Workaround: wtf?
+	auto Num = WideCharToMultiByte(CodePage, flags, Str, -1, nullptr, 0, nullptr, FALSE);
+	lastError = GetLastError();
+	if (Num == 0 || lastError)
+	{
+		nat_Throw(natWinException, lastError, _T("WideCharToMultiByte failed."));
+	}
+
 	std::vector<nChar> tBuffer(static_cast<size_t>(Num));
-	WideCharToMultiByte(CodePage, 0, Str, -1, tBuffer.data(), Num, nullptr, FALSE);
+	Num = WideCharToMultiByte(CodePage, flags, Str, -1, tBuffer.data(), Num, nullptr, FALSE);
+	lastError = GetLastError();
+	if (Num == 0 || lastError)
+	{
+		nat_Throw(natWinException, lastError, _T("WideCharToMultiByte failed."));
+	}
 
 	return tBuffer.data();
 }

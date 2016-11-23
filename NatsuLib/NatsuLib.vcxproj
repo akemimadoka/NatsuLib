@@ -203,6 +203,7 @@
     <ClInclude Include="natStackWalker.h" />
     <ClInclude Include="natStopWatch.h" />
     <ClInclude Include="natStream.h" />
+    <ClInclude Include="natString.h" />
     <ClInclude Include="natStringUtil.h" />
     <ClInclude Include="natTransform.h" />
     <ClInclude Include="natType.h" />
@@ -250,6 +251,7 @@
     <ClCompile Include="natStackWalker.cpp" />
     <ClCompile Include="natStopWatch.cpp" />
     <ClCompile Include="natStream.cpp" />
+    <ClCompile Include="natString.cpp" />
     <ClCompile Include="natUtil.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
