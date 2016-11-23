@@ -108,8 +108,8 @@ int main()
 
 #ifdef _WIN32
 		{
-			U8String str = AnsiStringView{ "¸ò¸ò" };
-			std::cout << str << std::endl;
+			nString str = AnsiStringView{ "¸ò¸ò" };
+			std::cout << str.GetView() << std::endl;
 		}
 #endif
 

@@ -2,7 +2,6 @@
 #include "natType.h"
 #include <functional>
 #include <cassert>
-#include "natException.h"
 
 namespace NatsuLib
 {
@@ -19,6 +18,9 @@ namespace NatsuLib
 
 		struct defaultconstruct_t {};
 		constexpr defaultconstruct_t defaultconstruct{};
+
+		[[noreturn]] void NotConstructed();
+		[[noreturn]] void ValueNotAvailable();
 
 #ifdef _MSC_VER
 #pragma pack(1)
@@ -136,7 +138,7 @@ namespace NatsuLib
 			{
 				if (!m_Constructed)
 				{
-					nat_Throw(natException, _T("Storage has not constructed."));
+					NotConstructed();
 				}
 				return Get(std::nothrow);
 			}
@@ -150,7 +152,7 @@ namespace NatsuLib
 			{
 				if (!m_Constructed)
 				{
-					nat_Throw(natException, _T("Storage has not constructed."));
+					NotConstructed();
 				}
 				return Get(std::nothrow);
 			}
@@ -164,7 +166,7 @@ namespace NatsuLib
 			{
 				if (!m_Constructed)
 				{
-					nat_Throw(natException, _T("Storage has not constructed."));
+					NotConstructed();
 				}
 				return std::move(Get(std::nothrow));
 			}
@@ -178,7 +180,7 @@ namespace NatsuLib
 			{
 				if (!m_Constructed)
 				{
-					nat_Throw(natException, _T("Storage has not constructed."));
+					NotConstructed();
 				}
 				return std::move(Get(std::nothrow));
 			}
@@ -413,7 +415,7 @@ namespace NatsuLib
 		{
 			if (!has_value())
 			{
-				nat_Throw(natException, _T("There is no available value."));
+				detail_::ValueNotAvailable();
 			}
 
 			return m_Value.Get();
@@ -423,7 +425,7 @@ namespace NatsuLib
 		{
 			if (!has_value())
 			{
-				nat_Throw(natException, _T("There is no available value."));
+				detail_::ValueNotAvailable();
 			}
 
 			return m_Value.Get();
@@ -433,7 +435,7 @@ namespace NatsuLib
 		{
 			if (!has_value())
 			{
-				nat_Throw(natException, _T("There is no available value."));
+				detail_::ValueNotAvailable();
 			}
 
 			return std::move(m_Value.Get());
@@ -443,7 +445,7 @@ namespace NatsuLib
 		{
 			if (!has_value())
 			{
-				nat_Throw(natException, _T("There is no available value."));
+				detail_::ValueNotAvailable();
 			}
 
 			return std::move(m_Value.Get());

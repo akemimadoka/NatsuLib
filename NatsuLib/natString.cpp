@@ -25,6 +25,16 @@ template class String<StringType::Wide>;
 #define SET_REPLACEMENT_CHARACTER(codepoint) do { (codepoint) = 0xFFFD; } while (false)
 #define DECODE_ERROR(resultCode, result, codepoint) { (result) = EncodingResult::resultCode; SET_REPLACEMENT_CHARACTER(codepoint); break; }
 
+void detail_::IndexOutOfRange()
+{
+	nat_Throw(natException, _T("Index is out of range."));
+}
+
+void detail_::SizeOutOfRange()
+{
+	nat_Throw(natException, _T("Size is out of range."));
+}
+
 std::tuple<EncodingResult, char32_t, const char*> NatsuLib::DecodeUtf8(const char* strBegin, const char* strEnd) noexcept
 {
 	assert(strBegin && strEnd && "strBegin and strEnd should not be nullptr.");

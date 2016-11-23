@@ -246,6 +246,7 @@
     <ClCompile Include="natEvent.cpp" />
     <ClCompile Include="natException.cpp" />
     <ClCompile Include="natLog.cpp" />
+    <ClCompile Include="natMisc.cpp" />
     <ClCompile Include="natMultiThread.cpp" />
     <ClCompile Include="natNamedPipe.cpp" />
     <ClCompile Include="natStackWalker.cpp" />

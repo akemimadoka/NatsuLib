@@ -4,6 +4,7 @@
 #ifdef EnableStackWalker
 
 #include "natMisc.h"
+#include "natException.h"
 
 using namespace NatsuLib;
 

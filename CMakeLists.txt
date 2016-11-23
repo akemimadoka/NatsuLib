@@ -17,6 +17,7 @@ set(SOURCE_FILES
     NatsuLib/natLog.h
     NatsuLib/natMat.h
     NatsuLib/natMath.h
+    NatsuLib/natMisc.cpp
     NatsuLib/natMisc.h
     NatsuLib/natMultiThread.cpp
     NatsuLib/natMultiThread.h

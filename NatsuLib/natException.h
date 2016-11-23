@@ -4,6 +4,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "natType.h"
+#include "natString.h"
 #include <chrono>
 #ifdef _WIN32
 #include <Windows.h>
@@ -225,5 +226,12 @@ public:\
 #define nat_Throw(ExceptionClass, ...) do { throw ExceptionClass(_T(__FUNCTION__), _T(__FILE__), __LINE__, __VA_ARGS__); } while (false)
 #define nat_ThrowWithNested(ExceptionClass, ...) do { throw ExceptionClass(std::current_exception(), _T(__FUNCTION__), _T(__FILE__), __LINE__, __VA_ARGS__); } while (false)
 #define nat_ThrowIfFailed(Expression, ...) do { nResult result; if (NATFAIL(result = (Expression))) nat_Throw(natErrException, static_cast<NatErr>(result), __VA_ARGS__); } while (false)
+
+#include "natString.h"
+
+namespace NatsuLib
+{
+
+}
 
 #include "natStringUtil.h"

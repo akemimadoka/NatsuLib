@@ -170,5 +170,8 @@
     <ClCompile Include="natString.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="natMisc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

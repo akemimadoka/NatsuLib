@@ -1,12 +1,12 @@
 #pragma once
+#include "natConfig.h"
+#include "natType.h"
 #include <cstddef>
 #include <cstring>
 #include <initializer_list>
 #include <cassert>
 #include <algorithm>
 #include <iterator>
-#include "natException.h"
-#include "natMisc.h"
 
 #ifdef _MSC_VER
 #pragma push_macro("max")
@@ -27,7 +27,7 @@ namespace NatsuLib
 #endif
 	};
 
-	template <StringType stringType>
+	template <StringType>
 	struct StringEncodingTrait;
 
 	template <>
@@ -127,114 +127,10 @@ namespace NatsuLib
 		}
 
 		template <typename Iter1, typename Iter2>
-		size_t MatchString(Iter1 srcBegin, Iter1 srcEnd, Iter2 patternBegin, Iter2 patternEnd) noexcept
-		{
-			assert(srcBegin != srcEnd);
-			assert(static_cast<size_t>(srcEnd - srcBegin) >= static_cast<size_t>(patternEnd - patternBegin));
+		size_t MatchString(Iter1 srcBegin, Iter1 srcEnd, Iter2 patternBegin, Iter2 patternEnd) noexcept;
 
-			const auto patternSize = static_cast<size_t>(patternEnd - patternBegin);
-
-			std::ptrdiff_t* table;
-			bool shouldDelete;
-			const auto tableSize = patternSize - 1;
-			auto scope = make_scope([&table, &shouldDelete]
-			{
-				if (shouldDelete)
-				{
-					delete[] table;
-				}
-			});
-
-			if (tableSize >= MaxAllocaSize / sizeof(std::ptrdiff_t))
-			{
-				table = new(std::nothrow) std::ptrdiff_t[tableSize];
-				shouldDelete = true;
-			}
-			else
-			{
-				table = static_cast<std::ptrdiff_t*>(alloca(tableSize));
-				shouldDelete = false;
-			}
-
-			if (table)
-			{
-				table[0] = 0;
-
-				if (patternSize > 2)
-				{
-					std::ptrdiff_t pos = 1, cand = 0;
-
-					do
-					{
-						if (patternBegin[pos] == patternBegin[cand])
-						{
-							++cand;
-							table[pos] = patternBegin[pos + 1] == patternBegin[cand] ? table[cand - 1] : cand;
-						}
-						else if (cand == 0)
-						{
-							table[pos] = 0;
-						}
-						else
-						{
-							cand = table[cand - 1];
-							continue;
-						}
-
-						++pos;
-					} while (static_cast<size_t>(pos) < patternSize - 1);
-				}
-			}
-
-			auto current = srcBegin;
-			while (true)
-			{
-				for (;; ++current)
-				{
-					if (srcEnd - current < static_cast<std::ptrdiff_t>(patternSize))
-					{
-						return npos;
-					}
-					if (*current == *patternBegin)
-					{
-						break;
-					}
-				}
-
-				std::ptrdiff_t matchLen = 1;
-
-				while (true)
-				{
-					if (static_cast<size_t>(matchLen) >= patternSize)
-					{
-						return static_cast<size_t>(current - srcBegin);
-					}
-
-				Fallback:
-					if (current[matchLen] != patternBegin[matchLen])
-					{
-						break;
-					}
-
-					++matchLen;
-				}
-
-				if (!table)
-				{
-					++current;
-					continue;
-				}
-
-				current += matchLen;
-				const auto fallback = table[matchLen - 1];
-				if (fallback != 0)
-				{
-					current -= fallback;
-					matchLen = fallback;
-					goto Fallback;
-				}
-			}
-		}
+		[[noreturn]] void IndexOutOfRange();
+		[[noreturn]] void SizeOutOfRange();
 	}
 
 	enum class EncodingResult
@@ -419,14 +315,14 @@ namespace NatsuLib
 			swap(m_StrEnd, other.m_StrEnd);
 		}
 
-		const CharType& Get(size_t pos) const
+		const CharType& Get(size_t index) const
 		{
-			if (pos >= GetSize())
+			if (index >= GetSize())
 			{
-				nat_Throw(natException, _T("Pos is out of range."));
+				detail_::IndexOutOfRange();
 			}
 
-			return UncheckGet(pos);
+			return UncheckGet(index);
 		}
 
 		const CharType& UncheckGet(size_t pos) const noexcept
@@ -615,15 +511,6 @@ namespace NatsuLib
 	extern template class StringView<StringType::Wide>;
 #endif
 
-	typedef StringView<StringType::Utf8> U8StringView;
-	typedef StringView<StringType::Utf16> U16StringView;
-	typedef StringView<StringType::Utf32> U32StringView;
-
-#ifdef _WIN32
-	typedef StringView<StringType::Ansi> AnsiStringView;
-	typedef StringView<StringType::Wide> WideStringView;
-#endif
-
 	namespace detail_
 	{
 		template <StringType SrcType>
@@ -734,38 +621,7 @@ namespace NatsuLib
 				return const_cast<CharType*>(static_cast<const StringStorage*>(this)->GetData());
 			}
 
-			void Reserve(size_t newCapacity)
-			{
-				using std::swap;
-
-				if (newCapacity <= Capacity)
-				{
-					return;
-				}
-
-				if (newCapacity > ArrayMaxSize)
-				{
-					auto newBuffer = new CharType[newCapacity];
-					auto scope = make_scope([&newBuffer]
-					{
-						delete[] newBuffer;
-					});
-
-					if (Size > 0)
-					{
-						std::memmove(newBuffer, GetData(), Size * sizeof(CharType));
-						newBuffer[Size] = 0;
-					}
-
-					if (Capacity <= ArrayMaxSize)
-					{
-						Pointer = nullptr;
-					}
-
-					swap(Pointer, newBuffer);
-					Capacity = newCapacity;
-				}
-			}
+			void Reserve(size_t newCapacity);
 
 			void Resize(size_t newSize)
 			{
@@ -1032,7 +888,7 @@ namespace NatsuLib
 		{
 			if (index >= m_Storage.Size)
 			{
-				nat_Throw(natException, _T("index is out of range."));
+				detail_::IndexOutOfRange();
 			}
 
 			return UncheckGet(index);
@@ -1047,7 +903,7 @@ namespace NatsuLib
 		{
 			if (index >= m_Storage.Size)
 			{
-				nat_Throw(natException, _T("index is out of range."));
+				detail_::IndexOutOfRange();
 			}
 
 			return UncheckGet(index);
@@ -1142,6 +998,15 @@ namespace NatsuLib
 	extern template class String<StringType::Wide>;
 #endif
 
+	typedef StringView<StringType::Utf8> U8StringView;
+	typedef StringView<StringType::Utf16> U16StringView;
+	typedef StringView<StringType::Utf32> U32StringView;
+
+#ifdef _WIN32
+	typedef StringView<StringType::Ansi> AnsiStringView;
+	typedef StringView<StringType::Wide> WideStringView;
+#endif
+
 	typedef String<StringType::Utf8> U8String;
 	typedef String<StringType::Utf16> U16String;
 	typedef String<StringType::Utf32> U32String;
@@ -1225,14 +1090,14 @@ namespace NatsuLib
 
 #ifdef _WIN32
 template <typename CharType, NatsuLib::StringType stringType>
-std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::String<stringType> const& str)
+std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::StringView<stringType> const& str)
 {
-	os << static_cast<std::basic_string<CharType>>(str);
+	os << static_cast<std::basic_string<CharType>>(static_cast<AnsiString>(str));
 	return os;
 }
 
 template <typename CharType, NatsuLib::StringType stringType>
-std::basic_istream<CharType>& operator>>(std::basic_istream<CharType>& is, NatsuLib::String<stringType> const& str)
+std::basic_istream<CharType>& operator>>(std::basic_istream<CharType>& is, NatsuLib::StringView<stringType> const& str)
 {
 	std::basic_string<CharType> tmpStr;
 	is >> tmpStr;
@@ -1244,3 +1109,169 @@ std::basic_istream<CharType>& operator>>(std::basic_istream<CharType>& is, Natsu
 #ifdef _MSC_VER
 #pragma pop_macro("max")
 #endif
+
+typedef NatsuLib::StringEncodingTrait<NatsuLib::StringType::Utf8>::CharType nU8Char;
+typedef NatsuLib::U8StringView nStrView;
+typedef NatsuLib::U8String nString;
+
+NATINLINE nStrView operator""_nv(const nU8Char* str, size_t length) noexcept
+{
+	return { str, length };
+}
+
+NATINLINE nString operator""_ns(const nU8Char* str, size_t length)
+{
+	return nStrView{ str, length };
+}
+
+#include "natMisc.h"
+
+namespace NatsuLib
+{
+	namespace detail_
+	{
+		template <typename Iter1, typename Iter2>
+		size_t MatchString(Iter1 srcBegin, Iter1 srcEnd, Iter2 patternBegin, Iter2 patternEnd) noexcept
+		{
+			assert(srcBegin != srcEnd);
+			assert(static_cast<size_t>(srcEnd - srcBegin) >= static_cast<size_t>(patternEnd - patternBegin));
+
+			const auto patternSize = static_cast<size_t>(patternEnd - patternBegin);
+
+			std::ptrdiff_t* table;
+			bool shouldDelete;
+			const auto tableSize = patternSize - 1;
+			auto scope = make_scope([&table, &shouldDelete]
+			{
+				if (shouldDelete)
+				{
+					delete[] table;
+				}
+			});
+
+			if (tableSize >= MaxAllocaSize / sizeof(std::ptrdiff_t))
+			{
+				table = new(std::nothrow) std::ptrdiff_t[tableSize];
+				shouldDelete = true;
+			}
+			else
+			{
+				table = static_cast<std::ptrdiff_t*>(alloca(tableSize));
+				shouldDelete = false;
+			}
+
+			if (table)
+			{
+				table[0] = 0;
+
+				if (patternSize > 2)
+				{
+					std::ptrdiff_t pos = 1, cand = 0;
+
+					do
+					{
+						if (patternBegin[pos] == patternBegin[cand])
+						{
+							++cand;
+							table[pos] = patternBegin[pos + 1] == patternBegin[cand] ? table[cand - 1] : cand;
+						}
+						else if (cand == 0)
+						{
+							table[pos] = 0;
+						}
+						else
+						{
+							cand = table[cand - 1];
+							continue;
+						}
+
+						++pos;
+					} while (static_cast<size_t>(pos) < patternSize - 1);
+				}
+			}
+
+			auto current = srcBegin;
+			while (true)
+			{
+				for (;; ++current)
+				{
+					if (srcEnd - current < static_cast<std::ptrdiff_t>(patternSize))
+					{
+						return npos;
+					}
+					if (*current == *patternBegin)
+					{
+						break;
+					}
+				}
+
+				std::ptrdiff_t matchLen = 1;
+
+				while (true)
+				{
+					if (static_cast<size_t>(matchLen) >= patternSize)
+					{
+						return static_cast<size_t>(current - srcBegin);
+					}
+
+				Fallback:
+					if (current[matchLen] != patternBegin[matchLen])
+					{
+						break;
+					}
+
+					++matchLen;
+				}
+
+				if (!table)
+				{
+					++current;
+					continue;
+				}
+
+				current += matchLen;
+				const auto fallback = table[matchLen - 1];
+				if (fallback != 0)
+				{
+					current -= fallback;
+					matchLen = fallback;
+					goto Fallback;
+				}
+			}
+		}
+
+		template <typename CharType, size_t ArrayMaxSize>
+		void StringStorage<CharType, ArrayMaxSize>::Reserve(size_t newCapacity)
+		{
+			using std::swap;
+
+			if (newCapacity <= Capacity)
+			{
+				return;
+			}
+
+			if (newCapacity > ArrayMaxSize)
+			{
+				auto newBuffer = new CharType[newCapacity];
+				auto scope = make_scope([&newBuffer]
+				{
+					delete[] newBuffer;
+				});
+
+				if (Size > 0)
+				{
+					std::memmove(newBuffer, GetData(), Size * sizeof(CharType));
+					newBuffer[Size] = 0;
+				}
+
+				if (Capacity <= ArrayMaxSize)
+				{
+					Pointer = nullptr;
+				}
+
+				swap(Pointer, newBuffer);
+				Capacity = newCapacity;
+			}
+		}
+	}
+}
