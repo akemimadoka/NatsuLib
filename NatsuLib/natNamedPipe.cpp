@@ -53,6 +53,17 @@ natNamedPipeServerStream::~natNamedPipeServerStream()
 	CloseHandle(m_hPipe);
 }
 
+nByte natNamedPipeServerStream::ReadByte()
+{
+	nByte byte;
+	if (ReadBytes(&byte, 1) == 1)
+	{
+		return byte;
+	}
+
+	nat_Throw(natErrException, NatErr_InternalErr, _T("Unable to read byte."));
+}
+
 nLen natNamedPipeServerStream::ReadBytes(nData pData, nLen Length)
 {
 	DWORD tReadBytes = 0ul;
@@ -85,6 +96,14 @@ std::future<nLen> natNamedPipeServerStream::ReadBytesAsync(nData pData, nLen Len
 	{
 		return ReadBytes(pData, Length);
 	});
+}
+
+void natNamedPipeServerStream::WriteByte(nByte byte)
+{
+	if (WriteBytes(&byte, 1) != 1)
+	{
+		nat_Throw(natErrException, NatErr_InternalErr, _T("Unable to write byte."));
+	}
 }
 
 nLen natNamedPipeServerStream::WriteBytes(ncData pData, nLen Length)
@@ -231,6 +250,17 @@ nBool natNamedPipeClientStream::CanRead() const
 	return m_InternalStream->CanRead();
 }
 
+nByte natNamedPipeClientStream::ReadByte()
+{
+	nByte byte;
+	if (ReadBytes(&byte, 1) == 1)
+	{
+		return byte;
+	}
+
+	nat_Throw(natErrException, NatErr_InternalErr, _T("Unable to read byte."));
+}
+
 nLen natNamedPipeClientStream::ReadBytes(nData pData, nLen Length)
 {
 	if (!m_InternalStream)
@@ -251,6 +281,14 @@ std::future<nLen> natNamedPipeClientStream::ReadBytesAsync(nData pData, nLen Len
 
 	auto ret = m_InternalStream->ReadBytesAsync(pData, Length);
 	return ret;
+}
+
+void natNamedPipeClientStream::WriteByte(nByte byte)
+{
+	if (WriteBytes(&byte, 1) != 1)
+	{
+		nat_Throw(natErrException, NatErr_InternalErr, _T("Unable to write byte."));
+	}
 }
 
 nLen natNamedPipeClientStream::WriteBytes(ncData pData, nLen Length)

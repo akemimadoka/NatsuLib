@@ -203,8 +203,10 @@
     <ClInclude Include="natStackWalker.h" />
     <ClInclude Include="natStopWatch.h" />
     <ClInclude Include="natStream.h" />
+    <ClInclude Include="natStreamHelper.h" />
     <ClInclude Include="natString.h" />
     <ClInclude Include="natStringUtil.h" />
+    <ClInclude Include="natText.h" />
     <ClInclude Include="natTransform.h" />
     <ClInclude Include="natType.h" />
     <ClInclude Include="natUtil.h" />

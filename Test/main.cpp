@@ -109,7 +109,7 @@ int main()
 #ifdef _WIN32
 		{
 			nString str = AnsiStringView{ "¸ò¸ò" };
-			std::cout << str.GetView() << std::endl;
+			std::cout << str.data() << std::endl;
 		}
 #endif
 

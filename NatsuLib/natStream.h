@@ -5,6 +5,7 @@
 #pragma once
 #include "natRefObj.h"
 #include "natMultiThread.h"
+#include "natString.h"
 
 #ifndef _WIN32
 #	include <fstream>
@@ -60,6 +61,9 @@ namespace NatsuLib
 		///	@param[in]	Offset	偏移
 		virtual void SetPosition(NatSeek Origin, nLong Offset) = 0;
 
+		/// @brief		从流中读取一个字节
+		virtual nByte ReadByte() = 0;
+
 		///	@brief		读取字节数据
 		///	@param[out]	pData	数据缓冲区
 		///	@param[in]	Length	读取的长度
@@ -71,6 +75,9 @@ namespace NatsuLib
 		/// @param[in]	Length	读取的长度
 		/// @return		实际读取长度
 		virtual std::future<nLen> ReadBytesAsync(nData pData, nLen Length) = 0;
+
+		/// @brief		向流中写入一个字节
+		virtual void WriteByte(nByte byte) = 0;
 
 		///	@brief		写入字节数据
 		///	@param[in]	pData	数据缓冲区
@@ -111,8 +118,10 @@ namespace NatsuLib
 		void SetSize(nLen Size) override;
 		nLen GetPosition() const override;
 		void SetPosition(NatSeek Origin, nLong Offset) override;
+		nByte ReadByte() override;
 		nLen ReadBytes(nData pData, nLen Length) override;
 		std::future<nLen> ReadBytesAsync(nData pData, nLen Length) override;
+		void WriteByte(nByte byte) override;
 		nLen WriteBytes(ncData pData, nLen Length) override;
 		std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) override;
 		void Flush() override;
@@ -159,8 +168,10 @@ namespace NatsuLib
 		void SetSize(nLen Size) override;
 		nLen GetPosition() const override;
 		void SetPosition(NatSeek Origin, nLong Offset) override;
+		nByte ReadByte() override;
 		nLen ReadBytes(nData pData, nLen Length) override;
 		std::future<nLen> ReadBytesAsync(nData pData, nLen Length) override;
+		void WriteByte(nByte byte) override;
 		nLen WriteBytes(ncData pData, nLen Length) override;
 		std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) override;
 		void Flush() override;
@@ -184,4 +195,127 @@ namespace NatsuLib
 		nTString m_Filename;
 		nBool m_bReadable, m_bWritable;
 	};
+
+	/*template <StringType encoding>
+	class natConsoleStream final
+		: public natRefObjImpl<natStream>
+	{
+	public:
+#ifdef _WIN32
+		typedef HANDLE NativeHandle;
+
+		natConsoleStream()
+			: m_StdIn(GetStdHandle(STD_INPUT_HANDLE)), m_StdOut(GetStdHandle(STD_OUTPUT_HANDLE)), m_StdErr(GetStdHandle(STD_ERROR_HANDLE))
+		{
+		}
+#else
+		typedef FILE* NativeHandle;
+
+		natConsoleStream()
+			: m_StdIn(stdin), m_StdOut(stdout), m_StdErr(stderr)
+		{
+		}
+#endif
+
+		~natConsoleStream()
+		{
+		}
+
+		nBool CanWrite() const override
+		{
+			return true;
+		}
+
+		nBool CanRead() const override
+		{
+			return true;
+		}
+
+		nBool CanResize() const override
+		{
+			return false;
+		}
+
+		nBool CanSeek() const override
+		{
+			return false;
+		}
+
+		nBool IsEndOfStream() const override
+		{
+			return false;
+		}
+
+		nLen GetSize() const override
+		{
+			return 0;
+		}
+
+		void SetSize(nLen Size) override
+		{
+			nat_Throw(natErrException, NatErr_NotSupport, _T("This stream cannot set size."));
+		}
+
+		nLen GetPosition() const override
+		{
+			return 0;
+		}
+
+		void SetPosition(NatSeek Origin, nLong Offset) override
+		{
+			nat_Throw(natErrException, NatErr_NotSupport, _T("This stream cannot set position."));
+		}
+
+		nByte ReadByte() override
+		{
+		}
+
+		nLen ReadBytes(nData pData, nLen Length) override
+		{
+#ifdef _WIN32
+			SetCP();
+			String<encoding> tmpStr;
+#else
+#endif
+		}
+
+		std::future<nLen> ReadBytesAsync(nData pData, nLen Length) override
+		{
+			return std::async([this]
+			{
+				return ReadBytes(pData, Length);
+			});
+		}
+
+		void WriteByte(nByte byte) override
+		{
+		}
+
+		nLen WriteBytes(ncData pData, nLen Length) override
+		{
+		}
+
+		std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) override
+		{
+			return std::async([this]
+			{
+				return WriteBytes(pData, Length);
+			});
+		}
+
+		void Flush() override
+		{
+			FlushConsoleInputBuffer(m_StdIn);
+		}
+
+#ifdef _WIN32
+		static void SetCP()
+		{
+			SetConsoleCP(encoding == StringType::Ansi ? CP_ACP : CP_UTF8);
+		}
+#endif
+
+	private:
+		NativeHandle m_StdIn, m_StdOut, m_StdErr;
+	};*/
 }

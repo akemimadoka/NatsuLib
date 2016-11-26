@@ -120,6 +120,12 @@
     <ClInclude Include="natString.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="natStreamHelper.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natText.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

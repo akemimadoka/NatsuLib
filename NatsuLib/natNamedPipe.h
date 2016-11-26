@@ -93,8 +93,10 @@ namespace NatsuLib
 			nat_Throw(natErrException, NatErr_NotSupport, _T("This type of stream does not support SetPosition."));
 		}
 
+		nByte ReadByte() override;
 		nLen ReadBytes(nData pData, nLen Length) override;
 		std::future<nLen> ReadBytesAsync(nData pData, nLen Length) override;
+		void WriteByte(nByte byte) override;
 		nLen WriteBytes(ncData pData, nLen Length) override;
 		std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) override;
 		void Flush() override;
@@ -171,8 +173,10 @@ namespace NatsuLib
 
 		nBool CanWrite() const override;
 		nBool CanRead() const override;
+		nByte ReadByte() override;
 		nLen ReadBytes(nData pData, nLen Length) override;
 		std::future<nLen> ReadBytesAsync(nData pData, nLen Length) override;
+		void WriteByte(nByte byte) override;
 		nLen WriteBytes(ncData pData, nLen Length) override;
 		std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) override;
 		void Flush() override;

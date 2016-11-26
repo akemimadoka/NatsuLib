@@ -34,18 +34,67 @@ namespace NatsuLib
 	struct StringEncodingTrait<StringType::Utf8>
 	{
 		typedef char CharType;
+		enum
+		{
+			MaxCharSize = 4,	///< @brief	对于此编码，一个有效字符可能占用的最大CharType数
+		};
+
+		static size_t GetCharCount(CharType Char) noexcept
+		{
+			const auto unsignedChar = static_cast<std::make_unsigned_t<CharType>>(Char);
+			if (unsignedChar < 0x80)
+			{
+				return 1;
+			}
+			if (unsignedChar - 0x80 < 0x40)
+			{
+				// 错误的编码
+				return size_t(-1);
+			}
+			if (unsignedChar - 0xC0 < 0x20)
+			{
+				return 2;
+			}
+			if (unsignedChar - 0xE0 < 0x10)
+			{
+				return 3;
+			}
+			if (unsignedChar - 0xF0 < 0x08)
+			{
+				return 4;
+			}
+			return size_t(-1);
+		}
 	};
 
 	template <>
 	struct StringEncodingTrait<StringType::Utf16>
 	{
 		typedef char16_t CharType;
+		enum
+		{
+			MaxCharSize = 1,
+		};
+
+		static size_t GetCharCount(CharType /*Char*/) noexcept
+		{
+			return 1;
+		}
 	};
 
 	template <>
 	struct StringEncodingTrait<StringType::Utf32>
 	{
 		typedef char32_t CharType;
+		enum
+		{
+			MaxCharSize = 1,
+		};
+
+		static size_t GetCharCount(CharType /*Char*/) noexcept
+		{
+			return 1;
+		}
 	};
 
 #ifdef _WIN32
@@ -53,12 +102,30 @@ namespace NatsuLib
 	struct StringEncodingTrait<StringType::Ansi>
 	{
 		typedef char CharType;
+		enum
+		{
+			MaxCharSize = 4,
+		};
+
+		static size_t GetCharCount(CharType Char) noexcept
+		{
+			return StringEncodingTrait<StringType::Utf8>::GetCharCount(Char);
+		}
 	};
 
 	template <>
 	struct StringEncodingTrait<StringType::Wide>
 	{
 		typedef wchar_t CharType;
+		enum
+		{
+			MaxCharSize = 1,
+		};
+
+		static size_t GetCharCount(CharType /*Char*/) noexcept
+		{
+			return 1;
+		}
 	};
 #endif
 
@@ -129,6 +196,27 @@ namespace NatsuLib
 		template <typename Iter1, typename Iter2>
 		size_t MatchString(Iter1 srcBegin, Iter1 srcEnd, Iter2 patternBegin, Iter2 patternEnd) noexcept;
 
+		template <StringType stringType>
+		std::enable_if_t<StringEncodingTrait<stringType>::MaxCharSize == 1, size_t> GetCharCount(const typename StringEncodingTrait<stringType>::CharType* /*str*/, size_t length)
+		{
+			return length;
+		}
+
+		template <StringType stringType>
+		std::enable_if_t<StringEncodingTrait<stringType>::MaxCharSize != 1, size_t> GetCharCount(const typename StringEncodingTrait<stringType>::CharType* str, size_t length)
+		{
+			size_t count{};
+			size_t currentSize;
+			for (size_t i = 0; i < length; )
+			{
+				currentSize = StringEncodingTrait<stringType>::GetCharCount(str[i]);
+				i += currentSize;
+				count += currentSize;
+			}
+
+			return count;
+		}
+
 		[[noreturn]] void IndexOutOfRange();
 		[[noreturn]] void SizeOutOfRange();
 	}
@@ -147,6 +235,11 @@ namespace NatsuLib
 	std::pair<EncodingResult, char16_t*> EncodeUtf16(char16_t* strBegin, const char16_t* strEnd, char32_t input) noexcept;
 	std::pair<EncodingResult, char32_t*> EncodeUtf32(char32_t* strBegin, const char32_t* strEnd, char32_t input) noexcept;
 
+	////////////////////////////////////////////////////////////////////////////////
+	///	@brief	字符串视图
+	///	@tparam	stringType	字符串的编码
+	///	@note	表示字符串的原始表示
+	////////////////////////////////////////////////////////////////////////////////
 	template <StringType stringType>
 	class StringView
 	{
@@ -306,6 +399,11 @@ namespace NatsuLib
 		size_t GetSize() const noexcept
 		{
 			return m_StrEnd - m_StrBegin;
+		}
+
+		size_t GetCharCount() const noexcept
+		{
+			return detail_::GetCharCount<stringType>(m_StrBegin, m_StrEnd - m_StrBegin);
 		}
 
 		void Swap(StringView& other) noexcept
@@ -650,6 +748,11 @@ namespace NatsuLib
 		};
 	}
 
+	////////////////////////////////////////////////////////////////////////////////
+	///	@brief	字符串
+	///	@tparam	stringType	字符串编码
+	///	@note	保存字符串的原始表示
+	////////////////////////////////////////////////////////////////////////////////
 	template <StringType stringType>
 	class String
 	{
@@ -1023,6 +1126,46 @@ namespace NatsuLib
 		static_assert(alignof(wchar_t) == alignof(char16_t), "wchar_t does not have the same alignment with char16_t.");
 #endif
 
+		template <StringType DstType>
+		struct EncodingCodePoint;
+
+		template <>
+		struct EncodingCodePoint<StringType::Utf8>
+		{
+			static EncodingResult Encode(String<StringType::Utf8>& output, nuInt codePoint);
+			static std::pair<EncodingResult, size_t> Decode(StringView<StringType::Utf8> const& input, nuInt& codePoint);
+		};
+
+		template <>
+		struct EncodingCodePoint<StringType::Utf16>
+		{
+			static EncodingResult Encode(String<StringType::Utf16>& output, nuInt codePoint);
+			static std::pair<EncodingResult, size_t> Decode(StringView<StringType::Utf16> const& input, nuInt& codePoint);
+		};
+
+		template <>
+		struct EncodingCodePoint<StringType::Utf32>
+		{
+			static EncodingResult Encode(String<StringType::Utf32>& output, nuInt codePoint);
+			static std::pair<EncodingResult, size_t> Decode(StringView<StringType::Utf32> const& input, nuInt& codePoint);
+		};
+
+#ifdef _WIN32
+		template <>
+		struct EncodingCodePoint<StringType::Ansi>
+		{
+			static EncodingResult Encode(String<StringType::Ansi>& output, nuInt codePoint);
+			static std::pair<EncodingResult, size_t> Decode(StringView<StringType::Ansi> const& input, nuInt& codePoint);
+		};
+
+		template <>
+		struct EncodingCodePoint<StringType::Wide>
+		{
+			static EncodingResult Encode(String<StringType::Wide>& output, nuInt codePoint);
+			static std::pair<EncodingResult, size_t> Decode(StringView<StringType::Wide> const& input, nuInt& codePoint);
+		};
+#endif
+
 		template <StringType SrcType>
 		struct TransCoder
 		{
@@ -1092,7 +1235,7 @@ namespace NatsuLib
 template <typename CharType, NatsuLib::StringType stringType>
 std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::StringView<stringType> const& str)
 {
-	os << static_cast<std::basic_string<CharType>>(static_cast<AnsiString>(str));
+	os << static_cast<std::basic_string<CharType>>(static_cast<NatsuLib::AnsiString>(str));
 	return os;
 }
 
@@ -1108,6 +1251,58 @@ std::basic_istream<CharType>& operator>>(std::basic_istream<CharType>& is, Natsu
 
 #ifdef _MSC_VER
 #pragma pop_macro("max")
+#endif
+
+NATINLINE NatsuLib::U8StringView operator""_u8v(const NatsuLib::U8StringView::CharType* str, size_t length) noexcept
+{
+	return { str,length };
+}
+
+NATINLINE NatsuLib::U8String operator""_u8s(const NatsuLib::U8String::CharType* str, size_t length) noexcept
+{
+	return NatsuLib::U8StringView{ str,length };
+}
+
+NATINLINE NatsuLib::U16StringView operator""_u16v(const NatsuLib::U16StringView::CharType* str, size_t length) noexcept
+{
+	return { str,length };
+}
+
+NATINLINE NatsuLib::U16String operator""_u16s(const NatsuLib::U16String::CharType* str, size_t length) noexcept
+{
+	return NatsuLib::U16StringView{ str,length };
+}
+
+NATINLINE NatsuLib::U32StringView operator""_u32v(const NatsuLib::U32StringView::CharType* str, size_t length) noexcept
+{
+	return { str,length };
+}
+
+NATINLINE NatsuLib::U32String operator""_u32s(const NatsuLib::U32String::CharType* str, size_t length) noexcept
+{
+	return NatsuLib::U32StringView{ str,length };
+}
+
+#ifdef _WIN32
+NATINLINE NatsuLib::AnsiStringView operator""_uav(const NatsuLib::AnsiStringView::CharType* str, size_t length) noexcept
+{
+	return { str,length };
+}
+
+NATINLINE NatsuLib::AnsiString operator""_uas(const NatsuLib::AnsiString::CharType* str, size_t length) noexcept
+{
+	return NatsuLib::AnsiStringView{ str,length };
+}
+
+NATINLINE NatsuLib::WideStringView operator""_uwv(const NatsuLib::WideStringView::CharType* str, size_t length) noexcept
+{
+	return{ str,length };
+}
+
+NATINLINE NatsuLib::WideString operator""_uws(const NatsuLib::WideString::CharType* str, size_t length) noexcept
+{
+	return NatsuLib::WideStringView{ str,length };
+}
 #endif
 
 typedef NatsuLib::StringEncodingTrait<NatsuLib::StringType::Utf8>::CharType nU8Char;

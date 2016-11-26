@@ -313,6 +313,126 @@ std::pair<EncodingResult, char32_t*> NatsuLib::EncodeUtf32(char32_t* strBegin, c
 
 namespace NatsuLib
 {
+	namespace detail_
+	{
+		EncodingResult EncodingCodePoint<StringType::Utf8>::Encode(String<StringType::Utf8>& output, nuInt codePoint)
+		{
+			StringEncodingTrait<StringType::Utf8>::CharType buffer[StringEncodingTrait<StringType::Utf8>::MaxCharSize]{};
+			EncodingResult result;
+			const char* end;
+			std::tie(result, end) = EncodeUtf8(std::begin(buffer), std::end(buffer), static_cast<char32_t>(codePoint));
+			if (result == EncodingResult::Accept)
+			{
+				output.Append(StringView<StringType::Utf8>{ std::cbegin(buffer), end });
+			}
+			return result;
+		}
+
+		std::pair<EncodingResult, size_t> EncodingCodePoint<StringType::Utf8>::Decode(StringView<StringType::Utf8> const& input, nuInt& codePoint)
+		{
+			EncodingResult result;
+			char32_t tmpCodePoint;
+			const char* end;
+			std::tie(result, tmpCodePoint, end) = DecodeUtf8(std::cbegin(input), std::cend(input));
+			if (result == EncodingResult::Accept)
+			{
+				codePoint = static_cast<nuInt>(tmpCodePoint);
+			}
+
+			return { result, std::distance(end, std::cbegin(input)) };
+		}
+
+		EncodingResult EncodingCodePoint<StringType::Utf16>::Encode(String<StringType::Utf16>& output, nuInt codePoint)
+		{
+			StringEncodingTrait<StringType::Utf16>::CharType buffer[StringEncodingTrait<StringType::Utf16>::MaxCharSize]{};
+			EncodingResult result;
+			const char16_t* end;
+			std::tie(result, end) = EncodeUtf16(std::begin(buffer), std::end(buffer), static_cast<char32_t>(codePoint));
+			if (result == EncodingResult::Accept)
+			{
+				output.Append(StringView<StringType::Utf16>{ std::cbegin(buffer), end });
+			}
+			return result;
+		}
+
+		std::pair<EncodingResult, size_t> EncodingCodePoint<StringType::Utf16>::Decode(StringView<StringType::Utf16> const& input, nuInt& codePoint)
+		{
+			EncodingResult result;
+			char32_t tmpCodePoint;
+			const char16_t* end;
+			std::tie(result, tmpCodePoint, end) = DecodeUtf16(std::cbegin(input), std::cend(input));
+			if (result == EncodingResult::Accept)
+			{
+				codePoint = static_cast<nuInt>(tmpCodePoint);
+			}
+
+			return{ result, std::distance(end, std::cbegin(input)) };
+		}
+
+		EncodingResult EncodingCodePoint<StringType::Utf32>::Encode(String<StringType::Utf32>& output, nuInt codePoint)
+		{
+			StringEncodingTrait<StringType::Utf32>::CharType buffer[StringEncodingTrait<StringType::Utf32>::MaxCharSize]{};
+			EncodingResult result;
+			const char32_t* end;
+			std::tie(result, end) = EncodeUtf32(std::begin(buffer), std::end(buffer), static_cast<char32_t>(codePoint));
+			if (result == EncodingResult::Accept)
+			{
+				output.Append(StringView<StringType::Utf32>{ std::cbegin(buffer), end });
+			}
+			return result;
+		}
+
+		std::pair<EncodingResult, size_t> EncodingCodePoint<StringType::Utf32>::Decode(StringView<StringType::Utf32> const& input, nuInt& codePoint)
+		{
+			EncodingResult result;
+			char32_t tmpCodePoint;
+			const char32_t* end;
+			std::tie(result, tmpCodePoint, end) = DecodeUtf32(std::cbegin(input), std::cend(input));
+			if (result == EncodingResult::Accept)
+			{
+				codePoint = static_cast<nuInt>(tmpCodePoint);
+			}
+
+			return{ result, std::distance(end, std::cbegin(input)) };
+		}
+
+#ifdef _WIN32
+		EncodingResult EncodingCodePoint<StringType::Ansi>::Encode(String<StringType::Ansi>& output, nuInt codePoint)
+		{
+			try
+			{
+				output.ResizeMore(4);
+				output.Append(StringView<StringType::Utf32>{ codePoint });
+			}
+			catch (...)
+			{
+				output.pop_back(4);
+				return EncodingResult::Reject;	// 异常被吞
+			}
+
+			return EncodingResult::Accept;
+		}
+
+		std::pair<EncodingResult, size_t> EncodingCodePoint<StringType::Ansi>::Decode(StringView<StringType::Ansi> const& input, nuInt& codePoint)
+		{
+			codePoint = static_cast<nuInt>(*input.begin());	// 我们无法假设Ansi的字符串的一个有效字符占用的字节数
+			return { EncodingResult::Accept, 1 };
+		}
+
+		EncodingResult EncodingCodePoint<StringType::Wide>::Encode(String<StringType::Wide>& output, nuInt codePoint)
+		{
+			// 假设 Windows 平台下的宽字符字符串总为UTF-16
+			return EncodingCodePoint<StringType::Utf16>::Encode(reinterpret_cast<String<StringType::Utf16>&>(output), codePoint);
+		}
+
+		std::pair<EncodingResult, size_t> EncodingCodePoint<StringType::Wide>::Decode(StringView<StringType::Wide> const& input, nuInt& codePoint)
+		{
+			return EncodingCodePoint<StringType::Utf16>::Decode(reinterpret_cast<StringView<StringType::Utf16> const&>(input), codePoint);
+		}
+
+#endif
+	}
+
 	template <>
 	void U8String::TransAppendTo(U16String& dst, View const& src)
 	{

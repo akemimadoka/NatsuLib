@@ -124,6 +124,17 @@ void natFileStream::SetPosition(NatSeek Origin, nLong Offset)
 	}
 }
 
+nByte natFileStream::ReadByte()
+{
+	nByte byte;
+	if (ReadBytes(&byte, 1) == 1)
+	{
+		return byte;
+	}
+
+	nat_Throw(natErrException, NatErr_InternalErr, _T("Unable to read byte."));
+}
+
 nLen natFileStream::ReadBytes(nData pData, nLen Length)
 {
 	DWORD tReadBytes = 0ul;
@@ -156,6 +167,14 @@ std::future<nLen> natFileStream::ReadBytesAsync(nData pData, nLen Length)
 	{
 		return ReadBytes(pData, Length);
 	});
+}
+
+void natFileStream::WriteByte(nByte byte)
+{
+	if (WriteBytes(&byte, 1) != 1)
+	{
+		nat_Throw(natErrException, NatErr_InternalErr, _T("Unable to write byte."));
+	}
 }
 
 nLen natFileStream::WriteBytes(ncData pData, nLen Length)
@@ -550,6 +569,11 @@ void natMemoryStream::SetPosition(NatSeek Origin, nLong Offset)
 	}
 }
 
+nByte natMemoryStream::ReadByte()
+{
+	return m_pData[m_CurPos++];
+}
+
 nLen natMemoryStream::ReadBytes(nData pData, nLen Length)
 {
 	nLen tReadBytes = 0ul;
@@ -588,6 +612,16 @@ std::future<nLen> natMemoryStream::ReadBytesAsync(nData pData, nLen Length)
 		natRefScopeGuard<natCriticalSection> guard(m_CriSection);
 		return ReadBytes(pData, Length);
 	});
+}
+
+void natMemoryStream::WriteByte(nByte byte)
+{
+	if (m_CurPos >= m_Length)
+	{
+		nat_Throw(natErrException, NatErr_IllegalState, _T("End of stream."));
+	}
+
+	m_pData[m_CurPos++] = byte;
 }
 
 nLen natMemoryStream::WriteBytes(ncData pData, nLen Length)
