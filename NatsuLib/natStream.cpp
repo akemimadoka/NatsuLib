@@ -8,7 +8,7 @@ using namespace NatsuLib;
 
 #ifdef _WIN32
 natFileStream::natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable)
-	: m_hMappedFile(NULL), m_Filename(lpFilename), m_bReadable(bReadable), m_bWritable(bWritable)
+	: m_hMappedFile(NULL), m_ShouldDispose(true), m_Filename(lpFilename), m_bReadable(bReadable), m_bWritable(bWritable)
 {
 	m_hFile = CreateFile(
 		lpFilename,
@@ -27,7 +27,7 @@ natFileStream::natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable
 }
 
 natFileStream::natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable)
-	: m_hFile(hFile), m_hMappedFile(NULL), m_bReadable(bReadable), m_bWritable(bWritable)
+	: m_hFile(hFile), m_hMappedFile(NULL), m_ShouldDispose(false), m_bReadable(bReadable), m_bWritable(bWritable)
 {
 	if (!m_hFile || m_hFile == INVALID_HANDLE_VALUE)
 	{
@@ -262,7 +262,69 @@ natRefPointer<natMemoryStream> natFileStream::MapToMemoryStream()
 natFileStream::~natFileStream()
 {
 	CloseHandle(m_hMappedFile);
-	CloseHandle(m_hFile);
+	if (m_ShouldDispose)
+	{
+		CloseHandle(m_hFile);
+	}
+}
+
+natStdStream::natStdStream(StdStreamType stdStreamType)
+	: m_StdStreamType(stdStreamType)
+{
+	switch (m_StdStreamType)
+	{
+	case StdIn:
+		m_StdHandle = GetStdHandle(STD_INPUT_HANDLE);
+		break;
+	case StdOut:
+		m_StdHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+		break;
+	case StdErr:
+		m_StdHandle = GetStdHandle(STD_ERROR_HANDLE);
+		break;
+	default:
+		nat_Throw(natException, _T("Invalid StdStreamType"));
+	}
+	m_InternalStream = make_ref<natFileStream>(m_StdHandle, m_StdStreamType == StdIn, m_StdStreamType != StdIn);
+}
+
+natStdStream::~natStdStream()
+{
+}
+
+nByte natStdStream::ReadByte()
+{
+	return m_InternalStream->ReadByte();
+}
+
+nLen natStdStream::ReadBytes(nData pData, nLen Length)
+{
+	return m_InternalStream->ReadBytes(pData, Length);
+}
+
+std::future<nLen> natStdStream::ReadBytesAsync(nData pData, nLen Length)
+{
+	return m_InternalStream->ReadBytesAsync(pData, Length);
+}
+
+void natStdStream::WriteByte(nByte byte)
+{
+	m_InternalStream->WriteByte(byte);
+}
+
+nLen natStdStream::WriteBytes(ncData pData, nLen Length)
+{
+	return m_InternalStream->WriteBytes(pData, Length);
+}
+
+std::future<nLen> natStdStream::WriteBytesAsync(ncData pData, nLen Length)
+{
+	return m_InternalStream->WriteBytesAsync(pData, Length);
+}
+
+void natStdStream::Flush()
+{
+	m_InternalStream->Flush();
 }
 #else
 natFileStream::natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable)
@@ -370,6 +432,12 @@ void natFileStream::SetPosition(NatSeek Origin, nLong Offset)
 	m_CurrentPos = static_cast<nLen>(m_File.tellp());
 }
 
+nByte natFileStream::ReadByte()
+{
+	// Here may be a bug?
+	return static_cast<nByte>(m_File.get());
+}
+
 nLen natFileStream::ReadBytes(nData pData, nLen Length)
 {
 	if (!m_bReadable)
@@ -403,6 +471,11 @@ std::future<nLen> natFileStream::ReadBytesAsync(nData pData, nLen Length)
 	{
 		return ReadBytes(pData, Length);
 	});
+}
+
+void natFileStream::WriteByte(nByte byte)
+{
+	m_File.put(static_cast<char>(byte));
 }
 
 nLen natFileStream::WriteBytes(ncData pData, nLen Length)
@@ -455,6 +528,90 @@ ncTStr natFileStream::GetFilename() const noexcept
 
 natFileStream::~natFileStream()
 {
+}
+
+natStdStream::natStdStream(StdStreamType stdStreamType)
+	: m_StdStreamType(stdStreamType)
+{
+	switch (m_StdStreamType)
+	{
+	case StdIn:
+		m_StdHandle = stdin;
+		break;
+	case StdOut:
+		m_StdHandle = stdout;
+		break;
+	case StdErr:
+		m_StdHandle = stderr;
+		break;
+	default:
+		nat_Throw(natException, _T("Invalid StdStreamType"));
+	}
+}
+
+natStdStream::~natStdStream()
+{
+}
+
+nByte natStdStream::ReadByte()
+{
+	nByte byteToRead;
+	if (ReadBytes(&byteToRead, 1) == 1)
+	{
+		return byteToRead;
+	}
+
+	nat_Throw(natErrException, NatErr_InternalErr, _T("Failed to read a byte."));
+}
+
+nLen natStdStream::ReadBytes(nData pData, nLen Length)
+{
+	if (!CanRead())
+	{
+		nat_Throw(natErrException, NatErr_IllegalState, _T("This stream cannot read."));
+	}
+
+#ifdef _MSC_VER
+	return static_cast<nLen>(fread_s(pData, Length, Length, 1, m_StdHandle));
+#else
+	return static_cast<nLen>(fread(pData, Length, 1, m_StdHandle));
+#endif
+}
+
+std::future<nLen> natStdStream::ReadBytesAsync(nData pData, nLen Length)
+{
+	return std::async([=]()
+	{
+		return ReadBytes(pData, Length);
+	});
+}
+
+void natStdStream::WriteByte(nByte byte)
+{
+	WriteBytes(&byte, 1);
+}
+
+nLen natStdStream::WriteBytes(ncData pData, nLen Length)
+{
+	if (!CanWrite())
+	{
+		nat_Throw(natErrException, NatErr_IllegalState, _T("This stream cannot write."));
+	}
+
+	return static_cast<nLen>(fwrite(pData, Length, 1, m_StdHandle));
+}
+
+std::future<nLen> natStdStream::WriteBytesAsync(ncData pData, nLen Length)
+{
+	return std::async([=]()
+	{
+		return WriteBytes(pData, Length);
+	});
+}
+
+void natStdStream::Flush()
+{
+	fflush(m_StdHandle);
 }
 
 #endif

@@ -2,6 +2,11 @@
 #include "natStream.h"
 #include "natText.h"
 
+#ifdef _MSC_VER
+#	pragma push_macro("min")
+#	undef min
+#endif
+
 namespace NatsuLib
 {
 	template <StringType encoding>
@@ -138,7 +143,7 @@ namespace NatsuLib
 		size_t Write(StringView<encoding> const& str) override
 		{
 			typedef typename StringEncodingTrait<encoding>::CharType CharType;
-			m_InternalStream->WriteBytes(str.cbegin(), str.size() * sizeof(CharType));
+			m_InternalStream->WriteBytes(reinterpret_cast<ncData>(str.cbegin()), str.size() * sizeof(CharType));
 			return str.GetCharCount();
 		}
 
@@ -156,3 +161,7 @@ namespace NatsuLib
 		natRefPointer<natStream> m_InternalStream;
 	};
 }
+
+#ifdef _MSC_VER
+#pragma pop_macro("min")
+#endif

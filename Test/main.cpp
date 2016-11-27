@@ -8,6 +8,8 @@
 #include <natLinq.h>
 #include <natStackWalker.h>
 #include <natString.h>
+#include <natStream.h>
+#include <natStreamHelper.h>
 
 using namespace NatsuLib;
 
@@ -108,8 +110,12 @@ int main()
 
 #ifdef _WIN32
 		{
-			nString str = AnsiStringView{ "¸ò¸ò" };
-			std::cout << str.data() << std::endl;
+			nString str = "¸ò¸ò"_av;
+			SetConsoleOutputCP(CP_UTF8);
+			natStdStream stdStream{ natStdStream::StdOut };
+			natStreamWriter<StringType::Utf8> writer{ &stdStream };
+
+			writer.WriteLine(str);
 		}
 #endif
 

@@ -34,7 +34,7 @@ namespace NatsuLib
 		natVec2<T> a, b;
 
 		constexpr natRect() noexcept = default;
-		constexpr natRect(natVec2<T> const& A, natVec2<T> const& B) noexcept  : a(A), b(B)
+		constexpr natRect(natVec2<T> const& A, natVec2<T> const& B) noexcept : a(A), b(B)
 		{
 		}
 		constexpr natRect(T x1, T y1, T x2, T y2) noexcept : a(x1, y1), b(x2, y2)
@@ -83,11 +83,11 @@ namespace NatsuLib
 			return false;
 		}
 	};
-
-	///	@}
 }
 
 #ifdef _MSC_VER
 #	pragma pop_macro("min")
 #	pragma pop_macro("max")
 #endif
+
+///	@}

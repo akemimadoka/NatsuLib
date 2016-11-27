@@ -1284,22 +1284,22 @@ NATINLINE NatsuLib::U32String operator""_u32s(const NatsuLib::U32String::CharTyp
 }
 
 #ifdef _WIN32
-NATINLINE NatsuLib::AnsiStringView operator""_uav(const NatsuLib::AnsiStringView::CharType* str, size_t length) noexcept
+NATINLINE NatsuLib::AnsiStringView operator""_av(const NatsuLib::AnsiStringView::CharType* str, size_t length) noexcept
 {
 	return { str,length };
 }
 
-NATINLINE NatsuLib::AnsiString operator""_uas(const NatsuLib::AnsiString::CharType* str, size_t length) noexcept
+NATINLINE NatsuLib::AnsiString operator""_as(const NatsuLib::AnsiString::CharType* str, size_t length) noexcept
 {
 	return NatsuLib::AnsiStringView{ str,length };
 }
 
-NATINLINE NatsuLib::WideStringView operator""_uwv(const NatsuLib::WideStringView::CharType* str, size_t length) noexcept
+NATINLINE NatsuLib::WideStringView operator""_wv(const NatsuLib::WideStringView::CharType* str, size_t length) noexcept
 {
 	return{ str,length };
 }
 
-NATINLINE NatsuLib::WideString operator""_uws(const NatsuLib::WideString::CharType* str, size_t length) noexcept
+NATINLINE NatsuLib::WideString operator""_ws(const NatsuLib::WideString::CharType* str, size_t length) noexcept
 {
 	return NatsuLib::WideStringView{ str,length };
 }
