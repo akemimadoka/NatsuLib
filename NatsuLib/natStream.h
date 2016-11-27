@@ -154,7 +154,7 @@ namespace NatsuLib
 
 		natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable);
 #ifdef _WIN32
-		natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable);
+		natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable, nBool transferOwner = false);
 #endif
 
 		~natFileStream();

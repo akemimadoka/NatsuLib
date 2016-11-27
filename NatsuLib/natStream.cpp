@@ -26,8 +26,8 @@ natFileStream::natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable
 	}
 }
 
-natFileStream::natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable)
-	: m_hFile(hFile), m_hMappedFile(NULL), m_ShouldDispose(false), m_bReadable(bReadable), m_bWritable(bWritable)
+natFileStream::natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable, nBool transferOwner)
+	: m_hFile(hFile), m_hMappedFile(NULL), m_ShouldDispose(transferOwner), m_bReadable(bReadable), m_bWritable(bWritable)
 {
 	if (!m_hFile || m_hFile == INVALID_HANDLE_VALUE)
 	{
@@ -285,7 +285,8 @@ natStdStream::natStdStream(StdStreamType stdStreamType)
 	default:
 		nat_Throw(natException, _T("Invalid StdStreamType"));
 	}
-	m_InternalStream = make_ref<natFileStream>(m_StdHandle, m_StdStreamType == StdIn, m_StdStreamType != StdIn);
+
+	m_InternalStream = make_ref<natFileStream>(m_StdHandle, m_StdStreamType == StdIn, m_StdStreamType != StdIn, false);
 }
 
 natStdStream::~natStdStream()

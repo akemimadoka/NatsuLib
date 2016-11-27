@@ -330,7 +330,7 @@ void natNamedPipeClientStream::Wait(nuInt timeOut)
 		nat_Throw(natWinException, _T("WaitNamedPipe failed."));
 	}
 
-	m_InternalStream = std::make_unique<natFileStream>(m_PipeName.c_str(), m_bReadable, m_bWritable);
+	m_InternalStream = std::make_unique<natFileStream>(m_PipeName.c_str(), m_bReadable, m_bWritable, true);
 }
 
 #endif
