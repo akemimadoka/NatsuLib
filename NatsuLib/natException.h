@@ -18,7 +18,7 @@ namespace NatsuLib
 	namespace natUtil
 	{
 		template <typename... Args>
-		nTString FormatString(const nStrView::CharType* lpStr, Args&&... args);
+		nTString FormatString(nStrView const& Str, Args&&... args);
 	}
 
 	namespace detail_

@@ -15,66 +15,6 @@ namespace NatsuLib
 		{
 			DefaultCodePage = CP_INSTALLED
 		};
-#endif
-
-		///	@brief	string转wstring
-		std::wstring C2Wstr(ncStr str, size_t n);
-		std::wstring C2Wstr(std::string const& str);
-		template <size_t n>
-		std::wstring C2Wstr(const nChar(&str)[n])
-		{
-			return C2Wstr(str, n);
-		}
-		std::wstring C2Wstr(ncStr str);
-		///	@brief	wstring转string
-		std::string W2Cstr(ncWStr str, size_t n);
-		std::string W2Cstr(std::wstring const& str);
-		template <size_t n>
-		std::string W2Cstr(const nWChar(&str)[n])
-		{
-			return W2Cstr(str, n);
-		}
-		std::string W2Cstr(ncWStr str);
-
-#ifdef UNICODE
-		std::basic_string<TCHAR> ToTString(ncStr str, size_t n);
-		std::basic_string<TCHAR> ToTString(std::string const& str);
-		template <size_t n>
-		std::basic_string<TCHAR> ToTString(const nChar(&str)[n])
-		{
-			return C2Wstr(str);
-		}
-		std::basic_string<TCHAR> ToTString(ncStr str);
-
-		std::basic_string<TCHAR> ToTString(ncWStr str, size_t n);
-		std::basic_string<TCHAR> ToTString(std::wstring const& str);
-		template <size_t n>
-		std::basic_string<TCHAR> ToTString(const nWChar(&str)[n])
-		{
-			return ToTString(str, n);
-		}
-		std::basic_string<TCHAR> ToTString(ncWStr str);
-#else
-		std::basic_string<TCHAR> ToTString(ncStr str, size_t n);
-		std::basic_string<TCHAR> ToTString(std::string const& str);
-		template <size_t n>
-		std::basic_string<TCHAR> ToTString(const nChar(&str)[n])
-		{
-			return ToTString(str, n);
-		}
-		std::basic_string<TCHAR> ToTString(ncStr str);
-
-		std::basic_string<TCHAR> ToTString(ncWStr str, size_t n);
-		std::basic_string<TCHAR> ToTString(std::wstring const& str);
-		template <size_t n>
-		std::basic_string<TCHAR> ToTString(const nWChar(&str)[n])
-		{
-			return W2Cstr(str);
-		}
-		std::basic_string<TCHAR> ToTString(ncWStr str);
-#endif
-
-#ifdef _WIN32
 
 		///	@brief	多字节转Unicode
 		std::wstring MultibyteToUnicode(ncStr Str, nuInt CodePage = DefaultCodePage);

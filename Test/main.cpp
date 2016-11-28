@@ -38,8 +38,10 @@ int main()
 
 	try
 	{
+#ifdef _WIN32
 		logger.LogMsg("{1} {0}"_nv, "²âÊÔÖĞÎÄ"_av, 123);
-		
+#endif
+
 		constexpr auto test = HasMemberNamedfoo<Incrementable>::value;
 
 		int t = 5;
