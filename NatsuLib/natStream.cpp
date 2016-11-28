@@ -7,11 +7,16 @@
 using namespace NatsuLib;
 
 #ifdef _WIN32
-natFileStream::natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable)
+natFileStream::natFileStream(ncTStr const& lpFilename, nBool bReadable, nBool bWritable)
 	: m_hMappedFile(NULL), m_ShouldDispose(true), m_Filename(lpFilename), m_bReadable(bReadable), m_bWritable(bWritable)
 {
 	m_hFile = CreateFile(
-		lpFilename,
+#ifdef UNICODE
+	WideString{lpFilename}.data()
+#else
+	AnsiString{lpFilename}.data()
+#endif
+	,
 		(bReadable ? GENERIC_READ : 0) | (bWritable ? GENERIC_WRITE : 0),
 		FILE_SHARE_READ,
 		NULL,
@@ -22,7 +27,7 @@ natFileStream::natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable
 
 	if (!m_hFile || m_hFile == INVALID_HANDLE_VALUE)
 	{
-		nat_Throw(natWinException, _T("Open file \"%s\" failed"), lpFilename);
+		nat_Throw(natWinException, "Open file \"%s\" failed"_nv, lpFilename);
 	}
 }
 
@@ -31,7 +36,7 @@ natFileStream::natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritabl
 {
 	if (!m_hFile || m_hFile == INVALID_HANDLE_VALUE)
 	{
-		nat_Throw(natErrException, NatErr_InvalidArg, _T("Invalid hFile."));
+		nat_Throw(natErrException, NatErr_InvalidArg, "Invalid hFile."_nv);
 	}
 }
 
@@ -69,7 +74,7 @@ void natFileStream::SetSize(nLen Size)
 {
 	if (!m_bWritable)
 	{
-		nat_Throw(natErrException, NatErr_IllegalState, _T("Stream is not writable."));
+		nat_Throw(natErrException, NatErr_IllegalState, "Stream is not writable."_nv);
 	}
 
 	LARGE_INTEGER tVal;
@@ -77,12 +82,12 @@ void natFileStream::SetSize(nLen Size)
 
 	if (SetFilePointer(m_hFile, tVal.LowPart, &tVal.HighPart, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
 	{
-		nat_Throw(natWinException, _T("SetFilePointer failed."));
+		nat_Throw(natWinException, "SetFilePointer failed."_nv);
 	}
 
 	if (SetEndOfFile(m_hFile) == FALSE)
 	{
-		nat_Throw(natWinException, _T("SetEndOfFile failed."));
+		nat_Throw(natWinException, "SetEndOfFile failed."_nv);
 	}
 
 	SetPosition(NatSeek::Beg, 0l);
@@ -112,7 +117,7 @@ void natFileStream::SetPosition(NatSeek Origin, nLong Offset)
 		tOrigin = FILE_END;
 		break;
 	default:
-		nat_Throw(natErrException, NatErr_InvalidArg, _T("Origin is not a valid NatSeek."));
+		nat_Throw(natErrException, NatErr_InvalidArg, "Origin is not a valid NatSeek."_nv);
 	}
 
 	LARGE_INTEGER tVal;
@@ -120,7 +125,7 @@ void natFileStream::SetPosition(NatSeek Origin, nLong Offset)
 
 	if (SetFilePointer(m_hFile, tVal.LowPart, &tVal.HighPart, tOrigin) == INVALID_SET_FILE_POINTER)
 	{
-		nat_Throw(natWinException, _T("SetFilePointer failed."));
+		nat_Throw(natWinException, "SetFilePointer failed."_nv);
 	}
 }
 
@@ -132,7 +137,7 @@ nByte natFileStream::ReadByte()
 		return byte;
 	}
 
-	nat_Throw(natErrException, NatErr_InternalErr, _T("Unable to read byte."));
+	nat_Throw(natErrException, NatErr_InternalErr, "Unable to read byte."_nv);
 }
 
 nLen natFileStream::ReadBytes(nData pData, nLen Length)
@@ -140,7 +145,7 @@ nLen natFileStream::ReadBytes(nData pData, nLen Length)
 	DWORD tReadBytes = 0ul;
 	if (!m_bReadable)
 	{
-		nat_Throw(natErrException, NatErr_IllegalState, _T("Stream is not readable."));
+		nat_Throw(natErrException, NatErr_IllegalState, "Stream is not readable."_nv);
 	}
 
 	if (Length == 0ul)
@@ -150,12 +155,12 @@ nLen natFileStream::ReadBytes(nData pData, nLen Length)
 
 	if (pData == nullptr)
 	{
-		nat_Throw(natErrException, NatErr_InvalidArg, _T("pData cannot be nullptr."));
+		nat_Throw(natErrException, NatErr_InvalidArg, "pData cannot be nullptr."_nv);
 	}
 
 	if (ReadFile(m_hFile, pData, static_cast<DWORD>(Length), &tReadBytes, NULL) == FALSE)
 	{
-		nat_Throw(natWinException, _T("ReadFile failed."));
+		nat_Throw(natWinException, "ReadFile failed."_nv);
 	}
 
 	return tReadBytes;
@@ -173,7 +178,7 @@ void natFileStream::WriteByte(nByte byte)
 {
 	if (WriteBytes(&byte, 1) != 1)
 	{
-		nat_Throw(natErrException, NatErr_InternalErr, _T("Unable to write byte."));
+		nat_Throw(natErrException, NatErr_InternalErr, "Unable to write byte."_nv);
 	}
 }
 
@@ -182,7 +187,7 @@ nLen natFileStream::WriteBytes(ncData pData, nLen Length)
 	DWORD tWriteBytes = 0ul;
 	if (!m_bWritable)
 	{
-		nat_Throw(natErrException, NatErr_IllegalState, _T("Stream is not writable."));
+		nat_Throw(natErrException, NatErr_IllegalState, "Stream is not writable."_nv);
 	}
 
 	if (Length == 0ul)
@@ -192,12 +197,12 @@ nLen natFileStream::WriteBytes(ncData pData, nLen Length)
 
 	if (pData == nullptr)
 	{
-		nat_Throw(natErrException, NatErr_InvalidArg, _T("pData cannot be nullptr."));
+		nat_Throw(natErrException, NatErr_InvalidArg, "pData cannot be nullptr."_nv);
 	}
 
 	if (WriteFile(m_hFile, pData, static_cast<DWORD>(Length), &tWriteBytes, NULL) == FALSE)
 	{
-		nat_Throw(natWinException, _T("WriteFile failed."));
+		nat_Throw(natWinException, "WriteFile failed."_nv);
 	}
 
 	return tWriteBytes;
@@ -223,7 +228,7 @@ void natFileStream::Flush()
 
 ncTStr natFileStream::GetFilename() const noexcept
 {
-	return m_Filename.c_str();
+	return m_Filename;
 }
 
 natFileStream::UnsafeHandle natFileStream::GetUnsafeHandle() const noexcept
@@ -248,12 +253,12 @@ natRefPointer<natMemoryStream> natFileStream::MapToMemoryStream()
 		}
 		else
 		{
-			nat_Throw(natWinException, _T("MapViewOfFile failed."));
+			nat_Throw(natWinException, "MapViewOfFile failed."_nv);
 		}
 	}
 	else
 	{
-		nat_Throw(natWinException, _T("CreateFileMapping failed."));
+		nat_Throw(natWinException, "CreateFileMapping failed."_nv);
 	}
 
 	return m_pMappedFile;
@@ -283,7 +288,7 @@ natStdStream::natStdStream(StdStreamType stdStreamType)
 		m_StdHandle = GetStdHandle(STD_ERROR_HANDLE);
 		break;
 	default:
-		nat_Throw(natException, _T("Invalid StdStreamType"));
+		nat_Throw(natException, "Invalid StdStreamType"_nv);
 	}
 
 	m_InternalStream = make_ref<natFileStream>(m_StdHandle, m_StdStreamType == StdIn, m_StdStreamType != StdIn, false);
@@ -344,7 +349,7 @@ natFileStream::natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable
 	m_File.open(lpFilename, openmode);
 	if (!m_File.is_open())
 	{
-		nat_Throw(natErrException, NatErr_InternalErr, _T("Cannot open file \"{0}\"."), lpFilename);
+		nat_Throw(natErrException, NatErr_InternalErr, "Cannot open file \"{0}\"."_nv, lpFilename);
 	}
 
 	auto current = m_File.tellg();
@@ -387,12 +392,12 @@ void natFileStream::SetSize(nLen Size)
 {
 	if (!m_bWritable)
 	{
-		nat_Throw(natErrException, NatErr_IllegalState, _T("Stream is not writable."));
+		nat_Throw(natErrException, NatErr_IllegalState, "Stream is not writable."_nv);
 	}
 
 	if (Size < m_Size)
 	{
-		nat_Throw(natErrException, NatErr_InvalidArg, _T("Cannot truncate file."));
+		nat_Throw(natErrException, NatErr_InvalidArg, "Cannot truncate file."_nv);
 	}
 
 	if (Size == m_Size)
@@ -426,7 +431,7 @@ void natFileStream::SetPosition(NatSeek Origin, nLong Offset)
 		tOrigin = std::ios_base::end;
 		break;
 	default:
-		nat_Throw(natErrException, NatErr_InvalidArg, _T("Origin is not a valid NatSeek."));
+		nat_Throw(natErrException, NatErr_InvalidArg, "Origin is not a valid NatSeek."_nv);
 	}
 
 	m_File.seekp(Offset, tOrigin);
@@ -443,7 +448,7 @@ nLen natFileStream::ReadBytes(nData pData, nLen Length)
 {
 	if (!m_bReadable)
 	{
-		nat_Throw(natErrException, NatErr_IllegalState, _T("Stream is not readable."));
+		nat_Throw(natErrException, NatErr_IllegalState, "Stream is not readable."_nv);
 	}
 
 	if (Length == 0ul)
@@ -453,13 +458,13 @@ nLen natFileStream::ReadBytes(nData pData, nLen Length)
 
 	if (pData == nullptr)
 	{
-		nat_Throw(natErrException, NatErr_InvalidArg, _T("pData cannot be nullptr."));
+		nat_Throw(natErrException, NatErr_InvalidArg, "pData cannot be nullptr."_nv);
 	}
 
 	auto size = m_File.readsome(reinterpret_cast<char*>(pData), static_cast<std::streamsize>(Length));
 	if (m_File.fail())
 	{
-		nat_Throw(natErrException, NatErr_InternalErr, _T("Reading file failed after readed {0} bytes."), size);
+		nat_Throw(natErrException, NatErr_InternalErr, "Reading file failed after readed {0} bytes."_nv, size);
 	}
 
 	m_CurrentPos = static_cast<nLen>(m_File.tellg());
@@ -483,7 +488,7 @@ nLen natFileStream::WriteBytes(ncData pData, nLen Length)
 {
 	if (!m_bWritable)
 	{
-		nat_Throw(natErrException, NatErr_IllegalState, _T("Stream is not writable."));
+		nat_Throw(natErrException, NatErr_IllegalState, "Stream is not writable."_nv);
 	}
 
 	if (Length == 0ul)
@@ -493,7 +498,7 @@ nLen natFileStream::WriteBytes(ncData pData, nLen Length)
 
 	if (pData == nullptr)
 	{
-		nat_Throw(natErrException, NatErr_InvalidArg, _T("pData cannot be nullptr."));
+		nat_Throw(natErrException, NatErr_InvalidArg, "pData cannot be nullptr."_nv);
 	}
 
 	m_File.write(reinterpret_cast<const char*>(pData), static_cast<std::streamsize>(Length));
@@ -502,7 +507,7 @@ nLen natFileStream::WriteBytes(ncData pData, nLen Length)
 
 	if (m_File.fail())
 	{
-		nat_Throw(natErrException, NatErr_InternalErr, _T("Writing file failed after wrote {0} bytes."), size);
+		nat_Throw(natErrException, NatErr_InternalErr, "Writing file failed after wrote {0} bytes."_nv, size);
 	}
 
 	m_CurrentPos = static_cast<nLen>(current);
@@ -546,7 +551,7 @@ natStdStream::natStdStream(StdStreamType stdStreamType)
 		m_StdHandle = stderr;
 		break;
 	default:
-		nat_Throw(natException, _T("Invalid StdStreamType"));
+		nat_Throw(natException, "Invalid StdStreamType"_nv);
 	}
 }
 
@@ -562,14 +567,14 @@ nByte natStdStream::ReadByte()
 		return byteToRead;
 	}
 
-	nat_Throw(natErrException, NatErr_InternalErr, _T("Failed to read a byte."));
+	nat_Throw(natErrException, NatErr_InternalErr, "Failed to read a byte."_nv);
 }
 
 nLen natStdStream::ReadBytes(nData pData, nLen Length)
 {
 	if (!CanRead())
 	{
-		nat_Throw(natErrException, NatErr_IllegalState, _T("This stream cannot read."));
+		nat_Throw(natErrException, NatErr_IllegalState, "This stream cannot read."_nv);
 	}
 
 #ifdef _MSC_VER
@@ -596,7 +601,7 @@ nLen natStdStream::WriteBytes(ncData pData, nLen Length)
 {
 	if (!CanWrite())
 	{
-		nat_Throw(natErrException, NatErr_IllegalState, _T("This stream cannot write."));
+		nat_Throw(natErrException, NatErr_IllegalState, "This stream cannot write."_nv);
 	}
 
 	return static_cast<nLen>(fwrite(pData, Length, 1, m_StdHandle));
@@ -635,7 +640,7 @@ natMemoryStream::natMemoryStream(ncData pData, nLen Length, nBool bReadable, nBo
 	}
 	catch (std::bad_alloc&)
 	{
-		nat_Throw(natException, _T("Failed to allocate memory"));
+		nat_Throw(natException, "Failed to allocate memory"_nv);
 	}
 }
 
@@ -673,7 +678,7 @@ void natMemoryStream::SetSize(nLen Size)
 {
 	if (!m_bResizable)
 	{
-		nat_Throw(natErrException, NatErr_IllegalState, _T("Stream is not resizable."));
+		nat_Throw(natErrException, NatErr_IllegalState, "Stream is not resizable."_nv);
 	}
 
 	if (Size == m_Length)
@@ -709,21 +714,21 @@ void natMemoryStream::SetPosition(NatSeek Origin, nLong Offset)
 	{
 	case NatSeek::Beg:
 		if (Offset < 0 || m_Length < static_cast<nLen>(Offset))
-			nat_Throw(natErrException, NatErr_OutOfRange, _T("Out of range."));
+			nat_Throw(natErrException, NatErr_OutOfRange, "Out of range."_nv);
 		m_CurPos = Offset;
 		break;
 	case NatSeek::Cur:
 		if ((Offset < 0 && m_CurPos < static_cast<nLen>(-Offset)) || m_Length > static_cast<nLen>(m_CurPos + Offset))
-			nat_Throw(natErrException, NatErr_OutOfRange, _T("Out of range."));
+			nat_Throw(natErrException, NatErr_OutOfRange, "Out of range."_nv);
 		m_CurPos += Offset;
 		break;
 	case NatSeek::End:
 		if (Offset > 0 || m_Length < static_cast<nLen>(-Offset))
-			nat_Throw(natErrException, NatErr_OutOfRange, _T("Out of range."));
+			nat_Throw(natErrException, NatErr_OutOfRange, "Out of range."_nv);
 		m_CurPos = m_Length + Offset;
 		break;
 	default:
-		nat_Throw(natErrException, NatErr_OutOfRange, _T("Out of range."));
+		nat_Throw(natErrException, NatErr_OutOfRange, "Out of range."_nv);
 	}
 }
 
@@ -738,7 +743,7 @@ nLen natMemoryStream::ReadBytes(nData pData, nLen Length)
 
 	if (!m_bReadable)
 	{
-		nat_Throw(natErrException, NatErr_IllegalState, _T("Stream is not readable."));
+		nat_Throw(natErrException, NatErr_IllegalState, "Stream is not readable."_nv);
 	}
 
 	if (Length == 0ul)
@@ -748,7 +753,7 @@ nLen natMemoryStream::ReadBytes(nData pData, nLen Length)
 
 	if (pData == nullptr)
 	{
-		nat_Throw(natErrException, NatErr_InvalidArg, _T("pData cannot be nullptr."));
+		nat_Throw(natErrException, NatErr_InvalidArg, "pData cannot be nullptr."_nv);
 	}
 
 	tReadBytes = std::min(Length, m_Length - m_CurPos);
@@ -776,7 +781,7 @@ void natMemoryStream::WriteByte(nByte byte)
 {
 	if (m_CurPos >= m_Length)
 	{
-		nat_Throw(natErrException, NatErr_IllegalState, _T("End of stream."));
+		nat_Throw(natErrException, NatErr_IllegalState, "End of stream."_nv);
 	}
 
 	m_pData[m_CurPos++] = byte;
@@ -788,7 +793,7 @@ nLen natMemoryStream::WriteBytes(ncData pData, nLen Length)
 
 	if (!m_bWritable)
 	{
-		nat_Throw(natErrException, NatErr_IllegalState, _T("Stream is not writable."));
+		nat_Throw(natErrException, NatErr_IllegalState, "Stream is not writable."_nv);
 	}
 
 	if (Length == 0ul)
@@ -798,7 +803,7 @@ nLen natMemoryStream::WriteBytes(ncData pData, nLen Length)
 
 	if (pData == nullptr)
 	{
-		nat_Throw(natErrException, NatErr_InvalidArg, _T("pData cannot be nullptr."));
+		nat_Throw(natErrException, NatErr_InvalidArg, "pData cannot be nullptr."_nv);
 	}
 
 	tWriteBytes = std::min(Length, m_Length - m_CurPos);

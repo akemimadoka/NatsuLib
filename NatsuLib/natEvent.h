@@ -61,7 +61,7 @@ namespace NatsuLib
 
 			if (!Succeeded)
 			{
-				nat_Throw(natException, _T("Cannot register event \"{0}\""), natUtil::ToTString(typeid(EventClass).name()));
+				nat_Throw(natException, "Cannot register event \"{0}\""_nv, typeid(EventClass).name());
 			}
 		}
 
@@ -71,7 +71,7 @@ namespace NatsuLib
 			auto iter = m_EventListenerMap.find(typeid(EventClass));
 			if (iter == m_EventListenerMap.end())
 			{
-				nat_Throw(natException, _T("Unregistered event."));
+				nat_Throw(natException, "Unregistered event."_nv);
 			}
 
 			auto&& listeners = iter->second[priority];
@@ -86,7 +86,7 @@ namespace NatsuLib
 			auto iter = m_EventListenerMap.find(typeid(EventClass));
 			if (iter == m_EventListenerMap.end())
 			{
-				nat_Throw(natException, _T("Unregistered event."));
+				nat_Throw(natException, "Unregistered event."_nv);
 			}
 
 			auto listeneriter = iter->second.find(priority);
@@ -102,7 +102,7 @@ namespace NatsuLib
 			auto iter = m_EventListenerMap.find(typeid(EventClass));
 			if (iter == m_EventListenerMap.end())
 			{
-				nat_Throw(natException, _T("Unregistered event."));
+				nat_Throw(natException, "Unregistered event."_nv);
 			}
 
 			for (auto&& listeners : iter->second)

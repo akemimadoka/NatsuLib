@@ -6,10 +6,10 @@ using namespace NatsuLib;
 
 void detail_::NotConstructed()
 {
-	nat_Throw(natException, _T("Storage has not constructed."));
+	nat_Throw(natException, "Storage has not constructed."_nv);
 }
 
 void detail_::ValueNotAvailable()
 {
-	nat_Throw(natException, _T("There is no available value."));
+	nat_Throw(natException, "There is no available value."_nv);
 }

@@ -7,16 +7,8 @@
 #include "natConfig.h"
 #include <cstdint>
 #include <string>
-#if defined(_MSC_VER)
-#	include <tchar.h>
-#else
-#	ifdef UNICODE
-#		define TIMPL(x) L##x
-#	else
-#		define TIMPL(x) x
-#	endif
-#	define _T(x) TIMPL(x)
-#endif
+#define NVIMPL(text) text##_nv
+#define NV(text) NVIMPL(text)
 
 ////////////////////////////////////////////////////////////////////////////////
 ///	@addtogroup	Natsu库基本数据类型
@@ -50,7 +42,7 @@ typedef	nInt				nResult;	///< @brief	预定义返回值
 										///	30 - 16 位	： 保留\n
 										///	15 - 0  位	： 错误描述
 
-#ifdef UNICODE
+/*#ifdef UNICODE
 typedef nWChar				nTChar;		///< @brief	通用字符
 typedef	nWStr				nTStr;		///< @brief	通用字符串
 typedef ncWStr				ncTStr;		///< @brief	常量通用字符串
@@ -60,7 +52,7 @@ typedef	nStr				nTStr;		///< @brief	通用字符串
 typedef	ncStr				ncTStr;		///< @brief	常量通用字符串
 #endif
 
-typedef std::basic_string<nTChar> nTString;	///< @brief	通用string类
+typedef std::basic_string<nTChar> nTString;	///< @brief	通用string类*/
 
 template <typename T>
 using nUnsafePtr = std::add_pointer_t<T>;

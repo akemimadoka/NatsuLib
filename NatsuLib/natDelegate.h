@@ -53,7 +53,7 @@ namespace NatsuLib
 		{
 			if (!m_Functor)
 			{
-				nat_Throw(natException, _T("Null delegate."));
+				nat_Throw(natException, "Null delegate."_nv);
 			}
 
 			return m_Functor(std::forward<Args>(args)...);

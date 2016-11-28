@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include "natEvent.h"
+#include "natConsole.h"
 
 namespace NatsuLib
 {
@@ -21,7 +22,7 @@ namespace NatsuLib
 			: public natEventBase
 		{
 		public:
-			constexpr EventLogUpdated(nuInt logType, std::chrono::system_clock::time_point const& time, ncTStr data) noexcept
+			EventLogUpdated(nuInt logType, std::chrono::system_clock::time_point const& time, ncTStr data) noexcept
 				: m_LogType(logType), m_Time(time), m_Data(data)
 			{
 			}
@@ -70,23 +71,11 @@ namespace NatsuLib
 			Log(Msg, content, std::forward<Arg>(arg)...);
 		}
 
-		template <typename... Arg>
-		void LogMsg(nTString const& content, Arg &&... arg)
-		{
-			Log(Msg, content.c_str(), std::forward<Arg>(arg)...);
-		}
-
 		///	@brief	记录错误
 		template <typename... Arg>
 		void LogErr(ncTStr content, Arg &&... arg)
 		{
 			Log(Err, content, std::forward<Arg>(arg)...);
-		}
-
-		template <typename... Arg>
-		void LogErr(nTString const& content, Arg &&... arg)
-		{
-			Log(Err, content.c_str(), std::forward<Arg>(arg)...);
 		}
 
 		///	@brief	记录警告
@@ -96,23 +85,11 @@ namespace NatsuLib
 			Log(Warn, content, std::forward<Arg>(arg)...);
 		}
 
-		template <typename... Arg>
-		void LogWarn(nTString const& content, Arg &&... arg)
-		{
-			Log(Warn, content.c_str(), std::forward<Arg>(arg)...);
-		}
-
 		///	@brief	记录
 		template <typename... Arg>
 		void Log(nuInt type, ncTStr content, Arg &&... arg)
 		{
 			UpdateLog(type, natUtil::FormatString(content, std::forward<Arg>(arg)...));
-		}
-
-		template <typename... Arg>
-		void Log(nuInt type, nTString const& content, Arg &&... arg)
-		{
-			UpdateLog(type, natUtil::FormatString(content.c_str(), std::forward<Arg>(arg)...));
 		}
 
 		///	@brief	注册日志更新事件处理函数
@@ -121,21 +98,6 @@ namespace NatsuLib
 	private:
 		struct OutputToOStream
 		{
-#ifdef _UNICODE
-			template <typename... RestChar_t>
-			static void Impl(ncTStr str, std::basic_ostream<nChar>& currentOStream, std::basic_ostream<RestChar_t>&... _ostreams)
-			{
-				currentOStream << natUtil::W2Cstr(str) << std::endl;
-				Impl(str, _ostreams...);
-			}
-
-			template <typename... RestChar_t>
-			static void Impl(ncTStr str, std::basic_ostream<nWChar>& currentOStream, std::basic_ostream<RestChar_t>&... _ostreams)
-			{
-				currentOStream << str << std::endl;
-				Impl(str, _ostreams...);
-			}
-#else
 			template <typename... RestChar_t>
 			static void Impl(ncTStr str, std::basic_ostream<nChar>& currentOStream, std::basic_ostream<RestChar_t>&... _ostreams)
 			{
@@ -146,10 +108,9 @@ namespace NatsuLib
 			template <typename... RestChar_t>
 			static void Impl(ncTStr str, std::basic_ostream<nWChar>& currentOStream, std::basic_ostream<RestChar_t>&... _ostreams)
 			{
-				currentOStream << natUtil::C2Wstr(str) << std::endl;
+				currentOStream << str << std::endl;
 				Impl(str, _ostreams...);
 			}
-#endif
 
 			static void Impl(ncTStr /*str*/)
 			{
@@ -158,9 +119,9 @@ namespace NatsuLib
 
 	public:
 		template <typename... Char_t>
-		void UseDefaultAction(std::basic_ostream<Char_t>&... ostreams)
+		void UseDefaultAction(natConsole& console, std::basic_ostream<Char_t>&... ostreams)
 		{
-			RegisterLogUpdateEventFunc([&ostreams...](natEventBase& event)
+			RegisterLogUpdateEventFunc([&console, &ostreams...](natEventBase& event)
 			{
 				auto&& eventLogUpdated(static_cast<EventLogUpdated&>(event));
 				auto time = std::chrono::system_clock::to_time_t(eventLogUpdated.GetTime());
@@ -171,15 +132,17 @@ namespace NatsuLib
 				timeStruct = *localtime(&time);
 #endif
 				auto logType = static_cast<LogType>(eventLogUpdated.GetLogType());
-				auto logStr = natUtil::FormatString(_T("[{0}] [{1}] {2}"), std::put_time(&timeStruct, _T("%F %T")), GetDefaultLogTypeName(logType), eventLogUpdated.GetData());
+				auto logStr = natUtil::FormatString("[{0}] [{1}] {2}"_nv, std::put_time(&timeStruct, "%F %T"), GetDefaultLogTypeName(logType), eventLogUpdated.GetData());
 				switch (logType)
 				{
 				case Msg:
 				case Warn:
-					OutputToOStream::Impl(logStr.c_str(), std::wclog, ostreams...);
+					console.WriteLine(logStr);
+					OutputToOStream::Impl(logStr, ostreams...);
 					break;
 				case Err:
-					OutputToOStream::Impl(logStr.c_str(), std::wcerr, ostreams...);
+					console.WriteLineErr(logStr);
+					OutputToOStream::Impl(logStr, ostreams...);
 					break;
 				default:
 					break;

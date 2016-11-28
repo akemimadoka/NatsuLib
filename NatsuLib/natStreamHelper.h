@@ -22,7 +22,7 @@ namespace NatsuLib
 		explicit natStreamReader(natStream* pStream, size_t bufferSize = DefaultBufferSize) noexcept
 			: m_InternalStream(pStream)
 		{
-			ReadBuffer(bufferSize);
+			//ReadBuffer(bufferSize);
 		}
 
 		~natStreamReader()
@@ -61,7 +61,7 @@ namespace NatsuLib
 			EncodingResult result;
 			size_t readBytes;
 			const ncData data = m_Buffer.data();
-			std::tie(result, readBytes) = detail_::EncodingCodePoint<encoding>::Decode({ data + m_CurrentPos, data + std::min(m_EndPos, m_Buffer.size()) }, codePoint);
+			std::tie(result, readBytes) = detail_::EncodingCodePoint<encoding>::Decode({ reinterpret_cast<const CharType*>(data + m_CurrentPos), reinterpret_cast<const CharType*>(data + std::min(m_EndPos, m_Buffer.size())) }, codePoint);
 			if (result == EncodingResult::Accept)
 			{
 				m_CurrentPos += readBytes;
@@ -71,7 +71,7 @@ namespace NatsuLib
 			if (result == EncodingResult::Incomplete)
 			{
 				ReadBuffer(m_BufferSize, m_EndPos - m_CurrentPos);
-				std::tie(result, readBytes) = detail_::EncodingCodePoint<encoding>::Decode({ data + m_CurrentPos, data + std::min(m_EndPos, m_Buffer.size()) }, codePoint);
+				std::tie(result, readBytes) = detail_::EncodingCodePoint<encoding>::Decode({ reinterpret_cast<const CharType*>(data + m_CurrentPos), reinterpret_cast<const CharType*>(data + std::min(m_EndPos, m_Buffer.size())) }, codePoint);
 				if (result == EncodingResult::Accept)
 				{
 					m_CurrentPos += readBytes;
@@ -105,7 +105,7 @@ namespace NatsuLib
 		void ReadBuffer(size_t size, size_t reserved = 0)
 		{
 			assert(size >= reserved);
-			assert(reserved < m_Buffer.size());
+			assert(reserved <= m_Buffer.size());
 			copy(prev(cend(m_Buffer), reserved), cend(m_Buffer), begin(m_Buffer));
 			m_Buffer.resize(size);
 			

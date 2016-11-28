@@ -26,13 +26,13 @@ natStackWalker::natStackWalker(ncTStr userSearchPath)
 		SymSetOptions(SYMOPT_LOAD_LINES);
 		if (!SymInitialize(GetCurrentProcess(),
 #ifdef UNICODE
-			userSearchPath ? natUtil::W2Cstr(userSearchPath).c_str() : nullptr
+			userSearchPath.empty() ? AnsiString{userSearchPath}.data() : nullptr
 #else
-			userSearchPath
+			userSearchPath.data()
 #endif
 			, TRUE))
 		{
-			nat_Throw(natWinException, _T("SymInitialize failed."));
+			nat_Throw(natWinException, "SymInitialize failed."_nv);
 		}
 
 		s_Initialized.store(true, std::memory_order_release);
@@ -48,7 +48,7 @@ void natStackWalker::CaptureStack(size_t skipFrames, ncTStr unknownSymbolName, n
 #if WINVER <= _WIN32_WINNT_WS03
 	if (skipFrames > 63)
 	{
-		nat_Throw(natException, _T("skipFrames is too large for Windows Server 2003 / Windows XP, see https://msdn.microsoft.com/en-us/library/windows/desktop/bb204633(v=vs.85).aspx ."));
+		nat_Throw(natException, "skipFrames is too large for Windows Server 2003 / Windows XP, see https://msdn.microsoft.com/en-us/library/windows/desktop/bb204633(v=vs.85).aspx ."_nv);
 	}
 #endif
 
@@ -73,32 +73,24 @@ void natStackWalker::CaptureStack(size_t skipFrames, ncTStr unknownSymbolName, n
 		Symbol currentSymbol{ pStack[i] };
 		if (!SymFromAddr(hProcess, reinterpret_cast<DWORD64>(pStack[i]), nullptr, &symbol.SymbolInfo))
 		{
-			currentSymbol.SymbolName = unknownSymbolName ? unknownSymbolName : _T("Unknown");
+			currentSymbol.SymbolName = unknownSymbolName.empty() ? unknownSymbolName : "Unknown"_nv;
 			currentSymbol.SymbolAddress = 0;
 		}
 		else
 		{
-#ifdef UNICODE
-			currentSymbol.SymbolName = natUtil::C2Wstr(std::string{ symbol.SymbolInfo.Name, symbol.SymbolInfo.NameLen });
-#else
-			currentSymbol.SymbolName.assign(symbol.SymbolInfo.Name, symbol.SymbolInfo.NameLen);
-#endif
+			currentSymbol.SymbolName = AnsiStringView{ symbol.SymbolInfo.Name, symbol.SymbolInfo.NameLen };
 			currentSymbol.SymbolAddress = symbol.SymbolInfo.Address;
 		}
 
 		if (!SymGetLineFromAddr64(hProcess, reinterpret_cast<DWORD64>(pStack[i]), &displacement, &line))
 		{
-			currentSymbol.SourceFileName = unknownFileName ? unknownFileName : _T("Unknown");
+			currentSymbol.SourceFileName = unknownFileName.empty() ? unknownFileName : "Unknown"_nv;
 			currentSymbol.SourceFileAddress = 0;
 			currentSymbol.SourceFileLine = 0;
 		}
 		else
 		{
-#ifdef UNICODE
-			currentSymbol.SourceFileName = natUtil::C2Wstr(line.FileName);
-#else
-			currentSymbol.SourceFileName = line.FileName;
-#endif
+			currentSymbol.SourceFileName = AnsiStringView{ line.FileName };
 			currentSymbol.SourceFileAddress = line.Address;
 			currentSymbol.SourceFileLine = line.LineNumber;
 		}
@@ -121,7 +113,7 @@ natStackWalker::Symbol const& natStackWalker::GetSymbol(size_t frame) const
 {
 	if (frame >= m_StackSymbols.size())
 	{
-		nat_Throw(natException, _T("Invalid frame."));
+		nat_Throw(natException, "Invalid frame."_nv);
 	}
 
 	return m_StackSymbols[frame];

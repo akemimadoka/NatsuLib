@@ -80,7 +80,7 @@ namespace NatsuLib
 
 		void SetSize(nLen /*Size*/) override
 		{
-			nat_Throw(natErrException, NatErr_NotSupport, _T("This type of stream does not support SetSize."));
+			nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support SetSize."_nv);
 		}
 
 		nLen GetPosition() const override
@@ -90,7 +90,7 @@ namespace NatsuLib
 
 		void SetPosition(NatSeek /*Origin*/, nLong /*Offset*/) override
 		{
-			nat_Throw(natErrException, NatErr_NotSupport, _T("This type of stream does not support SetPosition."));
+			nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support SetPosition."_nv);
 		}
 
 		nByte ReadByte() override;
@@ -158,7 +158,7 @@ namespace NatsuLib
 
 		void SetSize(nLen /*Size*/) override
 		{
-			nat_Throw(natErrException, NatErr_NotSupport, _T("This type of stream does not support SetSize."));
+			nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support SetSize."_nv);
 		}
 
 		nLen GetPosition() const override
@@ -168,7 +168,7 @@ namespace NatsuLib
 
 		void SetPosition(NatSeek /*Origin*/, nLong /*Offset*/) override
 		{
-			nat_Throw(natErrException, NatErr_NotSupport, _T("This type of stream does not support SetPosition."));
+			nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support SetPosition."_nv);
 		}
 
 		nBool CanWrite() const override;
@@ -184,7 +184,7 @@ namespace NatsuLib
 		void Wait(nuInt timeOut = Infinity);
 
 	private:
-		std::unique_ptr<natFileStream> m_InternalStream;
+		natRefPointer<natFileStream> m_InternalStream;
 		nTString m_PipeName;
 		nBool m_bReadable, m_bWritable;
 	};

@@ -27,12 +27,12 @@ template class String<StringType::Wide>;
 
 void detail_::IndexOutOfRange()
 {
-	nat_Throw(natException, _T("Index is out of range."));
+	nat_Throw(natException, "Index is out of range."_nv);
 }
 
 void detail_::SizeOutOfRange()
 {
-	nat_Throw(natException, _T("Size is out of range."));
+	nat_Throw(natException, "Size is out of range."_nv);
 }
 
 std::tuple<EncodingResult, char32_t, const char*> NatsuLib::DecodeUtf8(const char* strBegin, const char* strEnd) noexcept
@@ -453,7 +453,7 @@ namespace NatsuLib
 				std::tie(result, u32CodePoint, read) = DecodeUtf8(read, readEnd);
 				if (result != EncodingResult::Accept)
 				{
-					nat_Throw(natException, _T("DecodeUtf8 failed."));
+					nat_Throw(natException, "DecodeUtf8 failed."_nv);
 				}
 				std::tie(result, write) = EncodeUtf16(write, writeEnd, u32CodePoint);
 				assert(result == EncodingResult::Accept && "EncodeUtf16 failed.");
@@ -487,7 +487,7 @@ namespace NatsuLib
 				std::tie(result, u32CodePoint, read) = DecodeUtf16(read, readEnd);
 				if (result != EncodingResult::Accept)
 				{
-					nat_Throw(natException, _T("DecodeUtf16 failed."));
+					nat_Throw(natException, "DecodeUtf16 failed."_nv);
 				}
 				std::tie(result, write) = EncodeUtf8(write, writeEnd, u32CodePoint);
 				assert(result == EncodingResult::Accept && "EncodeUtf8 failed.");
@@ -521,7 +521,7 @@ namespace NatsuLib
 				std::tie(result, u32CodePoint, read) = DecodeUtf8(read, readEnd);
 				if (result != EncodingResult::Accept)
 				{
-					nat_Throw(natException, _T("DecodeUtf8 failed."));
+					nat_Throw(natException, "DecodeUtf8 failed."_nv);
 				}
 				std::tie(result, write) = EncodeUtf32(write, writeEnd, u32CodePoint);
 				assert(result == EncodingResult::Accept && "EncodeUtf32 failed.");
@@ -555,7 +555,7 @@ namespace NatsuLib
 				std::tie(result, u32CodePoint, read) = DecodeUtf32(read, readEnd);
 				if (result != EncodingResult::Accept)
 				{
-					nat_Throw(natException, _T("DecodeUtf32 failed."));
+					nat_Throw(natException, "DecodeUtf32 failed."_nv);
 				}
 				std::tie(result, write) = EncodeUtf8(write, writeEnd, u32CodePoint);
 				assert(result == EncodingResult::Accept && "EncodeUtf8 failed.");
@@ -589,7 +589,7 @@ namespace NatsuLib
 				std::tie(result, u32CodePoint, read) = DecodeUtf16(read, readEnd);
 				if (result != EncodingResult::Accept)
 				{
-					nat_Throw(natException, _T("DecodeUtf16 failed."));
+					nat_Throw(natException, "DecodeUtf16 failed."_nv);
 				}
 				std::tie(result, write) = EncodeUtf16(write, writeEnd, u32CodePoint);
 				assert(result == EncodingResult::Accept && "EncodeUtf16 failed.");
@@ -623,7 +623,7 @@ namespace NatsuLib
 				std::tie(result, u32CodePoint, read) = DecodeUtf16(read, readEnd);
 				if (result != EncodingResult::Accept)
 				{
-					nat_Throw(natException, _T("DecodeUtf16 failed."));
+					nat_Throw(natException, "DecodeUtf16 failed."_nv);
 				}
 				std::tie(result, write) = EncodeUtf16(write, writeEnd, u32CodePoint);
 				assert(result == EncodingResult::Accept && "EncodeUtf16 failed.");
@@ -657,7 +657,7 @@ namespace NatsuLib
 				std::tie(result, u32CodePoint, read) = DecodeUtf16(read, readEnd);
 				if (result != EncodingResult::Accept)
 				{
-					nat_Throw(natException, _T("DecodeUtf16 failed."));
+					nat_Throw(natException, "DecodeUtf16 failed."_nv);
 				}
 				std::tie(result, write) = EncodeUtf32(write, writeEnd, u32CodePoint);
 				assert(result == EncodingResult::Accept && "EncodeUtf32 failed.");
@@ -691,7 +691,7 @@ namespace NatsuLib
 				std::tie(result, u32CodePoint, read) = DecodeUtf32(read, readEnd);
 				if (result != EncodingResult::Accept)
 				{
-					nat_Throw(natException, _T("DecodeUtf32 failed."));
+					nat_Throw(natException, "DecodeUtf32 failed."_nv);
 				}
 				std::tie(result, write) = EncodeUtf16(write, writeEnd, u32CodePoint);
 				assert(result == EncodingResult::Accept && "EncodeUtf16 failed.");
@@ -725,7 +725,7 @@ namespace NatsuLib
 				std::tie(result, u32CodePoint, read) = DecodeUtf32(read, readEnd);
 				if (result != EncodingResult::Accept)
 				{
-					nat_Throw(natException, _T("DecodeUtf32 failed."));
+					nat_Throw(natException, "DecodeUtf32 failed."_nv);
 				}
 				std::tie(result, write) = EncodeUtf16(write, writeEnd, u32CodePoint);
 				assert(result == EncodingResult::Accept && "EncodeUtf16 failed.");
@@ -759,7 +759,7 @@ namespace NatsuLib
 				std::tie(result, u32CodePoint, read) = DecodeUtf16(read, readEnd);
 				if (result != EncodingResult::Accept)
 				{
-					nat_Throw(natException, _T("DecodeUtf16 failed."));
+					nat_Throw(natException, "DecodeUtf16 failed."_nv);
 				}
 				std::tie(result, write) = EncodeUtf32(write, writeEnd, u32CodePoint);
 				assert(result == EncodingResult::Accept && "EncodeUtf32 failed.");
@@ -793,7 +793,7 @@ namespace NatsuLib
 				std::tie(result, u32CodePoint, read) = DecodeUtf32(read, readEnd);
 				if (result != EncodingResult::Accept)
 				{
-					nat_Throw(natException, _T("DecodeUtf32 failed."));
+					nat_Throw(natException, "DecodeUtf32 failed."_nv);
 				}
 				std::tie(result, write) = EncodeUtf32(write, writeEnd, u32CodePoint);
 				assert(result == EncodingResult::Accept && "EncodeUtf32 failed.");
@@ -827,7 +827,7 @@ namespace NatsuLib
 				std::tie(result, u32CodePoint, read) = DecodeUtf32(read, readEnd);
 				if (result != EncodingResult::Accept)
 				{
-					nat_Throw(natException, _T("DecodeUtf32 failed."));
+					nat_Throw(natException, "DecodeUtf32 failed."_nv);
 				}
 				std::tie(result, write) = EncodeUtf32(write, writeEnd, u32CodePoint);
 				assert(result == EncodingResult::Accept && "EncodeUtf32 failed.");

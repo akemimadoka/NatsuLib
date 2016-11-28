@@ -1,6 +1,7 @@
 #pragma once
 #include "natConfig.h"
 #include "natType.h"
+#include "natString.h"
 
 #ifdef EnableStackWalker
 #ifdef _WIN32

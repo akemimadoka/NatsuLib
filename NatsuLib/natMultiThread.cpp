@@ -112,7 +112,7 @@ natThreadPool::natThreadPool(nuInt InitialThreadCount, nuInt MaxThreadCount)
 {
 	if (m_MaxThreadCount < InitialThreadCount)
 	{
-		nat_Throw(natException, _T("Max thread count({0}) should be bigger than total thread count({1})."), m_MaxThreadCount, InitialThreadCount);
+		nat_Throw(natException, "Max thread count({0}) should be bigger than total thread count({1})."_nv, m_MaxThreadCount, InitialThreadCount);
 	}
 
 	nuInt Index;
@@ -181,7 +181,7 @@ natThread::ThreadIdType natThreadPool::GetThreadId(nuInt Index) const
 	auto iter = m_Threads.find(Index);
 	if (iter == m_Threads.end())
 	{
-		nat_Throw(natException, _T("No such thread with index {0}."), Index);
+		nat_Throw(natException, "No such thread with index {0}."_nv, Index);
 	}
 
 	return iter->second->GetThreadId();
@@ -294,7 +294,7 @@ nuInt natThreadPool::getNextAvailableIndex()
 		}
 	}
 
-	nat_Throw(natException, _T("No available index."));
+	nat_Throw(natException, "No available index."_nv);
 }
 
 nuInt natThreadPool::getIdleThreadIndex()

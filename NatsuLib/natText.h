@@ -18,11 +18,19 @@ namespace NatsuLib
 
 		virtual void SetNewLine(StringView<encoding> const& newLine)
 		{
+			m_NewLine.clear();
 			EncodingResult result;
-			std::tie(result, std::ignore) = detail_::EncodingCodePoint<encoding>::Decode(newLine, m_NewLine);
-			if (result != EncodingResult::Accept)
+			nuInt codePoint;
+			const auto charCount = newLine.GetCharCount();
+			for (size_t i = 0; i < charCount; ++i)
 			{
-				nat_Throw(natException, _T("Not an available new line string."));
+				std::tie(result, std::ignore) = detail_::EncodingCodePoint<encoding>::Decode(newLine.Slice(i, -1), codePoint);
+				if (result != EncodingResult::Accept)
+				{
+					nat_Throw(natException, "Not an available new line string."_nv);
+				}
+
+				m_NewLine.push_back(codePoint);
 			}
 		}
 
@@ -40,7 +48,26 @@ namespace NatsuLib
 
 		virtual String<encoding> ReadLine()
 		{
-			return ReadUntil({ m_NewLine });
+			nuInt currentChar;
+			nuInt matchedLength{};
+			String<encoding> result;
+			while (matchedLength < m_NewLine.size() && Read(currentChar))
+			{
+				if (currentChar == m_NewLine[matchedLength])
+				{
+					++matchedLength;
+				}
+				else
+				{
+					matchedLength = 0;
+				}
+
+				if (detail_::EncodingCodePoint<encoding>::Encode(result, currentChar) != EncodingResult::Accept)
+				{
+					break;
+				}
+			}
+			return result;
 		}
 
 		virtual String<encoding> ReadToEnd()
@@ -54,8 +81,7 @@ namespace NatsuLib
 		{
 		}
 
-		// TODO: 修改为序列以支持"\r\n"这样的换行符
-		nuInt m_NewLine;
+		std::vector<nuInt> m_NewLine;
 	};
 
 	template <StringType encoding>
@@ -72,7 +98,7 @@ namespace NatsuLib
 			std::tie(result, std::ignore) = detail_::EncodingCodePoint<encoding>::Decode(newLine, m_NewLine);
 			if (result != EncodingResult::Accept)
 			{
-				nat_Throw(natException, _T("Not an available new line string."));
+				nat_Throw(natException, "Not an available new line string."_nv);
 			}
 		}
 

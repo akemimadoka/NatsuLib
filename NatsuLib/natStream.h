@@ -152,7 +152,7 @@ namespace NatsuLib
 		typedef HANDLE UnsafeHandle;
 #endif
 
-		natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable);
+		natFileStream(ncTStr const& lpFilename, nBool bReadable, nBool bWritable);
 #ifdef _WIN32
 		natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable, nBool transferOwner = false);
 #endif
@@ -249,7 +249,7 @@ namespace NatsuLib
 
 		void SetSize(nLen /*Size*/) override
 		{
-			nat_Throw(natErrException, NatErr_NotSupport, _T("This stream cannot set size."));
+			nat_Throw(natErrException, NatErr_NotSupport, "This stream cannot set size."_nv);
 		}
 
 		nLen GetPosition() const override
@@ -259,7 +259,7 @@ namespace NatsuLib
 
 		void SetPosition(NatSeek /*Origin*/, nLong /*Offset*/) override
 		{
-			nat_Throw(natErrException, NatErr_NotSupport, _T("This stream cannot set position."));
+			nat_Throw(natErrException, NatErr_NotSupport, "This stream cannot set position."_nv);
 		}
 
 		nByte ReadByte() override;
