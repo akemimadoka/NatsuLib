@@ -346,7 +346,7 @@ natFileStream::natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable
 		openmode |= std::ios_base::out;
 	}
 
-	m_File.open(lpFilename, openmode);
+	m_File.open(lpFilename.data(), openmode);
 	if (!m_File.is_open())
 	{
 		nat_Throw(natErrException, NatErr_InternalErr, "Cannot open file \"{0}\"."_nv, lpFilename);
