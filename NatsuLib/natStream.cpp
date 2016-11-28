@@ -7,14 +7,14 @@
 using namespace NatsuLib;
 
 #ifdef _WIN32
-natFileStream::natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable)
-	: m_hMappedFile(NULL), m_ShouldDispose(true), m_Filename(lpFilename), m_bReadable(bReadable), m_bWritable(bWritable)
+natFileStream::natFileStream(ncTStr filename, nBool bReadable, nBool bWritable)
+	: m_hMappedFile(NULL), m_ShouldDispose(true), m_Filename(filename), m_bReadable(bReadable), m_bWritable(bWritable)
 {
 	m_hFile = CreateFile(
 #ifdef UNICODE
-	WideString{lpFilename}.data()
+	WideString{filename}.data()
 #else
-	AnsiString{lpFilename}.data()
+	AnsiString{filename}.data()
 #endif
 	,
 		(bReadable ? GENERIC_READ : 0) | (bWritable ? GENERIC_WRITE : 0),
@@ -27,7 +27,7 @@ natFileStream::natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable
 
 	if (!m_hFile || m_hFile == INVALID_HANDLE_VALUE)
 	{
-		nat_Throw(natWinException, "Open file \"%s\" failed"_nv, lpFilename);
+		nat_Throw(natWinException, "Open file \"%s\" failed"_nv, filename);
 	}
 }
 
@@ -333,8 +333,8 @@ void natStdStream::Flush()
 	m_InternalStream->Flush();
 }
 #else
-natFileStream::natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable)
-	: m_CurrentPos(0), m_Filename(lpFilename), m_bReadable(bReadable), m_bWritable(bWritable)
+natFileStream::natFileStream(ncTStr filename, nBool bReadable, nBool bWritable)
+	: m_CurrentPos(0), m_Filename(filename), m_bReadable(bReadable), m_bWritable(bWritable)
 {
 	std::ios_base::openmode openmode{};
 	if (bReadable)
@@ -346,10 +346,10 @@ natFileStream::natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable
 		openmode |= std::ios_base::out;
 	}
 
-	m_File.open(lpFilename.data(), openmode);
+	m_File.open(filename.data(), openmode);
 	if (!m_File.is_open())
 	{
-		nat_Throw(natErrException, NatErr_InternalErr, "Cannot open file \"{0}\"."_nv, lpFilename);
+		nat_Throw(natErrException, NatErr_InternalErr, "Cannot open file \"{0}\"."_nv, filename);
 	}
 
 	auto current = m_File.tellg();
