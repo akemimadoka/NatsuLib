@@ -131,7 +131,6 @@ namespace NatsuLib
 
 		nBool Write(nuInt Char) override
 		{
-			typedef typename StringEncodingTrait<encoding>::CharType CharType;
 			String<encoding> tmpStr;
 			if (detail_::EncodingCodePoint<encoding>::Encode(tmpStr, Char) == EncodingResult::Accept)
 			{

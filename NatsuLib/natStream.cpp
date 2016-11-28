@@ -7,7 +7,7 @@
 using namespace NatsuLib;
 
 #ifdef _WIN32
-natFileStream::natFileStream(ncTStr const& lpFilename, nBool bReadable, nBool bWritable)
+natFileStream::natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable)
 	: m_hMappedFile(NULL), m_ShouldDispose(true), m_Filename(lpFilename), m_bReadable(bReadable), m_bWritable(bWritable)
 {
 	m_hFile = CreateFile(
@@ -529,7 +529,7 @@ void natFileStream::Flush()
 
 ncTStr natFileStream::GetFilename() const noexcept
 {
-	return m_Filename.c_str();
+	return m_Filename;
 }
 
 natFileStream::~natFileStream()
