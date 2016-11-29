@@ -1409,10 +1409,8 @@ NATINLINE NatsuLib::WideString operator""_ws(const NatsuLib::WideString::CharTyp
 typedef NatsuLib::StringEncodingTrait<NatsuLib::StringType::Utf8>::CharType nU8Char;
 typedef NatsuLib::U8StringView nStrView;
 typedef NatsuLib::U8String nString;
-typedef nString nTString;
 typedef nString::CharType nTChar;
 typedef nTChar* nTStr;
-typedef nStrView ncTStr;
 
 NATINLINE nStrView operator""_nv(const nU8Char* str, size_t length) noexcept
 {

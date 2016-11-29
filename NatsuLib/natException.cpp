@@ -4,7 +4,7 @@
 
 using namespace NatsuLib;
 
-detail_::natExceptionStorage::natExceptionStorage(std::exception_ptr nestedException, std::chrono::system_clock::time_point const& time, nTString const& file, nuInt line, nTString const& src, nTString const& desc)
+detail_::natExceptionStorage::natExceptionStorage(std::exception_ptr nestedException, std::chrono::system_clock::time_point const& time, nString const& file, nuInt line, nString const& src, nString const& desc)
 	: m_NestedException(nestedException), m_Time(time), m_File(file), m_Line(line), m_Source(src), m_Description(desc)
 {
 }
@@ -18,7 +18,7 @@ std::chrono::system_clock::time_point natException::GetTime() const noexcept
 	return m_Time;
 }
 
-ncTStr natException::GetFile() const noexcept
+nStrView natException::GetFile() const noexcept
 {
 	return m_File;
 }
@@ -28,12 +28,12 @@ nuInt natException::GetLine() const noexcept
 	return m_Line;
 }
 
-ncTStr natException::GetSource() const noexcept
+nStrView natException::GetSource() const noexcept
 {
 	return m_Source;
 }
 
-ncTStr natException::GetDesc() const noexcept
+nStrView natException::GetDesc() const noexcept
 {
 	return m_Description;
 }
@@ -62,7 +62,7 @@ DWORD natWinException::GetErrNo() const noexcept
 	return m_LastErr;
 }
 
-ncTStr natWinException::GetErrMsg() const noexcept
+nStrView natWinException::GetErrMsg() const noexcept
 {
 	if (m_ErrMsg.empty())
 	{
@@ -92,7 +92,7 @@ NatErr natErrException::GetErrNo() const noexcept
 	return m_Errno;
 }
 
-ncTStr natErrException::GetErrMsg() const noexcept
+nStrView natErrException::GetErrMsg() const noexcept
 {
 	return GetErrDescription(m_Errno);
 }

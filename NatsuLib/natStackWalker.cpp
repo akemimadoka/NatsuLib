@@ -19,7 +19,7 @@ natScope<std::function<void()>> StackWalkerUninitializer{[]
 	}
 }};
 
-natStackWalker::natStackWalker(ncTStr userSearchPath)
+natStackWalker::natStackWalker(nStrView userSearchPath)
 {
 	if (!s_Initialized.load(std::memory_order_acquire))
 	{
@@ -43,7 +43,7 @@ natStackWalker::~natStackWalker()
 {
 }
 
-void natStackWalker::CaptureStack(size_t skipFrames, ncTStr unknownSymbolName, ncTStr unknownFileName) noexcept
+void natStackWalker::CaptureStack(size_t skipFrames, nStrView unknownSymbolName, nStrView unknownFileName) noexcept
 {
 #if WINVER <= _WIN32_WINNT_WS03
 	if (skipFrames > 63)
@@ -135,7 +135,7 @@ natStackWalker::~natStackWalker()
 {
 }
 
-void natStackWalker::CaptureStack(size_t captureFrames, ncTStr unknownSymbolInfo) noexcept
+void natStackWalker::CaptureStack(size_t captureFrames, nStrView unknownSymbolInfo) noexcept
 {
 	std::vector<AddressType> addresses(captureFrames);
 	const auto size = static_cast<size_t>(backtrace(addresses.data(), static_cast<int>(captureFrames)));

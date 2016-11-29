@@ -7,7 +7,7 @@ using namespace NatsuLib;
 
 #ifdef _WIN32
 
-natNamedPipeServerStream::natNamedPipeServerStream(ncTStr Pipename, PipeDirection Direction, nuInt MaxInstances, nuInt OutBuffer, nuInt InBuffer, nuInt TimeOut, PipeMode TransmissionMode, PipeMode ReadMode, PipeOptions Options)
+natNamedPipeServerStream::natNamedPipeServerStream(nStrView Pipename, PipeDirection Direction, nuInt MaxInstances, nuInt OutBuffer, nuInt InBuffer, nuInt TimeOut, PipeMode TransmissionMode, PipeMode ReadMode, PipeOptions Options)
 	: m_hPipe(nullptr), m_bAsync(Options == PipeOptions::Asynchronous), m_bConnected(false), m_bMessageComplete(false), m_bReadable(false), m_bWritable(false)
 {
 	DWORD dir;
@@ -214,7 +214,7 @@ std::future<void> natNamedPipeServerStream::WaitForConnectionAsync()
 	return std::async([this]() { ConnectNamedPipe(m_hPipe, NULL); m_bConnected = true; });
 }
 
-natNamedPipeClientStream::natNamedPipeClientStream(ncTStr Pipename, nBool bReadable, nBool bWritable)
+natNamedPipeClientStream::natNamedPipeClientStream(nStrView Pipename, nBool bReadable, nBool bWritable)
 	: m_PipeName(Pipename), m_bReadable(bReadable), m_bWritable(bWritable)
 {
 }

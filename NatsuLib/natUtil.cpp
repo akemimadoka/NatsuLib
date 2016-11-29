@@ -57,7 +57,7 @@ std::string natUtil::WidecharToMultibyte(ncWStr Str, nuInt CodePage)
 	return tBuffer.data();
 }
 
-nTString natUtil::GetResourceString(DWORD ResourceID, HINSTANCE hInstance)
+nString natUtil::GetResourceString(DWORD ResourceID, HINSTANCE hInstance)
 {
 	int nLen;
 	std::vector<TCHAR> tBuf(16u);

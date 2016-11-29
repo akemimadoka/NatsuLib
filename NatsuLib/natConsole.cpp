@@ -11,8 +11,14 @@ natConsole::natConsole()
 	}, m_StdOutWriter{ &m_StdOut }, m_StdErrWriter{ &m_StdErr }
 {
 #ifdef _WIN32
-	SetConsoleCP(CP_UTF8);
-	SetConsoleOutputCP(CP_UTF8);
+	if (!SetConsoleCP(CP_UTF8))
+	{
+		nat_Throw(natWinException, "SetConsoleCP failed."_nv);
+	}
+	if (!SetConsoleOutputCP(CP_UTF8))
+	{
+		nat_Throw(natWinException, "SetConsoleOutputCP failed."_nv);
+	}
 #endif
 }
 

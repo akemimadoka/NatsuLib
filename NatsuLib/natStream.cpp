@@ -23,7 +23,7 @@ std::future<nLen> natStream::WriteBytesAsync(ncData pData, nLen Length)
 }
 
 #ifdef _WIN32
-natFileStream::natFileStream(ncTStr filename, nBool bReadable, nBool bWritable)
+natFileStream::natFileStream(nStrView filename, nBool bReadable, nBool bWritable)
 	: m_hMappedFile(NULL), m_ShouldDispose(true), m_Filename(filename), m_bReadable(bReadable), m_bWritable(bWritable)
 {
 	m_hFile = CreateFile(
@@ -226,7 +226,7 @@ void natFileStream::Flush()
 	FlushFileBuffers(m_hFile);
 }
 
-ncTStr natFileStream::GetFilename() const noexcept
+nStrView natFileStream::GetFilename() const noexcept
 {
 	return m_Filename;
 }
@@ -333,7 +333,7 @@ void natStdStream::Flush()
 	m_InternalStream->Flush();
 }
 #else
-natFileStream::natFileStream(ncTStr filename, nBool bReadable, nBool bWritable)
+natFileStream::natFileStream(nStrView filename, nBool bReadable, nBool bWritable)
 	: m_CurrentPos(0), m_Filename(filename), m_bReadable(bReadable), m_bWritable(bWritable)
 {
 	std::ios_base::openmode openmode{};
@@ -511,7 +511,7 @@ void natFileStream::Flush()
 	m_File.flush();
 }
 
-ncTStr natFileStream::GetFilename() const noexcept
+nStrView natFileStream::GetFilename() const noexcept
 {
 	return m_Filename;
 }

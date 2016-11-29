@@ -22,7 +22,7 @@ namespace NatsuLib
 			: public natEventBase
 		{
 		public:
-			EventLogUpdated(nuInt logType, std::chrono::system_clock::time_point const& time, ncTStr data) noexcept
+			EventLogUpdated(nuInt logType, std::chrono::system_clock::time_point const& time, nStrView data) noexcept
 				: m_LogType(logType), m_Time(time), m_Data(data)
 			{
 			}
@@ -42,7 +42,7 @@ namespace NatsuLib
 				return m_Time;
 			}
 
-			ncTStr GetData() const noexcept
+			nStrView GetData() const noexcept
 			{
 				return m_Data;
 			}
@@ -50,7 +50,7 @@ namespace NatsuLib
 		private:
 			nuInt m_LogType;
 			std::chrono::system_clock::time_point m_Time;
-			ncTStr m_Data;
+			nStrView m_Data;
 		};
 
 		///	@brief	预置日志类型
@@ -66,28 +66,28 @@ namespace NatsuLib
 
 		///	@brief	记录信息
 		template <typename... Arg>
-		void LogMsg(ncTStr content, Arg &&... arg)
+		void LogMsg(nStrView content, Arg &&... arg)
 		{
 			Log(Msg, content, std::forward<Arg>(arg)...);
 		}
 
 		///	@brief	记录错误
 		template <typename... Arg>
-		void LogErr(ncTStr content, Arg &&... arg)
+		void LogErr(nStrView content, Arg &&... arg)
 		{
 			Log(Err, content, std::forward<Arg>(arg)...);
 		}
 
 		///	@brief	记录警告
 		template <typename... Arg>
-		void LogWarn(ncTStr content, Arg &&... arg)
+		void LogWarn(nStrView content, Arg &&... arg)
 		{
 			Log(Warn, content, std::forward<Arg>(arg)...);
 		}
 
 		///	@brief	记录
 		template <typename... Arg>
-		void Log(nuInt type, ncTStr content, Arg &&... arg)
+		void Log(nuInt type, nStrView content, Arg &&... arg)
 		{
 			UpdateLog(type, natUtil::FormatString(content, std::forward<Arg>(arg)...));
 		}
@@ -99,20 +99,20 @@ namespace NatsuLib
 		struct OutputToOStream
 		{
 			template <typename... RestChar_t>
-			static void Impl(ncTStr str, std::basic_ostream<nChar>& currentOStream, std::basic_ostream<RestChar_t>&... _ostreams)
+			static void Impl(nStrView str, std::basic_ostream<nChar>& currentOStream, std::basic_ostream<RestChar_t>&... _ostreams)
 			{
 				currentOStream << str << std::endl;
 				Impl(str, _ostreams...);
 			}
 
 			template <typename... RestChar_t>
-			static void Impl(ncTStr str, std::basic_ostream<nWChar>& currentOStream, std::basic_ostream<RestChar_t>&... _ostreams)
+			static void Impl(nStrView str, std::basic_ostream<nWChar>& currentOStream, std::basic_ostream<RestChar_t>&... _ostreams)
 			{
 				currentOStream << str << std::endl;
 				Impl(str, _ostreams...);
 			}
 
-			static void Impl(ncTStr /*str*/)
+			static void Impl(nStrView /*str*/)
 			{
 			}
 		};
@@ -150,10 +150,10 @@ namespace NatsuLib
 			});
 		}
 
-		static ncTStr GetDefaultLogTypeName(LogType logtype);
+		static nStrView GetDefaultLogTypeName(LogType logtype);
 
 	private:
-		void UpdateLog(nuInt type, nTString&& log);
+		void UpdateLog(nuInt type, nString&& log);
 		natEventBus& m_EventBus;
 	};
 }

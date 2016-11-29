@@ -152,7 +152,7 @@ namespace NatsuLib
 		typedef HANDLE UnsafeHandle;
 #endif
 
-		natFileStream(ncTStr filename, nBool bReadable, nBool bWritable);
+		natFileStream(nStrView filename, nBool bReadable, nBool bWritable);
 #ifdef _WIN32
 		natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable, nBool transferOwner = false);
 #endif
@@ -174,7 +174,7 @@ namespace NatsuLib
 		nLen WriteBytes(ncData pData, nLen Length) override;
 		void Flush() override;
 
-		ncTStr GetFilename() const noexcept;
+		nStrView GetFilename() const noexcept;
 
 #ifdef _WIN32
 		UnsafeHandle GetUnsafeHandle() const noexcept;
@@ -191,7 +191,7 @@ namespace NatsuLib
 		nLen m_Size, m_CurrentPos;
 #endif
 		
-		nTString m_Filename;
+		nString m_Filename;
 		nBool m_bReadable, m_bWritable;
 	};
 

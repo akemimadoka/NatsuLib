@@ -52,8 +52,8 @@ int main()
 		}, t);
 		
 		/*{
-			std::vector<nTString> strvec;
-			natUtil::split("test 2333"_nv, " 2"_nv, [&strvec](ncTStr str, size_t len)
+			std::vector<nString> strvec;
+			natUtil::split("test 2333"_nv, " 2"_nv, [&strvec](nStrView str, size_t len)
 			{
 				strvec.emplace_back(str, len);
 			});

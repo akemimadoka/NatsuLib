@@ -45,7 +45,7 @@ namespace NatsuLib
 			MaxAllowedServerInstances = std::numeric_limits<nuInt>::max(),
 		};
 
-		natNamedPipeServerStream(ncTStr Pipename, PipeDirection Direction, nuInt MaxInstances, nuInt OutBuffer = 1024, nuInt InBuffer = 1024, nuInt TimeOut = 0, PipeMode TransmissionMode = PipeMode::Message, PipeMode ReadMode = PipeMode::Message, PipeOptions Options = PipeOptions::WriteThrough);
+		natNamedPipeServerStream(nStrView Pipename, PipeDirection Direction, nuInt MaxInstances, nuInt OutBuffer = 1024, nuInt InBuffer = 1024, nuInt TimeOut = 0, PipeMode TransmissionMode = PipeMode::Message, PipeMode ReadMode = PipeMode::Message, PipeOptions Options = PipeOptions::WriteThrough);
 		~natNamedPipeServerStream();
 
 		nBool CanWrite() const override
@@ -131,7 +131,7 @@ namespace NatsuLib
 			Infinity = std::numeric_limits<nuInt>::max(),
 		};
 
-		natNamedPipeClientStream(ncTStr Pipename, nBool bReadable, nBool bWritable);
+		natNamedPipeClientStream(nStrView Pipename, nBool bReadable, nBool bWritable);
 		~natNamedPipeClientStream() = default;
 
 		nBool CanResize() const override
@@ -183,7 +183,7 @@ namespace NatsuLib
 
 	private:
 		natRefPointer<natFileStream> m_InternalStream;
-		nTString m_PipeName;
+		nString m_PipeName;
 		nBool m_bReadable, m_bWritable;
 	};
 }

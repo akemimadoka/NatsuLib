@@ -42,18 +42,6 @@ typedef	nInt				nResult;	///< @brief	预定义返回值
 										///	30 - 16 位	： 保留\n
 										///	15 - 0  位	： 错误描述
 
-/*#ifdef UNICODE
-typedef nWChar				nTChar;		///< @brief	通用字符
-typedef	nWStr				nTStr;		///< @brief	通用字符串
-typedef ncWStr				ncTStr;		///< @brief	常量通用字符串
-#else
-typedef nChar				nTChar;		///< @brief	通用字符
-typedef	nStr				nTStr;		///< @brief	通用字符串
-typedef	ncStr				ncTStr;		///< @brief	常量通用字符串
-#endif
-
-typedef std::basic_string<nTChar> nTString;	///< @brief	通用string类*/
-
 template <typename T>
 using nUnsafePtr = std::add_pointer_t<T>;
 

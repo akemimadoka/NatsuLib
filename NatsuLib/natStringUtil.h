@@ -116,7 +116,7 @@ namespace NatsuLib
 		}
 
 		template <typename... Args>
-		nTString FormatString(const nStrView::CharType* lpStr, Args&&... args)
+		nString FormatString(const nStrView::CharType* lpStr, Args&&... args)
 		{
 			std::basic_stringstream<nTChar> ss;
 			nuInt index = 0;
@@ -138,7 +138,7 @@ namespace NatsuLib
 						visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<nTChar>::Get(item); });
 						break;
 					case 's':
-						visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<nTString>::Get(item); });
+						visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<nString>::Get(item); });
 						break;
 					case 'd':
 					case 'i':
@@ -372,19 +372,19 @@ namespace NatsuLib
 		}
 
 		template <>
-		inline nTString FormatString(const nStrView::CharType* lpStr)
+		inline nString FormatString(const nStrView::CharType* lpStr)
 		{
 			return { lpStr };
 		}
 
 		template <typename... Args>
-		nTString FormatString(nStrView const& Str, Args&&... args)
+		nString FormatString(nStrView const& Str, Args&&... args)
 		{
 			return FormatString(Str.data(), std::forward<Args>(args)...);
 		}
 
 		template <>
-		inline nTString FormatString(nStrView const& Str)
+		inline nString FormatString(nStrView const& Str)
 		{
 			return Str;
 		}

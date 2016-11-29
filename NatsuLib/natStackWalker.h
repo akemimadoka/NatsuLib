@@ -46,9 +46,9 @@ namespace NatsuLib
 		struct Symbol
 		{
 			AddressType OriginalAddress;
-			nTString SymbolName;
+			nString SymbolName;
 			SymbolAddressType SymbolAddress;
-			nTString SourceFileName;
+			nString SourceFileName;
 			SourceFileAddressType SourceFileAddress;
 			SourceFileLineNumberType SourceFileLine;
 		};
@@ -70,13 +70,13 @@ namespace NatsuLib
 #ifdef _WIN32
 		static nBool HasInitialized() noexcept;
 
-	explicit natStackWalker(ncTStr userSearchPath = nullptr);
+	explicit natStackWalker(nStrView userSearchPath = nullptr);
 
-		void CaptureStack(size_t skipFrames = 0, ncTStr unknownSymbolName = nullptr, ncTStr unknownFileName = nullptr) noexcept;
+		void CaptureStack(size_t skipFrames = 0, nStrView unknownSymbolName = nullptr, nStrView unknownFileName = nullptr) noexcept;
 #else
 		natStackWalker();
 
-		void CaptureStack(size_t captureFrames = CaptureFrames, ncTStr unknownSymbolInfo = nullptr) noexcept;
+		void CaptureStack(size_t captureFrames = CaptureFrames, nStrView unknownSymbolInfo = nullptr) noexcept;
 #endif
 		~natStackWalker();
 
