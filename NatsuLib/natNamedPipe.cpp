@@ -95,14 +95,6 @@ nLen natNamedPipeServerStream::ReadBytes(nData pData, nLen Length)
 	return tReadBytes;
 }
 
-std::future<nLen> natNamedPipeServerStream::ReadBytesAsync(nData pData, nLen Length)
-{
-	return std::async([=]()
-	{
-		return ReadBytes(pData, Length);
-	});
-}
-
 void natNamedPipeServerStream::WriteByte(nByte byte)
 {
 	if (WriteBytes(&byte, 1) != 1)
@@ -135,14 +127,6 @@ nLen natNamedPipeServerStream::WriteBytes(ncData pData, nLen Length)
 	}
 
 	return tWriteBytes;
-}
-
-std::future<nLen> natNamedPipeServerStream::WriteBytesAsync(ncData pData, nLen Length)
-{
-	return std::async([=]()
-	{
-		return WriteBytes(pData, Length);
-	});
 }
 
 void natNamedPipeServerStream::Flush()
