@@ -1,7 +1,13 @@
 cmake_minimum_required(VERSION 3.0)
 project(NatsuLib)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra")
+message(STATUS "Operation system is ${CMAKE_SYSTEM}")
+
+if(WIN32)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra")
+endif()
 
 set(SOURCE_FILES
     NatsuLib/natConcepts.h
@@ -9,6 +15,7 @@ set(SOURCE_FILES
     NatsuLib/natConsole.cpp
     NatsuLib/natConsole.h
     NatsuLib/natDelegate.h
+    NatsuLib/natEnvironment.cpp
     NatsuLib/natEnvironment.h
     NatsuLib/natEvent.cpp
     NatsuLib/natEvent.h

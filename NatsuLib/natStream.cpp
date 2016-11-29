@@ -545,6 +545,8 @@ natStdStream::~natStdStream()
 
 nByte natStdStream::ReadByte()
 {
+	assert(CanRead());
+
 	nByte byteToRead;
 	if (ReadBytes(&byteToRead, 1) == 1)
 	{
@@ -561,10 +563,34 @@ nLen natStdStream::ReadBytes(nData pData, nLen Length)
 		nat_Throw(natErrException, NatErr_IllegalState, "This stream cannot read."_nv);
 	}
 
+	/*auto pWrite = pData;
+	nLen readBytes{};
+
+	while (readBytes < Length)
+	{
+		nByte byteToRead;
+		if (
 #ifdef _MSC_VER
-	return static_cast<nLen>(fread_s(pData, Length, Length, 1, m_StdHandle));
+			fread_s(&byteToRead, Length, 1, 1, m_StdHandle)
 #else
-	return static_cast<nLen>(fread(pData, Length, 1, m_StdHandle));
+			fread(&byteToRead, 1, 1, m_StdHandle)
+#endif
+			== 1)
+		{
+			*pWrite++ = byteToRead;
+			++readBytes;
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	return readBytes;*/
+#ifdef _MSC_VER
+	return static_cast<nLen>(fread_s(pData, Length, 1, Length, m_StdHandle));
+#else
+	return static_cast<nLen>(fread(pData, 1, Length, m_StdHandle));
 #endif
 }
 
@@ -578,6 +604,7 @@ std::future<nLen> natStdStream::ReadBytesAsync(nData pData, nLen Length)
 
 void natStdStream::WriteByte(nByte byte)
 {
+	assert(CanWrite());
 	WriteBytes(&byte, 1);
 }
 

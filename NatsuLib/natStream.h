@@ -217,12 +217,12 @@ namespace NatsuLib
 
 		nBool CanWrite() const override
 		{
-			return m_StdStreamType == StdIn;
+			return m_StdStreamType != StdIn;
 		}
 
 		nBool CanRead() const override
 		{
-			return m_StdStreamType != StdIn;
+			return m_StdStreamType == StdIn;
 		}
 
 		nBool CanResize() const override

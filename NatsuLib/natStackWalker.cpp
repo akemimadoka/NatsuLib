@@ -8,9 +8,9 @@
 
 using namespace NatsuLib;
 
+#ifdef _WIN32
 std::atomic_bool natStackWalker::s_Initialized{ false };
 
-#ifdef _WIN32
 natScope<std::function<void()>> StackWalkerUninitializer{[]
 {
 	if (natStackWalker::HasInitialized())
@@ -123,8 +123,57 @@ nBool natStackWalker::HasInitialized() noexcept
 {
 	return s_Initialized.load(std::memory_order_acquire);
 }
-
 #else
+
+#include <malloc.h>
+
+natStackWalker::natStackWalker()
+{
+}
+
+natStackWalker::~natStackWalker()
+{
+}
+
+void natStackWalker::CaptureStack(size_t captureFrames, ncTStr unknownSymbolInfo) noexcept
+{
+	std::vector<AddressType> addresses(captureFrames);
+	const auto size = static_cast<size_t>(backtrace(addresses.data(), static_cast<int>(captureFrames)));
+	addresses.resize(size);
+	char** symbolInfo = backtrace_symbols(addresses.data(), static_cast<int>(size));
+	const auto scope = make_scope([symbolInfo]
+	{
+		std::free(symbolInfo);
+	});
+
+	for (size_t i = 0; i < size; ++i)
+	{
+		const auto symInfo = symbolInfo[i];
+		Symbol currentSymbol { addresses[i], symInfo ? nStrView{ symInfo } : unknownSymbolInfo.empty() ? "Unknown"_nv : unknownSymbolInfo };
+		m_StackSymbols.emplace_back(std::move(currentSymbol));
+	}
+}
+
+void natStackWalker::Clear() noexcept
+{
+	m_StackSymbols.clear();
+}
+
+size_t natStackWalker::GetFrameCount() const noexcept
+{
+	return m_StackSymbols.size();
+}
+
+const natStackWalker::Symbol &natStackWalker::GetSymbol(size_t frame) const
+{
+	if (frame >= m_StackSymbols.size())
+	{
+		nat_Throw(natException, "Invalid frame."_nv);
+	}
+
+	return m_StackSymbols[frame];
+}
+
 #endif
 
 #endif

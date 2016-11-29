@@ -1,6 +1,6 @@
 #pragma once
 #include "natConfig.h"
-#include "natString.h"
+#include "natEnvironment.h"
 #include "natRefObj.h"
 
 namespace NatsuLib
@@ -16,7 +16,7 @@ namespace NatsuLib
 		virtual nBool Read(nuInt& Char) = 0;
 		virtual nBool Peek(nuInt& Char) = 0;
 
-		virtual void SetNewLine(StringView<encoding> const& newLine)
+		virtual void SetNewLine(StringView<encoding> const& newLine = Environment::GetNewLine())
 		{
 			m_NewLine.clear();
 			EncodingResult result;
@@ -77,8 +77,8 @@ namespace NatsuLib
 
 	protected:
 		TextReader()
-			: m_NewLine{ '\n' }
 		{
+			TextReader::SetNewLine();
 		}
 
 		std::vector<nuInt> m_NewLine;
@@ -92,13 +92,21 @@ namespace NatsuLib
 
 		virtual nBool Write(nuInt Char) = 0;
 
-		virtual void SetNewLine(StringView<encoding> const& newLine)
+		virtual void SetNewLine(StringView<encoding> const& newLine = Environment::GetNewLine())
 		{
+			m_NewLine.clear();
 			EncodingResult result;
-			std::tie(result, std::ignore) = detail_::EncodingCodePoint<encoding>::Decode(newLine, m_NewLine);
-			if (result != EncodingResult::Accept)
+			nuInt codePoint;
+			const auto charCount = newLine.GetCharCount();
+			for (size_t i = 0; i < charCount; ++i)
 			{
-				nat_Throw(natException, "Not an available new line string."_nv);
+				std::tie(result, std::ignore) = detail_::EncodingCodePoint<encoding>::Decode(newLine.Slice(i, -1), codePoint);
+				if (result != EncodingResult::Accept)
+				{
+					nat_Throw(natException, "Not an available new line string."_nv);
+				}
+
+				m_NewLine.push_back(codePoint);
 			}
 		}
 
@@ -129,15 +137,19 @@ namespace NatsuLib
 		virtual size_t WriteLine(StringView<encoding> const& str)
 		{
 			const auto size = Write(str);
-			return size + Write(m_NewLine) ? 1 : 0;
+			for (auto&& item : m_NewLine)
+			{
+				Write(item);
+			}
+			return size + m_NewLine.size();
 		}
 
 	protected:
 		TextWriter()
-			: m_NewLine{ '\n' }
 		{
+			TextWriter::SetNewLine();
 		}
 
-		nuInt m_NewLine;
+		std::vector<nuInt> m_NewLine;
 	};
 }

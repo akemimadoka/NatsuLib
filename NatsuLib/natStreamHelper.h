@@ -66,6 +66,11 @@ namespace NatsuLib
 		// 清空缓冲区并重设位置，可选保留尾部的部分数据
 		void ReadBuffer(size_t size, size_t reserved = 0)
 		{
+			if (!size)
+			{
+				return;
+			}
+
 			assert(size >= reserved);
 			assert(reserved <= m_Buffer.size());
 			copy(prev(cend(m_Buffer), reserved), cend(m_Buffer), begin(m_Buffer));

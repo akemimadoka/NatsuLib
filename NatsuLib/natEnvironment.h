@@ -4,5 +4,8 @@
 
 namespace NatsuLib
 {
-
+	namespace Environment
+	{
+		nStrView GetNewLine();
+	}
 }

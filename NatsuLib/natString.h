@@ -823,11 +823,29 @@ namespace NatsuLib
 			return *this;
 		}
 
-		String(String const& other) = default;
-		String(String&& other) = default;
+		String(String const& other)
+			: String{}
+		{
+			Assign(other);
+		}
 
-		String& operator=(String const& other) = default;
-		String& operator=(String&& other) = default;
+		String(String&& other) noexcept
+			: String{}
+		{
+			Assign(std::move(other));
+		}
+
+		String& operator=(String const& other)
+		{
+			Assign(other);
+			return *this;
+		}
+
+		String& operator=(String&& other) noexcept
+		{
+			Assign(std::move(other));
+			return *this;
+		}
 
 		template <StringType srcType>
 		String(StringView<srcType> const& other)
