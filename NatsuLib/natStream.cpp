@@ -6,6 +6,22 @@
 
 using namespace NatsuLib;
 
+std::future<nLen> natStream::ReadBytesAsync(nData pData, nLen Length)
+{
+	return std::async([&]
+	{
+		return ReadBytes(pData, Length);
+	});
+}
+
+std::future<nLen> natStream::WriteBytesAsync(ncData pData, nLen Length)
+{
+	return std::async([&]
+	{
+		return WriteBytes(pData, Length);
+	});
+}
+
 #ifdef _WIN32
 natFileStream::natFileStream(ncTStr filename, nBool bReadable, nBool bWritable)
 	: m_hMappedFile(NULL), m_ShouldDispose(true), m_Filename(filename), m_bReadable(bReadable), m_bWritable(bWritable)
@@ -166,14 +182,6 @@ nLen natFileStream::ReadBytes(nData pData, nLen Length)
 	return tReadBytes;
 }
 
-std::future<nLen> natFileStream::ReadBytesAsync(nData pData, nLen Length)
-{
-	return std::async([=]()
-	{
-		return ReadBytes(pData, Length);
-	});
-}
-
 void natFileStream::WriteByte(nByte byte)
 {
 	if (WriteBytes(&byte, 1) != 1)
@@ -206,14 +214,6 @@ nLen natFileStream::WriteBytes(ncData pData, nLen Length)
 	}
 
 	return tWriteBytes;
-}
-
-std::future<nLen> natFileStream::WriteBytesAsync(ncData pData, nLen Length)
-{
-	return std::async([=]()
-	{
-		return WriteBytes(pData, Length);
-	});
 }
 
 void natFileStream::Flush()
@@ -471,14 +471,6 @@ nLen natFileStream::ReadBytes(nData pData, nLen Length)
 	return size;
 }
 
-std::future<nLen> natFileStream::ReadBytesAsync(nData pData, nLen Length)
-{
-	return std::async([=]()
-	{
-		return ReadBytes(pData, Length);
-	});
-}
-
 void natFileStream::WriteByte(nByte byte)
 {
 	m_File.put(static_cast<char>(byte));
@@ -512,14 +504,6 @@ nLen natFileStream::WriteBytes(ncData pData, nLen Length)
 
 	m_CurrentPos = static_cast<nLen>(current);
 	return size;
-}
-
-std::future<nLen> natFileStream::WriteBytesAsync(ncData pData, nLen Length)
-{
-	return std::async([=]()
-	{
-		return WriteBytes(pData, Length);
-	});
 }
 
 void natFileStream::Flush()

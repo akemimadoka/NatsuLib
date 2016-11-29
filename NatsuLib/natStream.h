@@ -74,7 +74,7 @@ namespace NatsuLib
 		/// @param[out]	pData	数据缓冲区
 		/// @param[in]	Length	读取的长度
 		/// @return		实际读取长度
-		virtual std::future<nLen> ReadBytesAsync(nData pData, nLen Length) = 0;
+		virtual std::future<nLen> ReadBytesAsync(nData pData, nLen Length);
 
 		/// @brief		向流中写入一个字节
 		virtual void WriteByte(nByte byte) = 0;
@@ -89,7 +89,7 @@ namespace NatsuLib
 		///	@param[in]	pData	数据缓冲区
 		///	@param[in]	Length	写入的长度
 		///	@return		实际写入长度
-		virtual std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) = 0;
+		virtual std::future<nLen> WriteBytesAsync(ncData pData, nLen Length);
 
 		///	@brief		刷新流
 		///	@note		仅对有缓存机制的流有效且有意义
@@ -170,10 +170,8 @@ namespace NatsuLib
 		void SetPosition(NatSeek Origin, nLong Offset) override;
 		nByte ReadByte() override;
 		nLen ReadBytes(nData pData, nLen Length) override;
-		std::future<nLen> ReadBytesAsync(nData pData, nLen Length) override;
 		void WriteByte(nByte byte) override;
 		nLen WriteBytes(ncData pData, nLen Length) override;
-		std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) override;
 		void Flush() override;
 
 		ncTStr GetFilename() const noexcept;

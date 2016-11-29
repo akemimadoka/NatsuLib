@@ -64,6 +64,11 @@ int main()
 		}*/
 
 		{
+			logger.LogMsg("Input: "_nv);
+			logger.LogMsg("Your input: {0}"_nv, console.ReadLine());
+		}
+		
+		{
 			int arr[] = { 1, 2, 3, 4, 5 };
 			for (auto&& item : from(arr).select([](int i){ return i + 1; }).where([](int i){ return i > 3; }))
 			{

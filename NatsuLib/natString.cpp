@@ -339,7 +339,7 @@ namespace NatsuLib
 				codePoint = static_cast<nuInt>(tmpCodePoint);
 			}
 
-			return { result, std::distance(end, std::cbegin(input)) };
+			return { result, std::distance(std::cbegin(input), end) };
 		}
 
 		EncodingResult EncodingCodePoint<StringType::Utf16>::Encode(String<StringType::Utf16>& output, nuInt codePoint)
@@ -366,7 +366,7 @@ namespace NatsuLib
 				codePoint = static_cast<nuInt>(tmpCodePoint);
 			}
 
-			return{ result, std::distance(end, std::cbegin(input)) };
+			return{ result, std::distance(std::cbegin(input), end) };
 		}
 
 		EncodingResult EncodingCodePoint<StringType::Utf32>::Encode(String<StringType::Utf32>& output, nuInt codePoint)
@@ -393,7 +393,7 @@ namespace NatsuLib
 				codePoint = static_cast<nuInt>(tmpCodePoint);
 			}
 
-			return{ result, std::distance(end, std::cbegin(input)) };
+			return{ result, std::distance(std::cbegin(input), end) };
 		}
 
 #ifdef _WIN32

@@ -20,7 +20,7 @@ namespace NatsuLib
 		};
 
 		explicit natStreamReader(natStream* pStream, size_t bufferSize = DefaultBufferSize) noexcept
-			: m_InternalStream(pStream)
+			: m_InternalStream(pStream), m_BufferSize{ bufferSize }, m_CurrentPos{}, m_EndPos{}
 		{
 			//ReadBuffer(bufferSize);
 		}
@@ -31,9 +31,11 @@ namespace NatsuLib
 
 		nBool Read(nuInt& codePoint) override
 		{
-			if (Peek(codePoint))
+			auto readBytes = InternalPeek(codePoint);
+			if (readBytes)
 			{
-				++m_CurrentPos;
+				m_CurrentPos += readBytes;
+				assert(m_CurrentPos <= m_EndPos && "Buffer overflew.");
 				return true;
 			}
 
@@ -42,47 +44,7 @@ namespace NatsuLib
 
 		nBool Peek(nuInt& codePoint) override
 		{
-			typedef typename StringEncodingTrait<encoding>::CharType CharType;
-			assert(m_CurrentPos <= m_EndPos);
-			if (m_CurrentPos == m_EndPos)
-			{
-				if (m_InternalStream->IsEndOfStream())
-				{
-					return false;
-				}
-
-				ReadBuffer(m_BufferSize);
-				if (m_CurrentPos == m_EndPos)
-				{
-					return false;
-				}
-			}
-
-			EncodingResult result;
-			size_t readBytes;
-			const ncData data = m_Buffer.data();
-			std::tie(result, readBytes) = detail_::EncodingCodePoint<encoding>::Decode({ reinterpret_cast<const CharType*>(data + m_CurrentPos), reinterpret_cast<const CharType*>(data + std::min(m_EndPos, m_Buffer.size())) }, codePoint);
-			if (result == EncodingResult::Accept)
-			{
-				m_CurrentPos += readBytes;
-				assert(m_CurrentPos <= m_EndPos && "Buffer overflew.");
-				return true;
-			}
-			if (result == EncodingResult::Incomplete)
-			{
-				ReadBuffer(m_BufferSize, m_EndPos - m_CurrentPos);
-				std::tie(result, readBytes) = detail_::EncodingCodePoint<encoding>::Decode({ reinterpret_cast<const CharType*>(data + m_CurrentPos), reinterpret_cast<const CharType*>(data + std::min(m_EndPos, m_Buffer.size())) }, codePoint);
-				if (result == EncodingResult::Accept)
-				{
-					m_CurrentPos += readBytes;
-					assert(m_CurrentPos <= m_EndPos && "Buffer overflew.");
-					return true;
-				}
-				
-				return false;
-			}
-			
-			return false;
+			return InternalPeek(codePoint) > 0;
 		}
 
 		nBool IsEndOfStream() const
@@ -112,6 +74,47 @@ namespace NatsuLib
 			const auto readBytes = m_InternalStream->ReadBytes(m_Buffer.data() + reserved, size - reserved);
 			m_CurrentPos = 0;
 			m_EndPos = reserved + readBytes;
+		}
+
+		size_t InternalPeek(nuInt& codePoint)
+		{
+			typedef typename StringEncodingTrait<encoding>::CharType CharType;
+			assert(m_CurrentPos <= m_EndPos);
+			if (m_CurrentPos == m_EndPos)
+			{
+				if (m_InternalStream->IsEndOfStream())
+				{
+					return 0;
+				}
+
+				ReadBuffer(m_BufferSize);
+				if (m_CurrentPos == m_EndPos)
+				{
+					return 0;
+				}
+			}
+
+			EncodingResult result;
+			size_t readBytes;
+			const ncData data = m_Buffer.data();
+			std::tie(result, readBytes) = detail_::EncodingCodePoint<encoding>::Decode({ reinterpret_cast<const CharType*>(data + m_CurrentPos), reinterpret_cast<const CharType*>(data + std::min(m_EndPos, m_Buffer.size())) }, codePoint);
+			if (result == EncodingResult::Accept)
+			{
+				return readBytes;
+			}
+			if (result == EncodingResult::Incomplete)
+			{
+				ReadBuffer(m_BufferSize, m_EndPos - m_CurrentPos);
+				std::tie(result, readBytes) = detail_::EncodingCodePoint<encoding>::Decode({ reinterpret_cast<const CharType*>(data + m_CurrentPos), reinterpret_cast<const CharType*>(data + std::min(m_EndPos, m_Buffer.size())) }, codePoint);
+				if (result == EncodingResult::Accept)
+				{
+					return readBytes;
+				}
+
+				return 0;
+			}
+
+			return 0;
 		}
 	};
 
