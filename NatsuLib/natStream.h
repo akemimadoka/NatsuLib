@@ -62,7 +62,7 @@ namespace NatsuLib
 		virtual void SetPosition(NatSeek Origin, nLong Offset) = 0;
 
 		/// @brief		从流中读取一个字节
-		virtual nByte ReadByte() = 0;
+		virtual nByte ReadByte();
 
 		///	@brief		读取字节数据
 		///	@param[out]	pData	数据缓冲区
@@ -77,7 +77,7 @@ namespace NatsuLib
 		virtual std::future<nLen> ReadBytesAsync(nData pData, nLen Length);
 
 		/// @brief		向流中写入一个字节
-		virtual void WriteByte(nByte byte) = 0;
+		virtual void WriteByte(nByte byte);
 
 		///	@brief		写入字节数据
 		///	@param[in]	pData	数据缓冲区
@@ -208,11 +208,13 @@ namespace NatsuLib
 
 #ifdef _WIN32
 		typedef HANDLE NativeHandle;
+
+		nBool UseFileApi() const noexcept;
 #else
 		typedef FILE* NativeHandle;
 #endif
-		explicit natStdStream(StdStreamType stdStreamType);
 
+		explicit natStdStream(StdStreamType stdStreamType);
 		~natStdStream();
 
 		nBool CanWrite() const override
@@ -266,7 +268,6 @@ namespace NatsuLib
 		void WriteByte(nByte byte) override;
 		nLen WriteBytes(ncData pData, nLen Length) override;
 		std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) override;
-
 		void Flush() override;
 
 	private:

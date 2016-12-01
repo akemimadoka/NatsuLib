@@ -1172,7 +1172,7 @@ namespace NatsuLib
 		static_assert(alignof(wchar_t) == alignof(char16_t), "wchar_t does not have the same alignment with char16_t.");
 #endif
 
-		template <StringType DstType>
+		template <StringType encoding>
 		struct EncodingCodePoint;
 
 		template <>

@@ -6,12 +6,31 @@
 
 using namespace NatsuLib;
 
+nByte natStream::ReadByte()
+{
+	nByte byte;
+	if (ReadBytes(&byte, 1) == 1)
+	{
+		return byte;
+	}
+
+	nat_Throw(natErrException, NatErr_InternalErr, "Unable to read byte."_nv);
+}
+
 std::future<nLen> natStream::ReadBytesAsync(nData pData, nLen Length)
 {
 	return std::async([&]
 	{
 		return ReadBytes(pData, Length);
 	});
+}
+
+void natStream::WriteByte(nByte byte)
+{
+	if (WriteBytes(&byte, 1) != 1)
+	{
+		nat_Throw(natErrException, NatErr_InternalErr, "Unable to write byte."_nv);
+	}
 }
 
 std::future<nLen> natStream::WriteBytesAsync(ncData pData, nLen Length)
@@ -244,22 +263,18 @@ natRefPointer<natMemoryStream> natFileStream::MapToMemoryStream()
 	}
 
 	m_hMappedFile = CreateFileMapping(m_hFile, NULL, m_bWritable ? PAGE_READWRITE : PAGE_READONLY, NULL, NULL, NULL);
-	if (m_hMappedFile && m_hMappedFile != INVALID_HANDLE_VALUE)
-	{
-		auto pFile = MapViewOfFile(m_hMappedFile, (m_bReadable ? FILE_MAP_READ : 0) | (m_bWritable ? FILE_MAP_WRITE : 0), NULL, NULL, NULL);
-		if (pFile)
-		{
-			m_pMappedFile = std::move(natMemoryStream::CreateFromExternMemory(reinterpret_cast<nData>(pFile), GetSize(), m_bReadable, m_bWritable));
-		}
-		else
-		{
-			nat_Throw(natWinException, "MapViewOfFile failed."_nv);
-		}
-	}
-	else
+	if (!m_hMappedFile || m_hMappedFile == INVALID_HANDLE_VALUE)
 	{
 		nat_Throw(natWinException, "CreateFileMapping failed."_nv);
 	}
+
+	auto pFile = MapViewOfFile(m_hMappedFile, (m_bReadable ? FILE_MAP_READ : 0) | (m_bWritable ? FILE_MAP_WRITE : 0), NULL, NULL, NULL);
+	if (!pFile)
+	{
+		nat_Throw(natWinException, "MapViewOfFile failed."_nv);
+	}
+
+	m_pMappedFile = natMemoryStream::CreateFromExternMemory(reinterpret_cast<nData>(pFile), GetSize(), m_bReadable, m_bWritable);
 
 	return m_pMappedFile;
 }
@@ -288,10 +303,26 @@ natStdStream::natStdStream(StdStreamType stdStreamType)
 		m_StdHandle = GetStdHandle(STD_ERROR_HANDLE);
 		break;
 	default:
-		nat_Throw(natException, "Invalid StdStreamType"_nv);
+		nat_Throw(natException, "Invalid StdStreamType."_nv);
 	}
 
-	m_InternalStream = make_ref<natFileStream>(m_StdHandle, m_StdStreamType == StdIn, m_StdStreamType != StdIn, false);
+	if (!m_StdHandle || m_StdHandle == INVALID_HANDLE_VALUE)
+	{
+		nat_Throw(natWinException, "GetStdHandle failed."_nv);
+	}
+
+	// 当控制台代码页不是Unicode或者被重定向的时候我们应当使用文件API
+	// 由于natConsole被钦定编码，所以在此我们只判断是否重定向
+	DWORD consoleMode;
+	if (!(GetFileType(m_StdHandle) & FILE_TYPE_CHAR) || !GetConsoleMode(m_StdHandle, &consoleMode))
+	{
+		m_InternalStream = make_ref<natFileStream>(m_StdHandle, m_StdStreamType == StdIn, m_StdStreamType != StdIn, false);
+	}
+}
+
+nBool natStdStream::UseFileApi() const noexcept
+{
+	return m_InternalStream != nullptr;
 }
 
 natStdStream::~natStdStream()
@@ -300,37 +331,115 @@ natStdStream::~natStdStream()
 
 nByte natStdStream::ReadByte()
 {
-	return m_InternalStream->ReadByte();
+	if (m_InternalStream)
+	{
+		return m_InternalStream->ReadByte();
+	}
+	
+	nByte byte;
+	if (ReadBytes(&byte, 1) == 1)
+	{
+		return byte;
+	}
+
+	nat_Throw(natErrException, NatErr_InternalErr, "Cannot read byte."_nv);
 }
 
 nLen natStdStream::ReadBytes(nData pData, nLen Length)
 {
-	return m_InternalStream->ReadBytes(pData, Length);
+	if (m_InternalStream)
+	{
+		return m_InternalStream->ReadBytes(pData, Length);
+	}
+	
+	// Workaround: 辣鸡WinAPI
+	if (!CanRead())
+	{
+		nat_Throw(natErrException, NatErr_IllegalState, "This stream cannot read."_nv);
+	}
+
+	DWORD readCharsCount;
+	if (!ReadConsole(m_StdHandle, pData, static_cast<DWORD>(Length / sizeof(TCHAR)), &readCharsCount, NULL))
+	{
+		nat_Throw(natWinException, "ReadConsole failed."_nv);
+	}
+
+	return static_cast<nLen>(readCharsCount * sizeof(TCHAR));
 }
 
 std::future<nLen> natStdStream::ReadBytesAsync(nData pData, nLen Length)
 {
-	return m_InternalStream->ReadBytesAsync(pData, Length);
+	if (m_InternalStream)
+	{
+		return m_InternalStream->ReadBytesAsync(pData, Length);
+	}
+	
+	return std::async([&]
+	{
+		return ReadBytes(pData, Length);
+	});
 }
 
 void natStdStream::WriteByte(nByte byte)
 {
-	m_InternalStream->WriteByte(byte);
+	if (m_InternalStream)
+	{
+		m_InternalStream->WriteByte(byte);
+	}
+	
+	if (WriteBytes(&byte, 1) != 1)
+	{
+		nat_Throw(natWinException, "Cannot write byte."_nv);
+	}
 }
 
 nLen natStdStream::WriteBytes(ncData pData, nLen Length)
 {
-	return m_InternalStream->WriteBytes(pData, Length);
+	if (m_InternalStream)
+	{
+		return m_InternalStream->WriteBytes(pData, Length);
+	}
+	
+	// Workaround: 辣鸡WinAPI
+	if (!CanWrite())
+	{
+		nat_Throw(natErrException, NatErr_IllegalState, "This stream cannot write."_nv);
+	}
+
+	DWORD writtenCharsCount;
+	if (!WriteConsole(m_StdHandle, pData, static_cast<DWORD>(Length / sizeof(TCHAR)), &writtenCharsCount, NULL))
+	{
+		nat_Throw(natWinException, "WriteConsole failed."_nv);
+	}
+
+	return static_cast<nLen>(writtenCharsCount * sizeof(TCHAR));
 }
 
 std::future<nLen> natStdStream::WriteBytesAsync(ncData pData, nLen Length)
 {
-	return m_InternalStream->WriteBytesAsync(pData, Length);
+	if (m_InternalStream)
+	{
+		return m_InternalStream->WriteBytesAsync(pData, Length);
+	}
+
+	return std::async([&]
+	{
+		return WriteBytes(pData, Length);
+	});
 }
 
 void natStdStream::Flush()
 {
-	m_InternalStream->Flush();
+	if (m_InternalStream)
+	{
+		m_InternalStream->Flush();
+		return;
+	}
+	
+	if (CanRead())
+	{
+		FlushConsoleInputBuffer(m_StdHandle);
+	}
 }
 #else
 natFileStream::natFileStream(nStrView filename, nBool bReadable, nBool bWritable)
@@ -440,7 +549,7 @@ void natFileStream::SetPosition(NatSeek Origin, nLong Offset)
 
 nByte natFileStream::ReadByte()
 {
-	// Here may be a bug?
+	// 可能有bug？
 	return static_cast<nByte>(m_File.get());
 }
 
@@ -535,7 +644,7 @@ natStdStream::natStdStream(StdStreamType stdStreamType)
 		m_StdHandle = stderr;
 		break;
 	default:
-		nat_Throw(natException, "Invalid StdStreamType"_nv);
+		nat_Throw(natException, "Invalid StdStreamType."_nv);
 	}
 }
 

@@ -53,10 +53,10 @@ namespace NatsuLib
 			SourceFileLineNumberType SourceFileLine;
 		};
 #else
-	enum
-	{
-		CaptureFrames = 255,
-	};
+		enum
+		{
+			CaptureFrames = 255,
+		};
 
 		typedef void* AddressType;
 
@@ -70,7 +70,7 @@ namespace NatsuLib
 #ifdef _WIN32
 		static nBool HasInitialized() noexcept;
 
-	explicit natStackWalker(nStrView userSearchPath = nullptr);
+		explicit natStackWalker(nStrView userSearchPath = nullptr);
 
 		void CaptureStack(size_t skipFrames = 0, nStrView unknownSymbolName = nullptr, nStrView unknownFileName = nullptr) noexcept;
 #else

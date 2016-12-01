@@ -16,7 +16,7 @@ namespace NatsuLib
 		virtual nBool Read(nuInt& Char) = 0;
 		virtual nBool Peek(nuInt& Char) = 0;
 
-		virtual void SetNewLine(StringView<encoding> const& newLine = Environment::GetNewLine())
+		virtual void SetNewLine(StringView<encoding> const& newLine)
 		{
 			m_NewLine.clear();
 			EncodingResult result;
@@ -78,7 +78,7 @@ namespace NatsuLib
 	protected:
 		TextReader()
 		{
-			TextReader::SetNewLine();
+			TextReader::SetNewLine(String<encoding>{Environment::GetNewLine()});
 		}
 
 		std::vector<nuInt> m_NewLine;
@@ -92,7 +92,7 @@ namespace NatsuLib
 
 		virtual nBool Write(nuInt Char) = 0;
 
-		virtual void SetNewLine(StringView<encoding> const& newLine = Environment::GetNewLine())
+		virtual void SetNewLine(StringView<encoding> const& newLine)
 		{
 			m_NewLine.clear();
 			EncodingResult result;
@@ -137,17 +137,23 @@ namespace NatsuLib
 		virtual size_t WriteLine(StringView<encoding> const& str)
 		{
 			const auto size = Write(str);
+			return size + WriteLine();
+		}
+
+		virtual size_t WriteLine()
+		{
 			for (auto&& item : m_NewLine)
 			{
 				Write(item);
 			}
-			return size + m_NewLine.size();
+
+			return m_NewLine.size();
 		}
 
 	protected:
 		TextWriter()
 		{
-			TextWriter::SetNewLine();
+			TextWriter::SetNewLine(String<encoding>{Environment::GetNewLine()});
 		}
 
 		std::vector<nuInt> m_NewLine;

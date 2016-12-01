@@ -10,39 +10,24 @@ natConsole::natConsole()
 #endif
 	}, m_StdOutWriter{ &m_StdOut }, m_StdErrWriter{ &m_StdErr }
 {
-#ifdef _WIN32
-	if (!SetConsoleCP(CP_UTF8))
-	{
-		nat_Throw(natWinException, "SetConsoleCP failed."_nv);
-	}
-	if (!SetConsoleOutputCP(CP_UTF8))
-	{
-		nat_Throw(natWinException, "SetConsoleOutputCP failed."_nv);
-	}
-#endif
 }
 
-void natConsole::Write(nStrView const& str)
+void natConsole::Write(StringView<Encoding> const& str)
 {
 	m_StdOutWriter.Write(str);
 }
 
-void natConsole::WriteLine(nStrView const& str)
+void natConsole::WriteLine(StringView<Encoding> const& str)
 {
 	m_StdOutWriter.WriteLine(str);
 }
 
-void natConsole::WriteErr(nStrView const& str)
+void natConsole::WriteErr(StringView<Encoding> const& str)
 {
 	m_StdErrWriter.Write(str);
 }
 
-void natConsole::WriteLineErr(nStrView const& str)
+void natConsole::WriteLineErr(StringView<Encoding> const& str)
 {
 	m_StdErrWriter.WriteLine(str);
-}
-
-nString natConsole::ReadLine()
-{
-	return m_StdInReader.ReadLine();
 }

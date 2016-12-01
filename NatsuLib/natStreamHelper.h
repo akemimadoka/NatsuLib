@@ -14,6 +14,8 @@ namespace NatsuLib
 		: public natRefObjImpl<TextReader<encoding>>
 	{
 	public:
+		typedef typename StringEncodingTrait<encoding>::CharType CharType;
+
 		enum
 		{
 			DefaultBufferSize = 128,
@@ -22,7 +24,6 @@ namespace NatsuLib
 		explicit natStreamReader(natStream* pStream, size_t bufferSize = DefaultBufferSize) noexcept
 			: m_InternalStream(pStream), m_BufferSize{ bufferSize }, m_CurrentPos{}, m_EndPos{}
 		{
-			//ReadBuffer(bufferSize);
 		}
 
 		~natStreamReader()
@@ -31,10 +32,10 @@ namespace NatsuLib
 
 		nBool Read(nuInt& codePoint) override
 		{
-			auto readBytes = InternalPeek(codePoint);
-			if (readBytes)
+			auto readChars = InternalPeek(codePoint);
+			if (readChars)
 			{
-				m_CurrentPos += readBytes;
+				m_CurrentPos += readChars * sizeof(CharType);
 				assert(m_CurrentPos <= m_EndPos && "Buffer overflew.");
 				return true;
 			}
@@ -100,20 +101,20 @@ namespace NatsuLib
 			}
 
 			EncodingResult result;
-			size_t readBytes;
+			size_t readChars;
 			const ncData data = m_Buffer.data();
-			std::tie(result, readBytes) = detail_::EncodingCodePoint<encoding>::Decode({ reinterpret_cast<const CharType*>(data + m_CurrentPos), reinterpret_cast<const CharType*>(data + std::min(m_EndPos, m_Buffer.size())) }, codePoint);
+			std::tie(result, readChars) = detail_::EncodingCodePoint<encoding>::Decode({ reinterpret_cast<const CharType*>(data + m_CurrentPos), reinterpret_cast<const CharType*>(data + std::min(m_EndPos, m_Buffer.size())) }, codePoint);
 			if (result == EncodingResult::Accept)
 			{
-				return readBytes;
+				return readChars;
 			}
 			if (result == EncodingResult::Incomplete)
 			{
 				ReadBuffer(m_BufferSize, m_EndPos - m_CurrentPos);
-				std::tie(result, readBytes) = detail_::EncodingCodePoint<encoding>::Decode({ reinterpret_cast<const CharType*>(data + m_CurrentPos), reinterpret_cast<const CharType*>(data + std::min(m_EndPos, m_Buffer.size())) }, codePoint);
+				std::tie(result, readChars) = detail_::EncodingCodePoint<encoding>::Decode({ reinterpret_cast<const CharType*>(data + m_CurrentPos), reinterpret_cast<const CharType*>(data + std::min(m_EndPos, m_Buffer.size())) }, codePoint);
 				if (result == EncodingResult::Accept)
 				{
-					return readBytes;
+					return readChars;
 				}
 
 				return 0;

@@ -93,9 +93,7 @@ namespace NatsuLib
 			nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support SetPosition."_nv);
 		}
 
-		nByte ReadByte() override;
 		nLen ReadBytes(nData pData, nLen Length) override;
-		void WriteByte(nByte byte) override;
 		nLen WriteBytes(ncData pData, nLen Length) override;
 		void Flush() override;
 
