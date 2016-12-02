@@ -79,7 +79,7 @@ namespace NatsuLib
 			
 			const auto readBytes = m_InternalStream->ReadBytes(m_Buffer.data() + reserved, size - reserved);
 			m_CurrentPos = 0;
-			m_EndPos = reserved + readBytes;
+			m_EndPos = static_cast<size_t>(reserved + readBytes);
 		}
 
 		size_t InternalPeek(nuInt& codePoint)

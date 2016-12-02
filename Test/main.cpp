@@ -39,7 +39,7 @@ int main()
 	try
 	{
 #ifdef _WIN32
-		logger.LogMsg("{1} {0}"_nv, "测试中文"_av, 123);
+		logger.LogMsg("{1} {0}"_nv, L"测试中文"_wv, 123);
 #endif
 
 		constexpr auto test = HasMemberNamedfoo<Incrementable>::value;

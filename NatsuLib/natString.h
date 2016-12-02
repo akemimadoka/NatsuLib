@@ -282,13 +282,13 @@ namespace NatsuLib
 		{
 		}
 
-		explicit StringView(CharIterator begin) noexcept
+		StringView(CharIterator begin) noexcept
 			: StringView(begin, detail_::GetEndOfString(begin))
 		{
 		}
 
 		template <size_t N>
-		explicit StringView(const CharType (&array)[N])
+		StringView(const CharType (&array)[N])
 			: StringView(array, array + N)
 		{
 		}
@@ -1465,6 +1465,48 @@ NatsuLib::String<stringTypel>& operator+=(NatsuLib::String<stringTypel>& left, N
 {
 	left.Append(right);
 	return left;
+}
+
+namespace NatsuLib
+{
+	namespace detail_
+	{
+		// ю╢вт https://www.byvoid.com/blog/string-hash-compare
+		template <typename CharType>
+		size_t BKDRHash(const CharType* str)
+		{
+			size_t seed = 131; // 31 131 1313 13131 131313 etc..
+			size_t hash = 0;
+
+			while (*str)
+			{
+				hash = hash * seed + (*str++);
+			}
+
+			return (hash & 0x7FFFFFFF);
+		}
+	}
+}
+
+namespace std
+{
+	template <NatsuLib::StringType stringType>
+	struct hash<NatsuLib::StringView<stringType>>
+	{
+		size_t operator()(NatsuLib::StringView<stringType> const& view) const
+		{
+			return NatsuLib::detail_::BKDRHash(view.data());
+		}
+	};
+
+	template <NatsuLib::StringType stringType>
+	struct hash<NatsuLib::String<stringType>>
+	{
+		size_t operator()(NatsuLib::String<stringType> const& str) const
+		{
+			return hash<NatsuLib::StringView<stringType>>{}(str.GetView());
+		}
+	};
 }
 
 #include "natMisc.h"
