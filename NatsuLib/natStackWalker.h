@@ -1,6 +1,7 @@
 #pragma once
 #include "natConfig.h"
 #include "natType.h"
+#include "natString.h"
 
 #ifdef EnableStackWalker
 #ifdef _WIN32
@@ -11,6 +12,7 @@
 #pragma warning (pop)
 #pragma comment (lib, "DbgHelp.lib")
 #else
+#include <execinfo.h>
 #endif
 #include <limits>
 #include <vector>
@@ -44,33 +46,50 @@ namespace NatsuLib
 		struct Symbol
 		{
 			AddressType OriginalAddress;
-			nTString SymbolName;
+			nString SymbolName;
 			SymbolAddressType SymbolAddress;
-			nTString SourceFileName;
+			nString SourceFileName;
 			SourceFileAddressType SourceFileAddress;
 			SourceFileLineNumberType SourceFileLine;
 		};
 #else
+		enum
+		{
+			CaptureFrames = 255,
+		};
+
+		typedef void* AddressType;
+
+		struct Symbol
+		{
+			AddressType OriginalAddress;
+			nString SymbolInfo;
+		};
 #endif
 	public:
 #ifdef _WIN32
-		explicit natStackWalker(ncTStr userSearchPath = nullptr);
+		static nBool HasInitialized() noexcept;
+
+		explicit natStackWalker(nStrView userSearchPath = nullptr);
+
+		void CaptureStack(size_t skipFrames = 0, nStrView unknownSymbolName = nullptr, nStrView unknownFileName = nullptr) noexcept;
 #else
+		natStackWalker();
+
+		void CaptureStack(size_t captureFrames = CaptureFrames, nStrView unknownSymbolInfo = nullptr) noexcept;
 #endif
 		~natStackWalker();
 
-		void CaptureStack(size_t skipFrames = 0, ncTStr unknownSymbolName = nullptr, ncTStr unknownFileName = nullptr) noexcept;
 		void Clear() noexcept;
 		size_t GetFrameCount() const noexcept;
 		Symbol const& GetSymbol(size_t frame) const;
-
-		static nBool HasInitialized() noexcept;
 
 	private:
 #ifdef _WIN32
 		static std::atomic_bool s_Initialized;
 		std::vector<Symbol> m_StackSymbols;
 #else
+		std::vector<Symbol> m_StackSymbols;
 #endif
 	};
 }

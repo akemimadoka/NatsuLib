@@ -126,6 +126,12 @@
     <ClInclude Include="natText.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="natEnvironment.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natConsole.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -177,6 +183,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="natMisc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="natConsole.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="natEnvironment.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

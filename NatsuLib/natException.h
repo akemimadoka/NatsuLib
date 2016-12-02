@@ -18,26 +18,21 @@ namespace NatsuLib
 	namespace natUtil
 	{
 		template <typename... Args>
-		nTString FormatString(ncTStr lpStr, Args&&... args);
-		std::wstring C2Wstr(std::string const& str);
-		std::string W2Cstr(std::wstring const& str);
+		nString FormatString(nStrView const& Str, Args&&... args);
 	}
 
 	namespace detail_
 	{
 		struct natExceptionStorage
 		{
-			natExceptionStorage(std::exception_ptr nestedException, std::chrono::system_clock::time_point const& time, nTString const& file, nuInt line, nTString const& src, nTString const& desc);
+			natExceptionStorage(std::exception_ptr nestedException, std::chrono::system_clock::time_point const& time, nString const& file, nuInt line, nString const& src, nString const& desc);
 
 			std::exception_ptr m_NestedException;
 			std::chrono::system_clock::time_point m_Time;
-			nTString m_File;
+			nString m_File;
 			nuInt m_Line;
-			nTString m_Source;
-			nTString m_Description;
-#ifdef UNICODE
-			std::string m_MBDescription;
-#endif
+			nString m_Source;
+			nString m_Description;
 		};
 	}
 
@@ -52,7 +47,7 @@ namespace NatsuLib
 		typedef detail_::natExceptionStorage Storage;
 
 		template <typename... Args>
-		natException(std::exception_ptr nestedException, ncTStr Src, ncTStr File, nuInt Line, ncTStr Desc, Args&&... args) noexcept
+		natException(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line, nStrView Desc, Args&&... args) noexcept
 #ifdef UNICODE
 			: Storage{ nestedException, std::chrono::system_clock::now(), File, Line, Src, natUtil::FormatString(Desc, std::forward<Args>(args)...) }
 #else
@@ -68,7 +63,7 @@ namespace NatsuLib
 		}
 
 		template <typename... Args>
-		natException(ncTStr Src, ncTStr File, nuInt Line, ncTStr Desc, Args&&... args) noexcept
+		natException(nStrView Src, nStrView File, nuInt Line, nStrView Desc, Args&&... args) noexcept
 			: natException(std::exception_ptr{}, Src, File, Line, Desc, std::forward<Args>(args)...)
 		{
 		}
@@ -76,10 +71,10 @@ namespace NatsuLib
 		virtual ~natException();
 
 		std::chrono::system_clock::time_point GetTime() const noexcept;
-		ncTStr GetFile() const noexcept;
+		nStrView GetFile() const noexcept;
 		nuInt GetLine() const noexcept;
-		ncTStr GetSource() const noexcept;
-		ncTStr GetDesc() const noexcept;
+		nStrView GetSource() const noexcept;
+		nStrView GetDesc() const noexcept;
 		std::exception_ptr GetNestedException() const noexcept;
 
 #ifdef EnableExceptionStackTrace
@@ -104,37 +99,37 @@ namespace NatsuLib
 	{
 	public:
 		template <typename... Args>
-		natWinException(ncTStr Src, ncTStr File, nuInt Line, ncTStr Desc, Args&&... args) noexcept
+		natWinException(nStrView Src, nStrView File, nuInt Line, nStrView Desc, Args&&... args) noexcept
 			: natWinException(Src, File, Line, GetLastError(), Desc, std::forward<Args>(args)...)
 		{
 		}
 
 		template <typename... Args>
-		natWinException(std::exception_ptr nestedException, ncTStr Src, ncTStr File, nuInt Line, ncTStr Desc, Args&&... args) noexcept
+		natWinException(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line, nStrView Desc, Args&&... args) noexcept
 			: natWinException(nestedException, Src, File, Line, GetLastError(), Desc, std::forward<Args>(args)...)
 		{
 		}
 
 		template <typename... Args>
-		natWinException(ncTStr Src, ncTStr File, nuInt Line, DWORD LastErr, ncTStr Desc, Args&&... args) noexcept
+		natWinException(nStrView Src, nStrView File, nuInt Line, DWORD LastErr, nStrView Desc, Args&&... args) noexcept
 			: natException(Src, File, Line, Desc, std::forward<Args>(args)...), m_LastErr(LastErr), m_ErrMsg()
 		{
-			m_Description = natUtil::FormatString((m_Description + _T(" (LastErr = {0})")).c_str(), m_LastErr);
+			m_Description = natUtil::FormatString(m_Description + " (LastErr = {0})"_nv, m_LastErr);
 		}
 
 		template <typename... Args>
-		natWinException(std::exception_ptr nestedException, ncTStr Src, ncTStr File, nuInt Line, DWORD LastErr, ncTStr Desc, Args&&... args) noexcept
+		natWinException(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line, DWORD LastErr, nStrView Desc, Args&&... args) noexcept
 			: natException(nestedException, Src, File, Line, Desc, std::forward<Args>(args)...), m_LastErr(LastErr), m_ErrMsg()
 		{
-			m_Description = natUtil::FormatString((m_Description + _T(" (LastErr = {0})")).c_str(), m_LastErr);
+			m_Description = natUtil::FormatString(m_Description + " (LastErr = {0})"_nv, m_LastErr);
 		}
 
 		DWORD GetErrNo() const noexcept;
-		ncTStr GetErrMsg() const noexcept;
+		nStrView GetErrMsg() const noexcept;
 
 	private:
 		DWORD m_LastErr;
-		mutable nTString m_ErrMsg;
+		mutable nString m_ErrMsg;
 	};
 #endif
 
@@ -143,53 +138,53 @@ namespace NatsuLib
 	{
 	public:
 		template <typename... Args>
-		natErrException(ncTStr Src, ncTStr File, nuInt Line, NatErr ErrNo, ncTStr Desc, Args&&... args) noexcept
+		natErrException(nStrView Src, nStrView File, nuInt Line, NatErr ErrNo, nStrView Desc, Args&&... args) noexcept
 			: natException(Src, File, Line, Desc, std::forward<Args>(args)...), m_Errno(ErrNo)
 		{
-			m_Description = natUtil::FormatString((m_Description + _T(" (Errno = {0})")).c_str(), m_Errno);
+			m_Description = natUtil::FormatString(m_Description + " (Errno = {0})"_nv, m_Errno);
 		}
 
 		template <typename... Args>
-		natErrException(std::exception_ptr nestedException, ncTStr Src, ncTStr File, nuInt Line, NatErr ErrNo, ncTStr Desc, Args&&... args) noexcept
+		natErrException(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line, NatErr ErrNo, nStrView Desc, Args&&... args) noexcept
 			: natException(nestedException, Src, File, Line, Desc, std::forward<Args>(args)...), m_Errno(ErrNo)
 		{
-			m_Description = natUtil::FormatString((m_Description + _T(" (Errno = {0})")).c_str(), m_Errno);
+			m_Description = natUtil::FormatString(m_Description + " (Errno = {0})"_nv, m_Errno);
 		}
 
 		NatErr GetErrNo() const noexcept;
-		ncTStr GetErrMsg() const noexcept;
+		nStrView GetErrMsg() const noexcept;
 
 	private:
 		NatErr m_Errno;
 
-		static NATINLINE ncTStr GetErrDescription(NatErr Errno)
+		static NATINLINE nStrView GetErrDescription(NatErr Errno)
 		{
 			switch (Errno)
 			{
 			case NatErr_Interrupted:
-				return _T("Interrupted");
+				return "Interrupted"_nv;
 			case NatErr_OK:
-				return _T("Success");
+				return "Success"_nv;
 			case NatErr_Unknown:
-				return _T("Unknown error");
+				return "Unknown error"_nv;
 			case NatErr_IllegalState:
-				return _T("Illegal state");
+				return "Illegal state"_nv;
 			case NatErr_InvalidArg:
-				return _T("Invalid argument");
+				return "Invalid argument"_nv;
 			case NatErr_InternalErr:
-				return _T("Internal error");
+				return "Internal error"_nv;
 			case NatErr_OutOfRange:
-				return _T("Out of range");
+				return "Out of range"_nv;
 			case NatErr_NotImpl:
-				return _T("Not implemented");
+				return "Not implemented"_nv;
 			case NatErr_NotSupport:
-				return _T("Not supported");
+				return "Not supported"_nv;
 			case NatErr_Duplicated:
-				return _T("Duplicated");
+				return "Duplicated"_nv;
 			case NatErr_NotFound:
-				return _T("Not found");
+				return "Not found"_nv;
 			default:
-				return _T("No description");
+				return "No description"_nv;
 			}
 		}
 	};
@@ -199,39 +194,32 @@ class ExceptionClass : public ExtendException\
 {\
 public:\
 	typedef ExtendException BaseException;\
-	ExceptionClass(ncTStr Src, ncTStr File, nuInt Line)\
+	ExceptionClass(nStrView Src, nStrView File, nuInt Line)\
 		: BaseException(Src, File, Line, DefaultDescription)\
 	{\
 	}\
-	ExceptionClass(std::exception_ptr nestedException, ncTStr Src, ncTStr File, nuInt Line)\
+	ExceptionClass(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line)\
 		: BaseException(nestedException, Src, File, Line, DefaultDescription)\
 	{\
 	}\
 	template <typename... Args>\
-	ExceptionClass(ncTStr Src, ncTStr File, nuInt Line, ncTStr Desc, Args&&... args)\
+	ExceptionClass(nStrView Src, nStrView File, nuInt Line, nStrView Desc, Args&&... args)\
 		: BaseException(Src, File, Line, Desc, std::forward<Args>(args)...)\
 	{\
 	}\
 	template <typename... Args>\
-	ExceptionClass(std::exception_ptr nestedException, ncTStr Src, ncTStr File, nuInt Line, ncTStr Desc, Args&&... args)\
+	ExceptionClass(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line, nStrView Desc, Args&&... args)\
 		: BaseException(nestedException, Src, File, Line, Desc, std::forward<Args>(args)...)\
 	{\
 	}\
 }
 
-	DeclareException(OutOfRange, natException, _T("Out of range."));
-	DeclareException(MemoryAllocFail, natException, _T("Failed to allocate memory."));
+	DeclareException(OutOfRange, natException, "Out of range."_nv);
+	DeclareException(MemoryAllocFail, natException, "Failed to allocate memory."_nv);
 }
 
-#define nat_Throw(ExceptionClass, ...) do { throw ExceptionClass(_T(__FUNCTION__), _T(__FILE__), __LINE__, __VA_ARGS__); } while (false)
-#define nat_ThrowWithNested(ExceptionClass, ...) do { throw ExceptionClass(std::current_exception(), _T(__FUNCTION__), _T(__FILE__), __LINE__, __VA_ARGS__); } while (false)
+#define nat_Throw(ExceptionClass, ...) do { throw ExceptionClass(nStrView{ __FUNCTION__ }, NV(__FILE__), __LINE__, __VA_ARGS__); } while (false)
+#define nat_ThrowWithNested(ExceptionClass, ...) do { throw ExceptionClass(std::current_exception(), nStrView{ __FUNCTION__ }, NV(__FILE__), __LINE__, __VA_ARGS__); } while (false)
 #define nat_ThrowIfFailed(Expression, ...) do { nResult result; if (NATFAIL(result = (Expression))) nat_Throw(natErrException, static_cast<NatErr>(result), __VA_ARGS__); } while (false)
-
-#include "natString.h"
-
-namespace NatsuLib
-{
-
-}
 
 #include "natStringUtil.h"

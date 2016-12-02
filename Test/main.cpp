@@ -31,50 +31,50 @@ HasMemberTrait(foo);
 
 int main()
 {
-#ifdef _WIN32
-	std::locale defaultLocale("", LC_CTYPE);
-	std::locale::global(defaultLocale);
-	std::wcout.imbue(defaultLocale);
-	std::wclog.imbue(defaultLocale);
-	std::wcerr.imbue(defaultLocale);
-#endif
-
 	natEventBus eventBus;
 	natLog logger(eventBus);
-	logger.UseDefaultAction();
+	natConsole console;
+	logger.UseDefaultAction(console);
 
 	try
 	{
-		logger.LogMsg(_T("{1} {0}"), _T("测试中文"), 123);
-		
+#ifdef _WIN32
+		logger.LogMsg("{1} {0}"_nv, L"测试中文"_wv, 123);
+#endif
+
 		constexpr auto test = HasMemberNamedfoo<Incrementable>::value;
 
 		int t = 5;
 		increment(t);
 		auto scope = make_scope([&logger](int i)
 		{
-			logger.LogMsg(_T("%s%d"), _T("end"), i);
+			logger.LogMsg("%s%d"_nv, "end"_nv, i);
 		}, t);
 		
-		{
-			std::vector<nTString> strvec;
-			natUtil::split(_T("test 2333"), _T(" 2"), [&strvec](ncTStr str, size_t len)
+		/*{
+			std::vector<nString> strvec;
+			natUtil::split("test 2333"_nv, " 2"_nv, [&strvec](nStrView str, size_t len)
 			{
 				strvec.emplace_back(str, len);
 			});
 			for (auto&& item : strvec)
 			{
-				logger.LogMsg(_T("%s"), item);
+				logger.LogMsg("%s"_nv, item);
 			}
-		}
+		}*/
 
+		{
+			logger.LogMsg("Input: "_nv);
+			logger.LogMsg("Your input: {0}"_nv, console.ReadLine());
+		}
+		
 		{
 			int arr[] = { 1, 2, 3, 4, 5 };
 			for (auto&& item : from(arr).select([](int i){ return i + 1; }).where([](int i){ return i > 3; }))
 			{
-				logger.LogMsg(_T("%d"), item);
+				logger.LogMsg("%d"_nv, item);
 			}
-			logger.LogMsg(_T("%d"), from_values(2, 4, 6, 3, 2).where([](int i) { return i >= 4; }).count());
+			logger.LogMsg("%d"_nv, from_values(2, 4, 6, 3, 2).where([](int i) { return i >= 4; }).count());
 		}
 
 		{
@@ -83,23 +83,27 @@ int main()
 			{
 				using namespace std::chrono_literals;
 				std::this_thread::sleep_for(10ms);
-				static_cast<natLog*>(Param)->LogMsg(_T("test"));
+				static_cast<natLog*>(Param)->LogMsg("test"_nv);
 				return 0u;
 			}, &logger);
 			auto&& result = ret.get();
-			logger.LogMsg(_T("Work started at thread index {0}, id {1}."), result.GetWorkThreadIndex(), pool.GetThreadId(result.GetWorkThreadIndex()));
-			logger.LogMsg(_T("Work finished with result {0}."), result.GetResult().get());
+			logger.LogMsg("Work started at thread index {0}, id {1}."_nv, result.GetWorkThreadIndex(), pool.GetThreadId(result.GetWorkThreadIndex()));
+			logger.LogMsg("Work finished with result {0}."_nv, result.GetResult().get());
 			pool.WaitAllJobsFinish();
 		}
 #ifdef EnableStackWalker
 		{
 			natStackWalker stackWalker;
 			stackWalker.CaptureStack();
-			logger.LogMsg(_T("Call stack:"));
+			logger.LogMsg("Call stack:"_nv);
 			for (size_t i = 0; i < stackWalker.GetFrameCount(); ++i)
 			{
 				auto&& symbol = stackWalker.GetSymbol(i);
-				logger.LogMsg(_T("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"), symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+#ifdef _WIN32
+				logger.LogMsg("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"_nv, symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+#else
+				logger.LogMsg("0x%p : {1}"_nv, symbol.OriginalAddress, symbol.SymbolInfo);
+#endif
 			}
 		}
 #endif
@@ -107,54 +111,54 @@ int main()
 			natCriticalSection cs;
 			natRefScopeGuard<natCriticalSection> sg(cs);
 		}
-
-#ifdef _WIN32
-		{
-			nString str = "蛤蛤"_av;
-			SetConsoleOutputCP(CP_UTF8);
-			natStdStream stdStream{ natStdStream::StdOut };
-			natStreamWriter<StringType::Utf8> writer{ &stdStream };
-
-			writer.WriteLine(str);
-		}
-#endif
-
 	}
 #ifdef _WIN32
 	catch (natWinException& e)
 	{
-		logger.LogErr(_T("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}\nErrno: {4}, Msg: {5}"), e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc(), e.GetErrNo(), e.GetErrMsg());
+		logger.LogErr("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}\nErrno: {4}, Msg: {5}"_nv, e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc(), e.GetErrNo(), e.GetErrMsg());
 #ifdef EnableExceptionStackTrace
-		logger.LogErr(_T("Call stack:"));
+		logger.LogErr("Call stack:"_nv);
 		for (size_t i = 0; i < e.GetStackWalker().GetFrameCount(); ++i)
 		{
 			auto&& symbol = e.GetStackWalker().GetSymbol(i);
-			logger.LogMsg(_T("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"), symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+#ifdef _WIN32
+			logger.LogMsg("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"_nv, symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+#else
+			logger.LogMsg("0x%p : {1}"_nv, symbol.OriginalAddress, symbol.SymbolInfo);
+#endif
 		}
 #endif
 	}
 #endif
 	catch (natErrException& e)
 	{
-		logger.LogErr(_T("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}\nErrno: {4}, Msg: {5}"), e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc(), e.GetErrNo(), e.GetErrMsg());
+		logger.LogErr("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}\nErrno: {4}, Msg: {5}"_nv, e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc(), e.GetErrNo(), e.GetErrMsg());
 #ifdef EnableExceptionStackTrace
-		logger.LogErr(_T("Call stack:"));
+		logger.LogErr("Call stack:"_nv);
 		for (size_t i = 0; i < e.GetStackWalker().GetFrameCount(); ++i)
 		{
 			auto&& symbol = e.GetStackWalker().GetSymbol(i);
-			logger.LogMsg(_T("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"), symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+#ifdef _WIN32
+			logger.LogMsg("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"_nv, symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+#else
+			logger.LogMsg("0x%p : {1}"_nv, symbol.OriginalAddress, symbol.SymbolInfo);
+#endif
 		}
 #endif
 	}
 	catch (natException& e)
 	{
-		logger.LogErr(_T("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}"), e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc());
+		logger.LogErr("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}"_nv, e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc());
 #ifdef EnableExceptionStackTrace
-		logger.LogErr(_T("Call stack:"));
+		logger.LogErr("Call stack:"_nv);
 		for (size_t i = 0; i < e.GetStackWalker().GetFrameCount(); ++i)
 		{
 			auto&& symbol = e.GetStackWalker().GetSymbol(i);
-			logger.LogMsg(_T("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"), symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+#ifdef _WIN32
+			logger.LogMsg("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"_nv, symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+#else
+			logger.LogMsg("0x%p : {1}"_nv, symbol.OriginalAddress, symbol.SymbolInfo);
+#endif
 		}
 #endif
 	}

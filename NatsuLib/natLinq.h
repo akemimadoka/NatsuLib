@@ -178,7 +178,7 @@ namespace NatsuLib
 		{
 			[[noreturn]] static void Get(T const& self)
 			{
-				nat_Throw(natException, _T("Cannot apply such operation to this type."));
+				nat_Throw(natException, "Cannot apply such operation to this type."_nv);
 			}
 		};
 
@@ -200,7 +200,7 @@ namespace NatsuLib
 		{
 			[[noreturn]] static void Get(T const& self)
 			{
-				nat_Throw(natException, _T("Cannot apply such operation to this type."));
+				nat_Throw(natException, "Cannot apply such operation to this type."_nv);
 			}
 		};
 
@@ -218,7 +218,7 @@ namespace NatsuLib
 		{
 			[[noreturn]] static void Get(T const& self)
 			{
-				nat_Throw(natException, _T("Cannot apply such operation to this type."));
+				nat_Throw(natException, "Cannot apply such operation to this type."_nv);
 			}
 		};
 
@@ -236,7 +236,7 @@ namespace NatsuLib
 		{
 			[[noreturn]] static void Get(T const& self)
 			{
-				nat_Throw(natException, _T("Cannot apply such operation to this type."));
+				nat_Throw(natException, "Cannot apply such operation to this type."_nv);
 			}
 		};
 
@@ -254,7 +254,7 @@ namespace NatsuLib
 		{
 			[[noreturn]] static void Get(T const& self)
 			{
-				nat_Throw(natException, _T("Cannot apply such operation to this type."));
+				nat_Throw(natException, "Cannot apply such operation to this type."_nv);
 			}
 		};
 
@@ -425,7 +425,7 @@ namespace NatsuLib
 
 			[[noreturn]] T& operator*() const
 			{
-				nat_Throw(natException, _T("Try to deref an empty iterator."));
+				nat_Throw(natException, "Try to deref an empty iterator."_nv);
 			}
 
 			nBool operator==(Self_t const&) const
@@ -605,7 +605,7 @@ namespace NatsuLib
 			{
 				if (std::distance(m_Iterator, m_End) < count)
 				{
-					nat_Throw(natException, _T("Out of range."));
+					nat_Throw(natException, "Out of range."_nv);
 				}
 
 				m_Target = std::next(m_Iterator, count);
@@ -983,7 +983,7 @@ namespace NatsuLib
 		{
 			if (m_Range.empty())
 			{
-				nat_Throw(natException, _T("Range is empty and there is no default constructor for this type."));
+				nat_Throw(natException, "Range is empty and there is no default constructor for this type."_nv);
 			}
 
 			auto iter = m_Range.begin();

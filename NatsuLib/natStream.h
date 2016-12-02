@@ -62,7 +62,7 @@ namespace NatsuLib
 		virtual void SetPosition(NatSeek Origin, nLong Offset) = 0;
 
 		/// @brief		从流中读取一个字节
-		virtual nByte ReadByte() = 0;
+		virtual nByte ReadByte();
 
 		///	@brief		读取字节数据
 		///	@param[out]	pData	数据缓冲区
@@ -74,10 +74,10 @@ namespace NatsuLib
 		/// @param[out]	pData	数据缓冲区
 		/// @param[in]	Length	读取的长度
 		/// @return		实际读取长度
-		virtual std::future<nLen> ReadBytesAsync(nData pData, nLen Length) = 0;
+		virtual std::future<nLen> ReadBytesAsync(nData pData, nLen Length);
 
 		/// @brief		向流中写入一个字节
-		virtual void WriteByte(nByte byte) = 0;
+		virtual void WriteByte(nByte byte);
 
 		///	@brief		写入字节数据
 		///	@param[in]	pData	数据缓冲区
@@ -89,7 +89,7 @@ namespace NatsuLib
 		///	@param[in]	pData	数据缓冲区
 		///	@param[in]	Length	写入的长度
 		///	@return		实际写入长度
-		virtual std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) = 0;
+		virtual std::future<nLen> WriteBytesAsync(ncData pData, nLen Length);
 
 		///	@brief		刷新流
 		///	@note		仅对有缓存机制的流有效且有意义
@@ -152,7 +152,7 @@ namespace NatsuLib
 		typedef HANDLE UnsafeHandle;
 #endif
 
-		natFileStream(ncTStr lpFilename, nBool bReadable, nBool bWritable);
+		natFileStream(nStrView filename, nBool bReadable, nBool bWritable);
 #ifdef _WIN32
 		natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable, nBool transferOwner = false);
 #endif
@@ -170,13 +170,11 @@ namespace NatsuLib
 		void SetPosition(NatSeek Origin, nLong Offset) override;
 		nByte ReadByte() override;
 		nLen ReadBytes(nData pData, nLen Length) override;
-		std::future<nLen> ReadBytesAsync(nData pData, nLen Length) override;
 		void WriteByte(nByte byte) override;
 		nLen WriteBytes(ncData pData, nLen Length) override;
-		std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) override;
 		void Flush() override;
 
-		ncTStr GetFilename() const noexcept;
+		nStrView GetFilename() const noexcept;
 
 #ifdef _WIN32
 		UnsafeHandle GetUnsafeHandle() const noexcept;
@@ -193,7 +191,7 @@ namespace NatsuLib
 		nLen m_Size, m_CurrentPos;
 #endif
 		
-		nTString m_Filename;
+		nString m_Filename;
 		nBool m_bReadable, m_bWritable;
 	};
 
@@ -210,21 +208,23 @@ namespace NatsuLib
 
 #ifdef _WIN32
 		typedef HANDLE NativeHandle;
+
+		nBool UseFileApi() const noexcept;
 #else
 		typedef FILE* NativeHandle;
 #endif
-		explicit natStdStream(StdStreamType stdStreamType);
 
+		explicit natStdStream(StdStreamType stdStreamType);
 		~natStdStream();
 
 		nBool CanWrite() const override
 		{
-			return m_StdStreamType == StdIn;
+			return m_StdStreamType != StdIn;
 		}
 
 		nBool CanRead() const override
 		{
-			return m_StdStreamType != StdIn;
+			return m_StdStreamType == StdIn;
 		}
 
 		nBool CanResize() const override
@@ -249,7 +249,7 @@ namespace NatsuLib
 
 		void SetSize(nLen /*Size*/) override
 		{
-			nat_Throw(natErrException, NatErr_NotSupport, _T("This stream cannot set size."));
+			nat_Throw(natErrException, NatErr_NotSupport, "This stream cannot set size."_nv);
 		}
 
 		nLen GetPosition() const override
@@ -259,7 +259,7 @@ namespace NatsuLib
 
 		void SetPosition(NatSeek /*Origin*/, nLong /*Offset*/) override
 		{
-			nat_Throw(natErrException, NatErr_NotSupport, _T("This stream cannot set position."));
+			nat_Throw(natErrException, NatErr_NotSupport, "This stream cannot set position."_nv);
 		}
 
 		nByte ReadByte() override;
@@ -268,7 +268,6 @@ namespace NatsuLib
 		void WriteByte(nByte byte) override;
 		nLen WriteBytes(ncData pData, nLen Length) override;
 		std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) override;
-
 		void Flush() override;
 
 	private:

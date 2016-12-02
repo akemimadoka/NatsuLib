@@ -43,13 +43,13 @@ namespace NatsuLib
 			: m_cRef(1u)
 		{
 #ifdef TraceRefObj
-			OutputDebugString(natUtil::FormatString(_T("Type %s created at (%p)\n"), natUtil::C2Wstr(typeid(*this).name()).c_str(), this).c_str());
+			OutputDebugString(natUtil::FormatString("Type %s created at (%p)\n"_nv, natUtil::C2Wstr(typeid(*this).name()).c_str(), this).c_str());
 #endif
 		}
 		virtual ~natRefObjImpl()
 		{
 #ifdef TraceRefObj
-			OutputDebugString(natUtil::FormatString(_T("Type %s destroyed at (%p)\n"), natUtil::C2Wstr(typeid(*this).name()).c_str(), this).c_str());
+			OutputDebugString(natUtil::FormatString("Type %s destroyed at (%p)\n"_nv, natUtil::C2Wstr(typeid(*this).name()).c_str(), this).c_str());
 #endif
 		}
 
@@ -247,6 +247,6 @@ namespace NatsuLib
 			return natRefPointer<P> { pTarget };
 		}
 
-		nat_Throw(natException, _T("Type P cannot be converted to T."));
+		nat_Throw(natException, "Type P cannot be converted to T."_nv);
 	}
 }

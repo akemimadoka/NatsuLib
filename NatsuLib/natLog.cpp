@@ -13,24 +13,24 @@ natLog::~natLog()
 {
 }
 
-void natLog::UpdateLog(nuInt type, nTString&& log)
+void natLog::UpdateLog(nuInt type, nString&& log)
 {
-	EventLogUpdated event(type, std::chrono::system_clock::now(), log.c_str());
+	EventLogUpdated event(type, std::chrono::system_clock::now(), log);
 	m_EventBus.Post(event);
 }
 
-ncTStr natLog::GetDefaultLogTypeName(LogType logtype)
+nStrView natLog::GetDefaultLogTypeName(LogType logtype)
 {
 	switch (logtype)
 	{
 	case Msg:
-		return _T("Message");
+		return "Message"_nv;
 	case Err:
-		return _T("Error");
+		return "Error"_nv;
 	case Warn:
-		return _T("Warning");
+		return "Warning"_nv;
 	default:
-		return _T("Unknown");
+		return "Unknown"_nv;
 	}
 }
 

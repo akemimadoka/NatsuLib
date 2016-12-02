@@ -2,12 +2,10 @@
 #include "natUtil.h"
 #include "natException.h"
 
-#include <locale>
-#include <codecvt>
-
 using namespace NatsuLib;
 using namespace natUtil;
 
+#ifdef _WIN32
 enum : nuInt
 {
 	FIXCHAR =
@@ -19,106 +17,18 @@ enum : nuInt
 	,
 };
 
-std::wstring natUtil::C2Wstr(ncStr str, size_t n)
-{
-	return std::wstring_convert<std::codecvt_utf8<nWChar>> {}.from_bytes(str, str + n);
-}
-
-std::wstring natUtil::C2Wstr(std::string const& str)
-{
-	return C2Wstr(str.c_str(), str.size());
-}
-
-std::wstring natUtil::C2Wstr(ncStr str)
-{
-	return C2Wstr(str, std::char_traits<nChar>::length(str));
-}
-
-std::string natUtil::W2Cstr(ncWStr str, size_t n)
-{
-	return std::wstring_convert<std::codecvt_utf8<nWChar>> {}.to_bytes(str, str + n);
-}
-
-std::string natUtil::W2Cstr(std::wstring const& str)
-{
-	return W2Cstr(str.c_str(), str.size());
-}
-
-std::string natUtil::W2Cstr(ncWStr str)
-{
-	return W2Cstr(str, std::char_traits<nWChar>::length(str));
-}
-
-#ifdef UNICODE
-nTString natUtil::ToTString(ncStr str, size_t n)
-{
-	return C2Wstr(str, n);
-}
-
-nTString natUtil::ToTString(std::string const& str)
-{
-	return C2Wstr(str);
-}
-
-nTString natUtil::ToTString(ncStr str)
-{
-	return C2Wstr(str);
-}
-
-nTString natUtil::ToTString(ncWStr str, size_t n)
-{
-	return{ str, n };
-}
-
-nTString natUtil::ToTString(std::wstring const& str)
-{
-	return ToTString(str.c_str(), str.size());
-}
-
-nTString natUtil::ToTString(ncWStr str)
-{
-	return ToTString(str, std::char_traits<nWChar>::length(str));
-}
-#else
-nTString natUtil::ToTString(ncStr str, size_t n)
-{
-	return{ str, n };
-}
-nTString natUtil::ToTString(std::string const& str)
-{
-	return ToTString(str.c_str(), str.size());
-}
-nTString natUtil::ToTString(ncStr str)
-{
-	return ToTString(str, std::char_traits<nChar>::length(str));
-}
-nTString natUtil::ToTString(ncWStr str, size_t n)
-{
-	return W2Cstr(str, n);
-}
-nTString natUtil::ToTString(std::wstring const& str)
-{
-	return W2Cstr(str);
-}
-nTString natUtil::ToTString(ncWStr str)
-{
-	return W2Cstr(str);
-}
-#endif
-
-#ifdef _WIN32
 std::wstring natUtil::MultibyteToUnicode(ncStr Str, nuInt CodePage)
 {
 	auto Num = MultiByteToWideChar(CodePage, MB_ERR_INVALID_CHARS, Str, -1, nullptr, 0);
 	if (Num == 0)
 	{
-		nat_Throw(natWinException, _T("MultiByteToWideChar failed."));
+		nat_Throw(natWinException, "MultiByteToWideChar failed."_nv);
 	}
 
 	std::vector<nWChar> tBuffer(static_cast<size_t>(Num));
 	if (!MultiByteToWideChar(CodePage, MB_ERR_INVALID_CHARS, Str, -1, tBuffer.data(), Num))
 	{
-		nat_Throw(natWinException, _T("MultiByteToWideChar failed."));
+		nat_Throw(natWinException, "MultiByteToWideChar failed."_nv);
 	}
 
 	return tBuffer.data();
@@ -133,7 +43,7 @@ std::string natUtil::WidecharToMultibyte(ncWStr Str, nuInt CodePage)
 	lastError = GetLastError();
 	if (Num == 0 || lastError)
 	{
-		nat_Throw(natWinException, lastError, _T("WideCharToMultiByte failed."));
+		nat_Throw(natWinException, lastError, "WideCharToMultiByte failed."_nv);
 	}
 
 	std::vector<nChar> tBuffer(static_cast<size_t>(Num));
@@ -141,16 +51,16 @@ std::string natUtil::WidecharToMultibyte(ncWStr Str, nuInt CodePage)
 	lastError = GetLastError();
 	if (Num == 0 || lastError)
 	{
-		nat_Throw(natWinException, lastError, _T("WideCharToMultiByte failed."));
+		nat_Throw(natWinException, lastError, "WideCharToMultiByte failed."_nv);
 	}
 
 	return tBuffer.data();
 }
 
-nTString natUtil::GetResourceString(DWORD ResourceID, HINSTANCE hInstance)
+nString natUtil::GetResourceString(DWORD ResourceID, HINSTANCE hInstance)
 {
 	int nLen;
-	std::vector<nTChar> tBuf(16u);
+	std::vector<TCHAR> tBuf(16u);
 
 	try
 	{
@@ -162,13 +72,17 @@ nTString natUtil::GetResourceString(DWORD ResourceID, HINSTANCE hInstance)
 	}
 	catch (std::bad_alloc&)
 	{
-		nat_Throw(natException, _T("Allocate memory failed"));
+		nat_Throw(natException, "Allocate memory failed"_nv);
 	}
 
-	return tBuf.data();
+#ifdef UNICODE
+	return WideStringView{ tBuf.data() };
+#else
+	return AnsiStringView{ tBuf.data() };
+#endif
 }
 
-std::vector<nByte> natUtil::GetResourceData(DWORD ResourceID, ncTStr lpType, HINSTANCE hInstance)
+std::vector<nByte> natUtil::GetResourceData(DWORD ResourceID, LPCTSTR lpType, HINSTANCE hInstance)
 {
 	HRSRC hRsrc = FindResource(hInstance, MAKEINTRESOURCE(ResourceID), lpType);
 	if (hRsrc != NULL)
@@ -188,7 +102,7 @@ std::vector<nByte> natUtil::GetResourceData(DWORD ResourceID, ncTStr lpType, HIN
 		}
 	}
 
-	nat_Throw(natException, _T("No such resource."));
+	nat_Throw(natException, "No such resource."_nv);
 }
 #else
 // TODO

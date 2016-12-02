@@ -45,7 +45,7 @@ namespace NatsuLib
 			MaxAllowedServerInstances = std::numeric_limits<nuInt>::max(),
 		};
 
-		natNamedPipeServerStream(ncTStr Pipename, PipeDirection Direction, nuInt MaxInstances, nuInt OutBuffer = 1024, nuInt InBuffer = 1024, nuInt TimeOut = 0, PipeMode TransmissionMode = PipeMode::Message, PipeMode ReadMode = PipeMode::Message, PipeOptions Options = PipeOptions::WriteThrough);
+		natNamedPipeServerStream(nStrView Pipename, PipeDirection Direction, nuInt MaxInstances, nuInt OutBuffer = 1024, nuInt InBuffer = 1024, nuInt TimeOut = 0, PipeMode TransmissionMode = PipeMode::Message, PipeMode ReadMode = PipeMode::Message, PipeOptions Options = PipeOptions::WriteThrough);
 		~natNamedPipeServerStream();
 
 		nBool CanWrite() const override
@@ -80,7 +80,7 @@ namespace NatsuLib
 
 		void SetSize(nLen /*Size*/) override
 		{
-			nat_Throw(natErrException, NatErr_NotSupport, _T("This type of stream does not support SetSize."));
+			nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support SetSize."_nv);
 		}
 
 		nLen GetPosition() const override
@@ -90,15 +90,11 @@ namespace NatsuLib
 
 		void SetPosition(NatSeek /*Origin*/, nLong /*Offset*/) override
 		{
-			nat_Throw(natErrException, NatErr_NotSupport, _T("This type of stream does not support SetPosition."));
+			nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support SetPosition."_nv);
 		}
 
-		nByte ReadByte() override;
 		nLen ReadBytes(nData pData, nLen Length) override;
-		std::future<nLen> ReadBytesAsync(nData pData, nLen Length) override;
-		void WriteByte(nByte byte) override;
 		nLen WriteBytes(ncData pData, nLen Length) override;
-		std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) override;
 		void Flush() override;
 
 		void WaitForConnection();
@@ -133,7 +129,7 @@ namespace NatsuLib
 			Infinity = std::numeric_limits<nuInt>::max(),
 		};
 
-		natNamedPipeClientStream(ncTStr Pipename, nBool bReadable, nBool bWritable);
+		natNamedPipeClientStream(nStrView Pipename, nBool bReadable, nBool bWritable);
 		~natNamedPipeClientStream() = default;
 
 		nBool CanResize() const override
@@ -158,7 +154,7 @@ namespace NatsuLib
 
 		void SetSize(nLen /*Size*/) override
 		{
-			nat_Throw(natErrException, NatErr_NotSupport, _T("This type of stream does not support SetSize."));
+			nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support SetSize."_nv);
 		}
 
 		nLen GetPosition() const override
@@ -168,7 +164,7 @@ namespace NatsuLib
 
 		void SetPosition(NatSeek /*Origin*/, nLong /*Offset*/) override
 		{
-			nat_Throw(natErrException, NatErr_NotSupport, _T("This type of stream does not support SetPosition."));
+			nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support SetPosition."_nv);
 		}
 
 		nBool CanWrite() const override;
@@ -184,8 +180,8 @@ namespace NatsuLib
 		void Wait(nuInt timeOut = Infinity);
 
 	private:
-		std::unique_ptr<natFileStream> m_InternalStream;
-		nTString m_PipeName;
+		natRefPointer<natFileStream> m_InternalStream;
+		nString m_PipeName;
 		nBool m_bReadable, m_bWritable;
 	};
 }

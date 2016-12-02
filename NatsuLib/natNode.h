@@ -14,11 +14,11 @@ namespace NatsuLib
 	{
 		virtual void AddChild(natNode* pChild) = 0;
 		virtual nBool ChildExists(natNode* pChild) const noexcept = 0;
-		virtual nBool ChildExists(ncTStr Name) const noexcept = 0;
-		virtual natNode* GetChildByName(ncTStr Name) const = 0;
+		virtual nBool ChildExists(nStrView Name) const noexcept = 0;
+		virtual natNode* GetChildByName(nStrView Name) const = 0;
 
 		template <typename T>
-		T* GetChildByName(ncTStr Name) const
+		T* GetChildByName(nStrView Name) const
 		{
 			return dynamic_cast<T*>(GetChildByName(Name));
 		}
@@ -35,10 +35,10 @@ namespace NatsuLib
 		virtual void SetParent(natNode* pParent) = 0;
 		virtual natNode* GetParent() const noexcept = 0;
 		virtual void RemoveChild(natNode* pnatNode) = 0;
-		virtual void RemoveChildByName(ncTStr Name) = 0;
+		virtual void RemoveChildByName(nStrView Name) = 0;
 		virtual void RemoveAllChild() = 0;
 
-		virtual void SetName(ncTStr Name) = 0;
-		virtual ncTStr GetName() const noexcept = 0;
+		virtual void SetName(nStrView Name) = 0;
+		virtual nStrView GetName() const noexcept = 0;
 	};
 }
