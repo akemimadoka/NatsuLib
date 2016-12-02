@@ -114,14 +114,14 @@ namespace NatsuLib
 		natWinException(nStrView Src, nStrView File, nuInt Line, DWORD LastErr, nStrView Desc, Args&&... args) noexcept
 			: natException(Src, File, Line, Desc, std::forward<Args>(args)...), m_LastErr(LastErr), m_ErrMsg()
 		{
-			m_Description = natUtil::FormatString(m_Description + " (LastErr = {0})"_nv, m_LastErr);
+			m_Description.Append(natUtil::FormatString(" (LastErr = {0})"_nv, m_LastErr));
 		}
 
 		template <typename... Args>
 		natWinException(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line, DWORD LastErr, nStrView Desc, Args&&... args) noexcept
 			: natException(nestedException, Src, File, Line, Desc, std::forward<Args>(args)...), m_LastErr(LastErr), m_ErrMsg()
 		{
-			m_Description = natUtil::FormatString(m_Description + " (LastErr = {0})"_nv, m_LastErr);
+			m_Description.Append(natUtil::FormatString(" (LastErr = {0})"_nv, m_LastErr));
 		}
 
 		DWORD GetErrNo() const noexcept;
@@ -141,14 +141,14 @@ namespace NatsuLib
 		natErrException(nStrView Src, nStrView File, nuInt Line, NatErr ErrNo, nStrView Desc, Args&&... args) noexcept
 			: natException(Src, File, Line, Desc, std::forward<Args>(args)...), m_Errno(ErrNo)
 		{
-			m_Description = natUtil::FormatString(m_Description + " (Errno = {0})"_nv, m_Errno);
+			m_Description.Append(natUtil::FormatString(" (Errno = {0})"_nv, m_Errno));
 		}
 
 		template <typename... Args>
 		natErrException(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line, NatErr ErrNo, nStrView Desc, Args&&... args) noexcept
 			: natException(nestedException, Src, File, Line, Desc, std::forward<Args>(args)...), m_Errno(ErrNo)
 		{
-			m_Description = natUtil::FormatString(m_Description + " (Errno = {0})"_nv, m_Errno);
+			m_Description.Append(natUtil::FormatString(" (Errno = {0})"_nv, m_Errno));
 		}
 
 		NatErr GetErrNo() const noexcept;

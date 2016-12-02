@@ -1281,8 +1281,14 @@ namespace NatsuLib
 template <typename CharType, NatsuLib::StringType stringType>
 std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::StringView<stringType> const& str)
 {
-	os << static_cast<std::basic_string<CharType>>(static_cast<NatsuLib::AnsiString>(str));
+	os << static_cast<std::basic_string<CharType>>(static_cast<std::conditional_t<std::is_same<CharType, char>::value, NatsuLib::AnsiString, NatsuLib::WideString>>(str));
 	return os;
+}
+
+template <typename CharType, NatsuLib::StringType stringType>
+std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::String<stringType> const& str)
+{
+	return os << static_cast<std::basic_string<CharType>>(str);
 }
 
 template <typename CharType, NatsuLib::StringType stringType>
@@ -1294,12 +1300,6 @@ std::basic_istream<CharType>& operator>>(std::basic_istream<CharType>& is, Natsu
 	return is;
 }
 
-template <typename CharType, NatsuLib::StringType stringType>
-std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::String<stringType> const& str)
-{
-	return os << str.GetView();
-}
-
 #else
 template <typename CharType, NatsuLib::StringType stringType>
 std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::StringView<stringType> const& str)
@@ -1309,18 +1309,18 @@ std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, Natsu
 }
 
 template <typename CharType, NatsuLib::StringType stringType>
+std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::String<stringType> const& str)
+{
+	return os << str.GetView();
+}
+
+template <typename CharType, NatsuLib::StringType stringType>
 std::basic_istream<CharType>& operator >> (std::basic_istream<CharType>& is, NatsuLib::String<stringType>& str)
 {
 	std::basic_string<CharType> tmpStr;
 	is >> tmpStr;
 	str.Assign(tmpStr.c_str());
 	return is;
-}
-
-template <typename CharType, NatsuLib::StringType stringType>
-std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::String<stringType> const& str)
-{
-	return os << str.GetView();
 }
 
 #endif

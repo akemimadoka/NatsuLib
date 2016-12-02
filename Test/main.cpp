@@ -40,6 +40,8 @@ int main()
 	{
 #ifdef _WIN32
 		logger.LogMsg("{1} {0}"_nv, L"²âÊÔÖÐÎÄ"_wv, 123);
+		std::cout << "baka"_nv << std::endl;
+		std::wcout << "baka"_nv << std::endl;
 #endif
 
 		constexpr auto test = HasMemberNamedfoo<Incrementable>::value;
