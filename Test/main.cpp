@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 
 #include <natUtil.h>
 #include <natMisc.h>
@@ -42,6 +43,7 @@ int main()
 		logger.LogMsg("{1} {0}"_nv, L"≤‚ ‘÷–Œƒ"_wv, 123);
 		std::cout << "baka"_nv << std::endl;
 		std::wcout << "baka"_nv << std::endl;
+		logger.LogMsg("%s", "baka"_nv);
 #endif
 
 		constexpr auto test = HasMemberNamedfoo<Incrementable>::value;
@@ -53,17 +55,12 @@ int main()
 			logger.LogMsg("%s%d"_nv, "end"_nv, i);
 		}, t);
 		
-		/*{
-			std::vector<nString> strvec;
-			natUtil::split("test 2333"_nv, " 2"_nv, [&strvec](nStrView str, size_t len)
+		{
+			"test 2333"_nv.Split(" 2"_nv, [&logger](nStrView const& str)
 			{
-				strvec.emplace_back(str, len);
+				logger.LogMsg(str);
 			});
-			for (auto&& item : strvec)
-			{
-				logger.LogMsg("%s"_nv, item);
-			}
-		}*/
+		}
 
 		{
 			logger.LogMsg("Input: "_nv);

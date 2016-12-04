@@ -470,6 +470,36 @@ namespace NatsuLib
 			return { m_StrBegin + ApplyOffset(begin, size), m_StrEnd + ApplyOffset(end, size) };
 		}
 
+		///	@brief	字符串分割函数
+		///	@param[in]	pattern		分割字符
+		///	@param[in]	callableObject	可被调用的对象，接受参数为StringView
+		template <typename CallableObject>
+		void Split(StringView const& pattern, CallableObject callableObject) const noexcept
+		{
+			size_t pos{};
+			const auto strLen = size();
+
+			for (size_t i = 0; i < strLen; ++i)
+			{
+				const auto currentchar = m_StrBegin[i];
+				for (auto&& item : pattern)
+				{
+					if (currentchar == item)
+					{
+						callableObject(StringView{ m_StrBegin + pos, i - pos });
+
+						pos = i + 1;
+						break;
+					}
+				}
+			}
+
+			if (pos != strLen)
+			{
+				callableObject(StringView{ m_StrBegin + pos, strLen - pos });
+			}
+		}
+
 		void Assign(CharIterator begin, CharIterator end) noexcept
 		{
 			m_StrBegin = begin;
@@ -1299,7 +1329,6 @@ std::basic_istream<CharType>& operator>>(std::basic_istream<CharType>& is, Natsu
 	str.Assign(static_cast<typename NatsuLib::String<stringType>::View>(tmpStr.c_str()));
 	return is;
 }
-
 #else
 template <typename CharType, NatsuLib::StringType stringType>
 std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::StringView<stringType> const& str)
@@ -1322,7 +1351,6 @@ std::basic_istream<CharType>& operator >> (std::basic_istream<CharType>& is, Nat
 	str.Assign(tmpStr.c_str());
 	return is;
 }
-
 #endif
 
 #ifdef _MSC_VER
