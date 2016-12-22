@@ -101,6 +101,7 @@ namespace NatsuLib
 			template <typename... RestChar_t>
 			static void Impl(nStrView str, std::basic_ostream<nChar>& currentOStream, std::basic_ostream<RestChar_t>&... _ostreams)
 			{
+				using ::operator<<;
 				currentOStream << str << std::endl;
 				Impl(str, _ostreams...);
 			}
@@ -108,6 +109,7 @@ namespace NatsuLib
 			template <typename... RestChar_t>
 			static void Impl(nStrView str, std::basic_ostream<nWChar>& currentOStream, std::basic_ostream<RestChar_t>&... _ostreams)
 			{
+				using ::operator<<;
 				currentOStream << str << std::endl;
 				Impl(str, _ostreams...);
 			}

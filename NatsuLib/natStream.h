@@ -6,6 +6,7 @@
 #include "natRefObj.h"
 #include "natMultiThread.h"
 #include "natString.h"
+#include "natException.h"
 
 #ifndef _WIN32
 #	include <fstream>

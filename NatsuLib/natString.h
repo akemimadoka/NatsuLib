@@ -179,7 +179,7 @@ namespace NatsuLib
 				{
 					if (static_cast<size_t>(matchLen) >= repeatCount)
 					{
-						return static_cast<size_t>(srcEnd - current);
+						return static_cast<size_t>(std::distance(srcBegin, current));
 					}
 					if (current[matchLen] != searchChar)
 					{
@@ -329,22 +329,22 @@ namespace NatsuLib
 
 		const_reverse_iterator rbegin() const noexcept
 		{
-			return const_reverse_iterator{ m_StrBegin };
+			return const_reverse_iterator{ std::prev(m_StrEnd) };
 		}
 
 		const_reverse_iterator rend() const noexcept
 		{
-			return const_reverse_iterator{ m_StrEnd };
+			return const_reverse_iterator{ std::prev(m_StrBegin) };
 		}
 
 		const_reverse_iterator crbegin() const noexcept
 		{
-			return const_reverse_iterator{ m_StrBegin };
+			return const_reverse_iterator{ std::prev(m_StrEnd) };
 		}
 
 		const_reverse_iterator crend() const noexcept
 		{
-			return const_reverse_iterator{ m_StrEnd };
+			return const_reverse_iterator{ std::prev(m_StrBegin) };
 		}
 
 		size_t size() const noexcept
@@ -467,7 +467,7 @@ namespace NatsuLib
 		StringView Slice(std::ptrdiff_t begin, std::ptrdiff_t end) const noexcept
 		{
 			const auto size = GetSize();
-			return { m_StrBegin + ApplyOffset(begin, size), m_StrEnd + ApplyOffset(end, size) };
+			return { m_StrBegin + ApplyOffset(begin, size), m_StrBegin + ApplyOffset(end, size) };
 		}
 
 		///	@brief	×Ö·û´®·Ö¸îº¯Êý
@@ -561,7 +561,7 @@ namespace NatsuLib
 			{
 				return npos;
 			}
-			const auto pos = detail_::MatchString(crbegin() + realEnd, crend(), pattern.crbegin(), pattern.crend());
+			const auto pos = detail_::MatchString(const_reverse_iterator{ cbegin() + realEnd }, crend(), pattern.cbegin(), pattern.cend());
 			if (pos == npos)
 			{
 				return npos;
@@ -601,7 +601,7 @@ namespace NatsuLib
 			{
 				return npos;
 			}
-			const auto pos = detail_::SearchCharRepeat(crbegin() + realEnd, crend(), findChar, repeatCount);
+			const auto pos = detail_::SearchCharRepeat(const_reverse_iterator{ cbegin() + realEnd }, crend(), findChar, repeatCount);
 			if (pos == npos)
 			{
 				return npos;
@@ -1153,14 +1153,14 @@ namespace NatsuLib
 		{
 			String<StringType::Ansi> ansiStr;
 			detail_::TransCoder<stringType>{}(ansiStr, *this);
-			return ansiStr.data();
+			return { ansiStr.data(), ansiStr.size() };
 		}
 
 		operator std::wstring() const
 		{
 			String<StringType::Wide> wideStr;
 			detail_::TransCoder<stringType>{}(wideStr, *this);
-			return wideStr.data();
+			return { wideStr.data(), wideStr.size() };
 		}
 #endif
 
@@ -1362,10 +1362,10 @@ NATINLINE NatsuLib::U8StringView operator""_u8v(const NatsuLib::U8StringView::Ch
 	return { str,length };
 }
 
-/*NATINLINE NatsuLib::U8StringView operator""_u8v(NatsuLib::U8StringView::CharType Char) noexcept
+NATINLINE NatsuLib::U8String operator""_u8s(NatsuLib::U8StringView::CharType Char) noexcept
 {
-	return { Char };
-}*/
+	return NatsuLib::U8StringView{ Char };
+}
 
 NATINLINE NatsuLib::U8String operator""_u8s(const NatsuLib::U8String::CharType* str, size_t length) noexcept
 {
@@ -1377,10 +1377,10 @@ NATINLINE NatsuLib::U16StringView operator""_u16v(const NatsuLib::U16StringView:
 	return { str,length };
 }
 
-/*NATINLINE NatsuLib::U16StringView operator""_u16v(NatsuLib::U16StringView::CharType Char) noexcept
+NATINLINE NatsuLib::U16String operator""_u16s(NatsuLib::U16StringView::CharType Char) noexcept
 {
-	return { Char };
-}*/
+	return NatsuLib::U16StringView{ Char };
+}
 
 NATINLINE NatsuLib::U16String operator""_u16s(const NatsuLib::U16String::CharType* str, size_t length) noexcept
 {
@@ -1392,10 +1392,10 @@ NATINLINE NatsuLib::U32StringView operator""_u32v(const NatsuLib::U32StringView:
 	return { str,length };
 }
 
-/*NATINLINE NatsuLib::U32StringView operator""_u32v(NatsuLib::U32StringView::CharType Char) noexcept
+NATINLINE NatsuLib::U32String operator""_u32s(NatsuLib::U32StringView::CharType Char) noexcept
 {
-	return { Char };
-}*/
+	return NatsuLib::U32StringView{ Char };
+}
 
 NATINLINE NatsuLib::U32String operator""_u32s(const NatsuLib::U32String::CharType* str, size_t length) noexcept
 {
@@ -1408,10 +1408,10 @@ NATINLINE NatsuLib::AnsiStringView operator""_av(const NatsuLib::AnsiStringView:
 	return { str,length };
 }
 
-/*NATINLINE NatsuLib::AnsiStringView operator""_av(NatsuLib::AnsiStringView::CharType Char) noexcept
+NATINLINE NatsuLib::AnsiString operator""_as(NatsuLib::AnsiStringView::CharType Char) noexcept
 {
-	return { Char };
-}*/
+	return NatsuLib::AnsiStringView{ Char };
+}
 
 NATINLINE NatsuLib::AnsiString operator""_as(const NatsuLib::AnsiString::CharType* str, size_t length) noexcept
 {
@@ -1423,10 +1423,10 @@ NATINLINE NatsuLib::WideStringView operator""_wv(const NatsuLib::WideStringView:
 	return{ str,length };
 }
 
-/*NATINLINE NatsuLib::WideStringView operator""_wv(NatsuLib::WideStringView::CharType Char) noexcept
+NATINLINE NatsuLib::WideString operator""_ws(NatsuLib::WideStringView::CharType Char) noexcept
 {
-	return { Char };
-}*/
+	return NatsuLib::WideStringView{ Char };
+}
 
 NATINLINE NatsuLib::WideString operator""_ws(const NatsuLib::WideString::CharType* str, size_t length) noexcept
 {
@@ -1445,9 +1445,9 @@ NATINLINE nStrView operator""_nv(const nU8Char* str, size_t length) noexcept
 	return { str, length };
 }
 
-NATINLINE nStrView operator""_nv(nU8Char Char) noexcept
+NATINLINE nString operator""_ns(nU8Char Char) noexcept
 {
-	return { Char };
+	return nStrView{ Char };
 }
 
 NATINLINE nString operator""_ns(const nU8Char* str, size_t length)
@@ -1549,10 +1549,10 @@ namespace NatsuLib
 			assert(srcBegin != srcEnd);
 			assert(static_cast<size_t>(srcEnd - srcBegin) >= static_cast<size_t>(patternEnd - patternBegin));
 
-			const auto patternSize = static_cast<size_t>(patternEnd - patternBegin);
+			const auto patternSize = static_cast<size_t>(std::distance(patternBegin, patternEnd));
 
-			std::ptrdiff_t* table;
-			bool shouldDelete;
+			std::ptrdiff_t* table{};
+			auto shouldDelete = false;
 			const auto tableSize = patternSize - 1;
 			auto scope = make_scope([&table, &shouldDelete]
 			{
@@ -1567,9 +1567,9 @@ namespace NatsuLib
 				table = new(std::nothrow) std::ptrdiff_t[tableSize];
 				shouldDelete = true;
 			}
-			else
+			else if (tableSize > 0)
 			{
-				table = static_cast<std::ptrdiff_t*>(alloca(tableSize));
+				table = static_cast<std::ptrdiff_t*>(alloca(tableSize * sizeof(std::ptrdiff_t)));
 				shouldDelete = false;
 			}
 
@@ -1608,7 +1608,7 @@ namespace NatsuLib
 			{
 				for (;; ++current)
 				{
-					if (srcEnd - current < static_cast<std::ptrdiff_t>(patternSize))
+					if (std::distance(current, srcEnd) < static_cast<std::ptrdiff_t>(patternSize))
 					{
 						return npos;
 					}

@@ -48,11 +48,7 @@ namespace NatsuLib
 
 		template <typename... Args>
 		natException(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line, nStrView Desc, Args&&... args) noexcept
-#ifdef UNICODE
 			: Storage{ nestedException, std::chrono::system_clock::now(), File, Line, Src, natUtil::FormatString(Desc, std::forward<Args>(args)...) }
-#else
-			: Storage{ nestedException, std::chrono::system_clock::now(), File, Line, Src, natUtil::FormatString(Desc, std::forward<Args>(args)...) }
-#endif
 #ifdef EnableExceptionStackTrace
 			, m_StackWalker()
 #endif

@@ -138,7 +138,7 @@ namespace NatsuLib
 						visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<nTChar>::Get(item); });
 						break;
 					case 's':
-						visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<nString>::Get(item); });
+						visit_at(argsTuple, index++, [&ss](auto&& item) { using ::operator<<; ss << Expect<nString>::Get(item); });
 						break;
 					case 'd':
 					case 'i':
@@ -355,7 +355,7 @@ namespace NatsuLib
 						nat_Throw(natException, "Expected '}', got '%c'"_nv, *lpStr);
 					}
 
-					visit_at(argsTuple, tmpIndex, [&ss](auto&& item) { ss << item; });
+					visit_at(argsTuple, tmpIndex, [&ss](auto&& item) { using ::operator<<; ss << item; });
 					break;
 				}
 				default:

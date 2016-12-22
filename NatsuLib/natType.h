@@ -80,7 +80,7 @@ using nUnsafePtr = std::add_pointer_t<T>;
 ///	@brief		常见错误
 ///	@{
 
-enum NatErr
+enum /*[[nodiscard]]*/ NatErr
 {
 	NatErr_Interrupted	=	nResult(1),		///< @brief	正常中断
 
