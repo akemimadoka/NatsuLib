@@ -42,8 +42,8 @@ std::future<nLen> natStream::WriteBytesAsync(ncData pData, nLen Length)
 }
 
 #ifdef _WIN32
-natFileStream::natFileStream(nStrView filename, nBool bReadable, nBool bWritable)
-	: m_hMappedFile(NULL), m_ShouldDispose(true), m_Filename(filename), m_bReadable(bReadable), m_bWritable(bWritable)
+natFileStream::natFileStream(nStrView filename, nBool bReadable, nBool bWritable, nBool isAsync)
+	: m_hMappedFile(NULL), m_ShouldDispose(true), m_IsAsync(isAsync), m_Filename(filename), m_bReadable(bReadable), m_bWritable(bWritable)
 {
 	m_hFile = CreateFile(
 #ifdef UNICODE
@@ -56,7 +56,7 @@ natFileStream::natFileStream(nStrView filename, nBool bReadable, nBool bWritable
 		FILE_SHARE_READ,
 		NULL,
 		bWritable ? OPEN_ALWAYS : OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL,
+		FILE_ATTRIBUTE_NORMAL | (isAsync ? FILE_FLAG_OVERLAPPED : 0),
 		NULL
 	);
 
@@ -66,8 +66,8 @@ natFileStream::natFileStream(nStrView filename, nBool bReadable, nBool bWritable
 	}
 }
 
-natFileStream::natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable, nBool transferOwner)
-	: m_hFile(hFile), m_hMappedFile(NULL), m_ShouldDispose(transferOwner), m_bReadable(bReadable), m_bWritable(bWritable)
+natFileStream::natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable, nBool transferOwner, nBool isAsync)
+	: m_hFile(hFile), m_hMappedFile(NULL), m_ShouldDispose(transferOwner), m_IsAsync(isAsync), m_bReadable(bReadable), m_bWritable(bWritable)
 {
 	if (!m_hFile || m_hFile == INVALID_HANDLE_VALUE)
 	{
@@ -177,6 +177,11 @@ nByte natFileStream::ReadByte()
 
 nLen natFileStream::ReadBytes(nData pData, nLen Length)
 {
+	if (m_IsAsync)
+	{
+		return ReadBytesAsync(pData, Length).get();
+	}
+
 	DWORD tReadBytes = 0ul;
 	if (!m_bReadable)
 	{
@@ -211,6 +216,11 @@ void natFileStream::WriteByte(nByte byte)
 
 nLen natFileStream::WriteBytes(ncData pData, nLen Length)
 {
+	if (m_IsAsync)
+	{
+		return WriteBytesAsync(pData, Length).get();
+	}
+
 	DWORD tWriteBytes = 0ul;
 	if (!m_bWritable)
 	{
@@ -233,6 +243,110 @@ nLen natFileStream::WriteBytes(ncData pData, nLen Length)
 	}
 
 	return tWriteBytes;
+}
+
+std::future<nLen> natFileStream::ReadBytesAsync(nData pData, nLen Length)
+{
+	if (m_IsAsync)
+	{
+		if (!m_bReadable)
+		{
+			nat_Throw(natErrException, NatErr_IllegalState, "Stream is not readable."_nv);
+		}
+
+		if (Length == 0ul)
+		{
+			std::promise<nLen> dummyPromise;
+			dummyPromise.set_value(0);
+			return dummyPromise.get_future();
+		}
+
+		if (pData == nullptr)
+		{
+			nat_Throw(natErrException, NatErr_InvalidArg, "pData cannot be nullptr."_nv);
+		}
+
+		return std::async([=]() -> nLen
+		{
+			auto hEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
+			OVERLAPPED olp{};
+			olp.hEvent = hEvent;
+
+			if (ReadFile(m_hFile, pData, static_cast<DWORD>(Length), NULL, &olp) == FALSE)
+			{
+				auto lastError = GetLastError();
+				if (lastError != ERROR_IO_PENDING)
+				{
+					nat_Throw(natWinException, lastError, "ReadFile failed."_nv);
+				}
+			}
+
+			DWORD tReadBytes;
+			if (!GetOverlappedResult(m_hFile, &olp, &tReadBytes, TRUE))
+			{
+				nat_Throw(natWinException, "GetOverlappedResult failed."_nv);
+			}
+
+			return tReadBytes;
+		});
+	}
+
+	return std::async([=]
+	{
+		return ReadBytes(pData, Length);
+	});
+}
+
+std::future<nLen> natFileStream::WriteBytesAsync(ncData pData, nLen Length)
+{
+	if (m_IsAsync)
+	{
+		if (!m_bWritable)
+		{
+			nat_Throw(natErrException, NatErr_IllegalState, "Stream is not writable."_nv);
+		}
+
+		if (Length == 0ul)
+		{
+			std::promise<nLen> dummyPromise;
+			dummyPromise.set_value(0);
+			return dummyPromise.get_future();
+		}
+
+		if (pData == nullptr)
+		{
+			nat_Throw(natErrException, NatErr_InvalidArg, "pData cannot be nullptr."_nv);
+		}
+
+		return std::async([=]() -> nLen
+		{
+			auto hEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
+			OVERLAPPED olp{};
+			olp.hEvent = hEvent;
+
+			if (WriteFile(m_hFile, pData, static_cast<DWORD>(Length), NULL, &olp) == FALSE)
+			{
+				auto lastError = GetLastError();
+				if (lastError != ERROR_IO_PENDING)
+				{
+					nat_Throw(natWinException, lastError, "WriteFile failed."_nv);
+				}
+			}
+
+			DWORD tWrittenBytes;
+			if (!GetOverlappedResult(m_hFile, &olp, &tWrittenBytes, TRUE))
+			{
+				nat_Throw(natWinException, "GetOverlappedResult failed."_nv);
+			}
+
+			return tWrittenBytes;
+		});
+	}
+
+	return std::async([=]
+	{
+		return WriteBytes(pData, Length);
+	});
 }
 
 void natFileStream::Flush()

@@ -153,9 +153,11 @@ namespace NatsuLib
 		typedef HANDLE UnsafeHandle;
 #endif
 
-		natFileStream(nStrView filename, nBool bReadable, nBool bWritable);
 #ifdef _WIN32
-		natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable, nBool transferOwner = false);
+		natFileStream(nStrView filename, nBool bReadable, nBool bWritable, nBool isAsync = false);
+		natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable, nBool transferOwner = false, nBool isAsync = false);
+#else
+		natFileStream(nStrView filename, nBool bReadable, nBool bWritable);
 #endif
 
 		~natFileStream();
@@ -173,6 +175,11 @@ namespace NatsuLib
 		nLen ReadBytes(nData pData, nLen Length) override;
 		void WriteByte(nByte byte) override;
 		nLen WriteBytes(ncData pData, nLen Length) override;
+#ifdef _WIN32
+		std::future<nLen> ReadBytesAsync(nData pData, nLen Length) override;
+		std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) override;
+#endif
+
 		void Flush() override;
 
 		nStrView GetFilename() const noexcept;
@@ -187,6 +194,7 @@ namespace NatsuLib
 		UnsafeHandle m_hFile, m_hMappedFile;
 		natRefPointer<natMemoryStream> m_pMappedFile;
 		const nBool m_ShouldDispose;
+		const nBool m_IsAsync;
 #else
 		std::fstream m_File;
 		nLen m_Size, m_CurrentPos;
