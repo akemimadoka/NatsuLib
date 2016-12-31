@@ -31,7 +31,7 @@ namespace
 const nStrView Uri::SchemeDelimiter{ "://" };
 
 Uri::Uri(nString uri)
-	: m_UriInfo{ std::move(uri) }
+	: m_UriInfo{ std::move(uri), {}, {}, {}, {}, {}, {}, {}, {} }
 {
 	ParseUri();
 }

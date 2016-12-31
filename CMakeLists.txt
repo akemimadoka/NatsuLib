@@ -52,6 +52,8 @@ set(SOURCE_FILES
     NatsuLib/natUtil.cpp
     NatsuLib/natUtil.h
     NatsuLib/natVec.h
+    NatsuLib/natVFS.cpp
+    NatsuLib/natVFS.h
     NatsuLib/stdafx.cpp
     NatsuLib/stdafx.h
     NatsuLib/targetver.h)
