@@ -11,6 +11,7 @@
 #include <natString.h>
 #include <natStream.h>
 #include <natStreamHelper.h>
+#include <natVFS.h>
 
 using namespace NatsuLib;
 
@@ -120,6 +121,11 @@ int main()
 			logger.LogMsg(nString{ AnsiStringView{ reinterpret_cast<const char*>(buffer.data()) } });
 #endif
 		}
+
+		{
+			Uri a{ "http://test:2333@funamiyui.moe:80/blog/index.html?index=5#main"_nv };
+			logger.LogMsg("{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}"_nv, a.GetScheme(), a.GetUser(), a.GetPassword(), a.GetHost(), a.GetPort().value_or(80u), a.GetPath(), a.GetQuery(), a.GetFragment());
+		}
 	}
 #ifdef _WIN32
 	catch (natWinException& e)
@@ -130,11 +136,7 @@ int main()
 		for (size_t i = 0; i < e.GetStackWalker().GetFrameCount(); ++i)
 		{
 			auto&& symbol = e.GetStackWalker().GetSymbol(i);
-#ifdef _WIN32
-			logger.LogMsg("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"_nv, symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
-#else
-			logger.LogMsg("0x%p : {1}"_nv, symbol.OriginalAddress, symbol.SymbolInfo);
-#endif
+			logger.LogErr("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"_nv, symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
 		}
 #endif
 	}
@@ -148,9 +150,9 @@ int main()
 		{
 			auto&& symbol = e.GetStackWalker().GetSymbol(i);
 #ifdef _WIN32
-			logger.LogMsg("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"_nv, symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+			logger.LogErr("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"_nv, symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
 #else
-			logger.LogMsg("0x%p : {1}"_nv, symbol.OriginalAddress, symbol.SymbolInfo);
+			logger.LogErr("0x%p : {1}"_nv, symbol.OriginalAddress, symbol.SymbolInfo);
 #endif
 		}
 #endif
@@ -164,9 +166,9 @@ int main()
 		{
 			auto&& symbol = e.GetStackWalker().GetSymbol(i);
 #ifdef _WIN32
-			logger.LogMsg("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"_nv, symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+			logger.LogErr("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"_nv, symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
 #else
-			logger.LogMsg("0x%p : {1}"_nv, symbol.OriginalAddress, symbol.SymbolInfo);
+			logger.LogErr("0x%p : {1}"_nv, symbol.OriginalAddress, symbol.SymbolInfo);
 #endif
 		}
 #endif

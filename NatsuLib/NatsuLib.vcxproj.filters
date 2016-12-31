@@ -132,6 +132,9 @@
     <ClInclude Include="natConsole.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="natVFS.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -189,6 +192,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="natEnvironment.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="natVFS.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

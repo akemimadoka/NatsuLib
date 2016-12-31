@@ -203,7 +203,7 @@ namespace NatsuLib
 		}
 
 		template <StringType stringType>
-		std::enable_if_t<StringEncodingTrait<stringType>::MaxCharSize != 1, size_t> GetCharCount(const typename StringEncodingTrait<stringType>::CharType* str, size_t length)
+		std::enable_if_t<(StringEncodingTrait<stringType>::MaxCharSize > 1), size_t> GetCharCount(const typename StringEncodingTrait<stringType>::CharType* str, size_t length)
 		{
 			size_t count{};
 			size_t currentSize;

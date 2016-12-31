@@ -849,9 +849,9 @@ namespace NatsuLib
 		dst.Resize(convertedString.size());
 
 #ifdef _MSC_VER
-		auto data = stdext::checked_array_iterator<nWStr>{ reinterpret_cast<nWStr>(dst.begin()), dst.size(), 0 };
+		const auto data = stdext::checked_array_iterator<nWStr>{ reinterpret_cast<nWStr>(dst.begin()), dst.size(), 0 };
 #else
-		auto data = reinterpret_cast<nWStr>(dst.begin());
+		const auto data = reinterpret_cast<nWStr>(dst.begin());
 #endif
 
 		copy(convertedString.cbegin(), convertedString.cend(), data);
@@ -864,9 +864,9 @@ namespace NatsuLib
 		dst.Resize(convertedString.size());
 
 #ifdef _MSC_VER
-		auto data = stdext::checked_array_iterator<nStr>{ reinterpret_cast<nStr>(dst.begin()), dst.size(), 0 };
+		const auto data = stdext::checked_array_iterator<nStr>{ reinterpret_cast<nStr>(dst.begin()), dst.size(), 0 };
 #else
-		auto data = reinterpret_cast<nStr>(dst.begin());
+		const auto data = reinterpret_cast<nStr>(dst.begin());
 #endif
 
 		copy(convertedString.cbegin(), convertedString.cend(), data);
