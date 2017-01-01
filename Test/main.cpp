@@ -12,6 +12,7 @@
 #include <natStream.h>
 #include <natStreamHelper.h>
 #include <natVFS.h>
+#include "natLocalFileScheme.h"
 
 using namespace NatsuLib;
 
@@ -113,9 +114,12 @@ int main()
 		}
 
 		{
-			natFileStream fs{ "main.cpp"_nv, true, false, true };
-			std::vector<nByte> buffer(static_cast<size_t>(fs.GetSize()));
-			logger.LogMsg("Read {0} bytes."_nv, fs.ReadBytesAsync(buffer.data(), buffer.size()).get());
+			natVFS vfs;
+			auto req = static_cast<natRefPointer<LocalFileRequest>>(vfs.CreateRequest("file:///main.cpp"));
+			req->SetAsync(true);
+			auto fs = req->GetResponse()->GetResponseStream();
+			std::vector<nByte> buffer(static_cast<size_t>(fs->GetSize()));
+			logger.LogMsg("Read {0} bytes."_nv, fs->ReadBytesAsync(buffer.data(), buffer.size()).get());
 			buffer.push_back(0);
 #ifdef _WIN32
 			logger.LogMsg(nString{ AnsiStringView{ reinterpret_cast<const char*>(buffer.data()) } });

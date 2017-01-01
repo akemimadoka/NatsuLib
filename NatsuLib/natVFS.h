@@ -2,9 +2,9 @@
 
 #include "natString.h"
 #include "natMisc.h"
-#include <unordered_map>
 #include "natRefObj.h"
 #include "natStream.h"
+#include <unordered_map>
 
 namespace NatsuLib
 {
@@ -15,6 +15,12 @@ namespace NatsuLib
 		static const nStrView SchemeDelimiter;
 
 		explicit Uri(nString uri);
+
+		Uri(Uri const& other);
+		Uri(Uri&& other) noexcept;
+
+		Uri& operator=(Uri const& other);
+		Uri& operator=(Uri&& other) noexcept;
 
 		nStrView GetScheme() const;
 		nStrView GetUser() const;
@@ -28,6 +34,7 @@ namespace NatsuLib
 		nStrView GetUnderlyingString() const noexcept;
 
 	private:
+		// 为什么我要写这个东西？
 		struct UriInfo
 		{
 			nString UriString;
@@ -53,6 +60,7 @@ namespace NatsuLib
 		: natRefObj
 	{
 		virtual natRefPointer<IResponse> GetResponse() = 0;
+		virtual std::future<natRefPointer<IResponse>> GetResponseAsync();
 	};
 
 	struct IResponse
@@ -80,6 +88,7 @@ namespace NatsuLib
 
 		natRefPointer<IScheme> GetScheme(nStrView name);
 		natRefPointer<IRequest> CreateRequest(Uri const& uri);
+		natRefPointer<IRequest> CreateRequest(nStrView const& uriString);
 
 	private:
 		std::unordered_map<nStrView, natRefPointer<IScheme>> m_SchemeMap;

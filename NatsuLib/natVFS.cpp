@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "natVFS.h"
 #include "natException.h"
+#include "natLocalFileScheme.h"
 
 using namespace NatsuLib;
 
@@ -31,9 +32,35 @@ namespace
 const nStrView Uri::SchemeDelimiter{ "://" };
 
 Uri::Uri(nString uri)
-	: m_UriInfo{ std::move(uri), {}, {}, {}, {}, {}, {}, {}, {} }
+	: m_UriInfo{ std::move(uri) }
 {
 	ParseUri();
+}
+
+Uri::Uri(Uri const& other)
+	: Uri(other.m_UriInfo.UriString)
+{
+}
+
+Uri::Uri(Uri&& other) noexcept
+	: Uri(std::move(other.m_UriInfo.UriString))
+{
+}
+
+Uri& Uri::operator=(Uri const& other)
+{
+	m_UriInfo = { other.m_UriInfo.UriString };
+	ParseUri();
+
+	return *this;
+}
+
+Uri& Uri::operator=(Uri&& other) noexcept
+{
+	m_UriInfo = { std::move(other.m_UriInfo.UriString) };
+	ParseUri();
+
+	return *this;
 }
 
 nStrView Uri::GetScheme() const
@@ -296,8 +323,17 @@ void Uri::ParseUri()
 	}
 }
 
+std::future<natRefPointer<IResponse>> IRequest::GetResponseAsync()
+{
+	return std::async([this]
+	{
+		return GetResponse();
+	});
+}
+
 natVFS::natVFS()
 {
+	RegisterScheme(make_ref<LocalFileScheme>());
 }
 
 natVFS::~natVFS()
@@ -306,7 +342,7 @@ natVFS::~natVFS()
 
 void natVFS::RegisterScheme(natRefPointer<IScheme> scheme)
 {
-	m_SchemeMap.emplace(scheme->GetSchemeName(), scheme);
+	m_SchemeMap.emplace(scheme->GetSchemeName(), std::move(scheme));
 }
 
 natRefPointer<IScheme> natVFS::GetScheme(nStrView name)
@@ -318,10 +354,10 @@ natRefPointer<IScheme> natVFS::GetScheme(nStrView name)
 natRefPointer<IRequest> natVFS::CreateRequest(Uri const& uri)
 {
 	const auto scheme = GetScheme(uri.GetScheme());
-	if (scheme)
-	{
-		return scheme->CreateRequest(uri);
-	}
+	return scheme ? scheme->CreateRequest(uri) : nullptr;
+}
 
-	return nullptr;
+natRefPointer<IRequest> natVFS::CreateRequest(nStrView const& uriString)
+{
+	return CreateRequest(Uri{ uriString });
 }

@@ -193,6 +193,7 @@
     <ClInclude Include="natException.h" />
     <ClInclude Include="natInterface.h" />
     <ClInclude Include="natLinq.h" />
+    <ClInclude Include="natLocalFileScheme.h" />
     <ClInclude Include="natLog.h" />
     <ClInclude Include="natMat.h" />
     <ClInclude Include="natMath.h" />
@@ -252,6 +253,7 @@
     <ClCompile Include="natEnvironment.cpp" />
     <ClCompile Include="natEvent.cpp" />
     <ClCompile Include="natException.cpp" />
+    <ClCompile Include="natLocalFileScheme.cpp" />
     <ClCompile Include="natLog.cpp" />
     <ClCompile Include="natMisc.cpp" />
     <ClCompile Include="natMultiThread.cpp" />

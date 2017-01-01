@@ -6,7 +6,7 @@ message(STATUS "Operation system is ${CMAKE_SYSTEM}")
 if(WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra")
 else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra -Wno-missing-field-initializers")
 endif()
 
 set(SOURCE_FILES
@@ -23,6 +23,8 @@ set(SOURCE_FILES
     NatsuLib/natException.h
     NatsuLib/natInterface.h
     NatsuLib/natLinq.h
+    NatsuLib/natLocalFileScheme.cpp
+    NatsuLib/natLocalFileScheme.h
     NatsuLib/natLog.cpp
     NatsuLib/natLog.h
     NatsuLib/natMat.h

@@ -1501,14 +1501,14 @@ namespace NatsuLib
 	{
 		// ю╢вт https://www.byvoid.com/blog/string-hash-compare
 		template <typename CharType>
-		size_t BKDRHash(const CharType* str)
+		size_t BKDRHash(const CharType* strBegin, const CharType* strEnd)
 		{
 			size_t seed = 131; // 31 131 1313 13131 131313 etc..
 			size_t hash = 0;
 
-			while (*str)
+			while (strBegin != strEnd)
 			{
-				hash = hash * seed + (*str++);
+				hash = hash * seed + (*strBegin++);
 			}
 
 			return (hash & 0x7FFFFFFF);
@@ -1523,7 +1523,7 @@ namespace std
 	{
 		size_t operator()(NatsuLib::StringView<stringType> const& view) const
 		{
-			return NatsuLib::detail_::BKDRHash(view.data());
+			return NatsuLib::detail_::BKDRHash(view.cbegin(), view.cend());
 		}
 	};
 
