@@ -1439,6 +1439,7 @@ typedef NatsuLib::U8StringView nStrView;
 typedef NatsuLib::U8String nString;
 typedef nString::CharType nTChar;
 typedef nTChar* nTStr;
+typedef const nTChar* ncTStr;
 
 NATINLINE nStrView operator""_nv(const nU8Char* str, size_t length) noexcept
 {
@@ -1499,7 +1500,7 @@ namespace NatsuLib
 {
 	namespace detail_
 	{
-		// 来自 https://www.byvoid.com/blog/string-hash-compare
+		// 修改自 https://www.byvoid.com/blog/string-hash-compare
 		template <typename CharType>
 		size_t BKDRHash(const CharType* strBegin, const CharType* strEnd)
 		{

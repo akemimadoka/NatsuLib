@@ -120,8 +120,8 @@ int main()
 			auto fs = req->GetResponse()->GetResponseStream();
 			std::vector<nByte> buffer(static_cast<size_t>(fs->GetSize()));
 			logger.LogMsg("Read {0} bytes."_nv, fs->ReadBytesAsync(buffer.data(), buffer.size()).get());
-			buffer.push_back(0);
 #ifdef _WIN32
+			buffer.push_back(0);
 			logger.LogMsg(nString{ AnsiStringView{ reinterpret_cast<const char*>(buffer.data()) } });
 #endif
 		}

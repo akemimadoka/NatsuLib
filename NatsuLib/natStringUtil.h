@@ -50,7 +50,7 @@ namespace NatsuLib
 				template <typename U>
 				constexpr static T Get(U&& value)
 				{
-					return static_cast<T>(value);
+					return static_cast<T>(std::forward<U>(value));
 				}
 			};
 
@@ -60,7 +60,7 @@ namespace NatsuLib
 				template <typename U>
 				constexpr static T Get(U&& value)
 				{
-					return dynamic_cast<T>(value);
+					return dynamic_cast<T>(std::forward<U>(value));
 				}
 			};
 		}
@@ -71,7 +71,7 @@ namespace NatsuLib
 			template <typename U>
 			constexpr static T Get(U&& value)
 			{
-				return detail_::ExpectImpl<std::is_convertible<U, T>::value, false, T>::Get(value);
+				return detail_::ExpectImpl<std::is_convertible<U, T>::value, false, T>::Get(std::forward<U>(value));
 			}
 
 			constexpr static T&& Get(T&& value)
@@ -86,7 +86,7 @@ namespace NatsuLib
 			template <typename U>
 			constexpr static T* Get(U&& value)
 			{
-				return detail_::ExpectImpl<std::is_convertible<U, T*>::value, false, T*>::Get(value);
+				return detail_::ExpectImpl<std::is_convertible<U, T*>::value, false, T*>::Get(std::forward<U>(value));
 			}
 
 			template <typename U>
@@ -96,6 +96,27 @@ namespace NatsuLib
 			}
 
 			constexpr static T* Get(T* value)
+			{
+				return value;
+			}
+		};
+
+		template <typename T>
+		struct Expect<T&>
+		{
+			template <typename U>
+			constexpr static T& Get(U&& value)
+			{
+				return detail_::ExpectImpl<std::is_convertible<U, T&>::value, false, T&>::Get(std::forward<U>(value));
+			}
+
+			template <typename U>
+			constexpr static T& Get(U& value)
+			{
+				return detail_::ExpectImpl<std::is_convertible<U&, T&>::value, std::is_base_of<U, T>::value, T&>::Get(value);
+			}
+
+			constexpr static T& Get(T& value)
 			{
 				return value;
 			}

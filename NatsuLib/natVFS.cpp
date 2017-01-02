@@ -8,13 +8,18 @@ using namespace NatsuLib;
 namespace
 {
 	// 无视溢出，谁溢出谁治理
+	// 假设begin和end总是指向相同的内存块或其后一字节
 	template <typename CharType, typename T>
 	std::enable_if_t<std::is_arithmetic<T>::value, bool> TryParseNumber(const CharType* begin, const CharType* end, T& num) noexcept
 	{
+		auto pRead = begin;
+		const auto pEnd = end;
+		assert(pRead <= pEnd);
+
 		T tmpNum{};
-		for (size_t digits{}; begin < end; ++begin, ++digits)
+		for (; pRead < pEnd; ++pRead)
 		{
-			const auto digit = static_cast<std::make_unsigned_t<CharType>>(*begin - CharType{ '0' });
+			const auto digit = static_cast<std::make_unsigned_t<CharType>>(*pRead - CharType{ '0' });
 			if (digit > 9)
 			{
 				return false;
@@ -342,7 +347,17 @@ natVFS::~natVFS()
 
 void natVFS::RegisterScheme(natRefPointer<IScheme> scheme)
 {
-	m_SchemeMap.emplace(scheme->GetSchemeName(), std::move(scheme));
+	nBool succeed;
+	tie(std::ignore, succeed) = m_SchemeMap.emplace(scheme->GetSchemeName(), std::move(scheme));
+	if (!succeed)
+	{
+		nat_Throw(natErrException, NatErr_Duplicated, "Register scheme failed: duplicated scheme name."_nv);
+	}
+}
+
+void natVFS::UnregisterScheme(nStrView name)
+{
+	m_SchemeMap.erase(name);
 }
 
 natRefPointer<IScheme> natVFS::GetScheme(nStrView name)

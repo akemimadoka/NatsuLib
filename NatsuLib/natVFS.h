@@ -85,6 +85,7 @@ namespace NatsuLib
 		~natVFS();
 
 		void RegisterScheme(natRefPointer<IScheme> scheme);
+		void UnregisterScheme(nStrView name);
 
 		natRefPointer<IScheme> GetScheme(nStrView name);
 		natRefPointer<IRequest> CreateRequest(Uri const& uri);
