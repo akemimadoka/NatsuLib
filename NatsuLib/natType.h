@@ -131,7 +131,7 @@ namespace NatsuLib
 		};
 
 		template <typename T>
-		struct CanAddRef<T, std::void_t<decltype(std::declval<T>().AddRef())>>
+		struct CanAddRef<T, std::void_t<decltype(std::declval<const T>().AddRef())>>
 			: std::true_type
 		{
 		};
@@ -143,7 +143,7 @@ namespace NatsuLib
 		};
 
 		template <typename T>
-		struct IsReleasable<T, std::void_t<decltype(std::declval<T>().Release())>>
+		struct IsReleasable<T, std::void_t<decltype(std::declval<const T>().Release())>>
 			: std::true_type
 		{
 		};
@@ -152,12 +152,16 @@ namespace NatsuLib
 
 ///	@brief	安全释放
 template <typename T>
-NATINLINE std::enable_if_t<NatsuLib::detail_::IsReleasable<T>::value> SafeRelease(T*& ptr)
+NATINLINE std::enable_if_t<NatsuLib::detail_::IsReleasable<T>::value> SafeRelease(T* volatile & ptr)
 {
-	if (ptr != nullptr)
+	const auto ptrToRelease = ptr;
+	if (ptrToRelease != nullptr)
 	{
-		ptr->Release();
-		ptr = nullptr;
+		ptrToRelease->Release();
+		if (ptr == ptrToRelease)
+		{
+			ptr = nullptr;	// 可能非线程安全？
+		}
 	}
 }
 

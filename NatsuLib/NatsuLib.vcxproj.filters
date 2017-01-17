@@ -138,6 +138,9 @@
     <ClInclude Include="natLocalFileScheme.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="natTask.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -201,6 +204,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="natLocalFileScheme.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="natTask.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

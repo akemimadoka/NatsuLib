@@ -8,21 +8,12 @@ namespace NatsuLib
 	template <typename Func>
 	class Delegate;
 
-#ifdef _MSC_VER
-#	pragma warning (push)
-#	pragma warning (disable : 4521)
-#endif
-
 	template <typename Ret, typename... Args>
 	class Delegate<Ret(Args...)>
 	{
 	public:
 		Delegate() noexcept = default;
 		Delegate(Delegate const& other) noexcept
-			: m_Functor(other.m_Functor)
-		{
-		}
-		Delegate(Delegate& other) noexcept
 			: m_Functor(other.m_Functor)
 		{
 		}
@@ -34,7 +25,7 @@ namespace NatsuLib
 		Delegate& operator=(Delegate const& other) = default;
 		Delegate& operator=(Delegate && other) = default;
 
-		template <typename CallableObj>
+		template <typename CallableObj, std::enable_if_t<NonSelf<CallableObj, Delegate>::value, int> = 0>
 		constexpr Delegate(CallableObj&& callableObj) noexcept
 			: m_Functor(std::forward<CallableObj>(callableObj))
 		{
@@ -72,8 +63,4 @@ namespace NatsuLib
 	private:
 		std::function<Ret(Args...)> m_Functor;
 	};
-
-#ifdef _MSC_VER
-#	pragma warning (pop)
-#endif
 }

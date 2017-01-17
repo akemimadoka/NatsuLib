@@ -204,6 +204,9 @@ namespace NatsuLib
 #endif
 	}
 
+	template <typename T, typename Self>
+	using NonSelf = std::bool_constant<!std::is_same<std::decay_t<T>, Self>::value && !std::is_base_of<Self, std::decay_t<T>>::value>;
+
 	template <class F, class Tuple>
 	constexpr decltype(auto) apply(F&& f, Tuple&& t)
 	{

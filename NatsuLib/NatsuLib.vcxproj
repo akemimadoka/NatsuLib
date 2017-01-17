@@ -209,6 +209,7 @@
     <ClInclude Include="natStreamHelper.h" />
     <ClInclude Include="natString.h" />
     <ClInclude Include="natStringUtil.h" />
+    <ClInclude Include="natTask.h" />
     <ClInclude Include="natText.h" />
     <ClInclude Include="natTransform.h" />
     <ClInclude Include="natType.h" />
@@ -262,6 +263,7 @@
     <ClCompile Include="natStopWatch.cpp" />
     <ClCompile Include="natStream.cpp" />
     <ClCompile Include="natString.cpp" />
+    <ClCompile Include="natTask.cpp" />
     <ClCompile Include="natUtil.cpp" />
     <ClCompile Include="natVFS.cpp" />
     <ClCompile Include="stdafx.cpp">

@@ -18,9 +18,9 @@ namespace std
 	template <typename Func>
 	struct hash<function<Func>>
 	{
-		size_t operator()(function<Func> const& _Keyval) const
+		size_t operator()(function<Func> const& func) const
 		{
-			return hash<decay_t<Func>>()(_Keyval.template target<Func>());
+			return hash<decay_t<Func>>()(func.template target<Func>());
 		}
 	};
 }
@@ -176,7 +176,7 @@ namespace NatsuLib
 		template <typename T, typename Result_t, bool Test = std::conjunction<Addable<Result_t, typename T::Element_t>, Dividable<Result_t>>::value>
 		struct GetAverage
 		{
-			[[noreturn]] static void Get(T const& self)
+			[[noreturn]] static void Get(T const& /*self*/)
 			{
 				nat_Throw(natException, "Cannot apply such operation to this type."_nv);
 			}
@@ -198,7 +198,7 @@ namespace NatsuLib
 		template <typename T, bool Test = CanGreater<typename T::Element_t>::value>
 		struct GetMax
 		{
-			[[noreturn]] static void Get(T const& self)
+			[[noreturn]] static void Get(T const& /*self*/)
 			{
 				nat_Throw(natException, "Cannot apply such operation to this type."_nv);
 			}
@@ -216,7 +216,7 @@ namespace NatsuLib
 		template <typename T, bool Test = CanLesser<typename T::Element_t>::value>
 		struct GetMin
 		{
-			[[noreturn]] static void Get(T const& self)
+			[[noreturn]] static void Get(T const& /*self*/)
 			{
 				nat_Throw(natException, "Cannot apply such operation to this type."_nv);
 			}
@@ -234,7 +234,7 @@ namespace NatsuLib
 		template <typename T, bool Test = Addable<typename T::Element_t>::value>
 		struct GetSum
 		{
-			[[noreturn]] static void Get(T const& self)
+			[[noreturn]] static void Get(T const& /*self*/)
 			{
 				nat_Throw(natException, "Cannot apply such operation to this type."_nv);
 			}
@@ -252,7 +252,7 @@ namespace NatsuLib
 		template <typename T, bool Test = Multipliable<typename T::Element_t>::value>
 		struct GetProduct
 		{
-			[[noreturn]] static void Get(T const& self)
+			[[noreturn]] static void Get(T const& /*self*/)
 			{
 				nat_Throw(natException, "Cannot apply such operation to this type."_nv);
 			}
@@ -1326,4 +1326,3 @@ namespace NatsuLib
 #pragma pop_macro("min")
 #pragma pop_macro("max")
 #endif
-

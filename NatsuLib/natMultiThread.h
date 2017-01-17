@@ -222,8 +222,45 @@ namespace NatsuLib
 
 	class natThreadPool final
 	{
-		class WorkToken;
 	public:
+		class WorkToken final
+		{
+			friend class natThreadPool;
+		public:
+			WorkToken() = default;
+
+			WorkToken(WorkToken&& other) noexcept
+				: m_WorkThreadIndex(other.m_WorkThreadIndex), m_Result(move(other.m_Result))
+			{
+			}
+
+			WorkToken& operator=(WorkToken&& other) noexcept
+			{
+				m_WorkThreadIndex = other.m_WorkThreadIndex;
+				m_Result = move(other.m_Result);
+				return *this;
+			}
+
+			nuInt GetWorkThreadIndex() const noexcept
+			{
+				return m_WorkThreadIndex;
+			}
+
+			std::future<nuInt>& GetResult() noexcept
+			{
+				return m_Result;
+			}
+
+		private:
+			nuInt m_WorkThreadIndex;
+			std::future<nuInt> m_Result;
+
+			WorkToken(nuInt workThreadId, std::future<nuInt>&& result)
+				: m_WorkThreadIndex(workThreadId), m_Result(move(result))
+			{
+			}
+		};
+
 		typedef Delegate<nuInt(void*)> WorkFunc;
 		enum : nuInt
 		{
@@ -269,45 +306,9 @@ namespace NatsuLib
 			std::atomic<nBool> m_Idle, m_ShouldTerminate;
 		};
 
-		class WorkToken final
-		{
-		public:
-			WorkToken() = default;
-			WorkToken(nuInt workThreadId, std::future<nuInt>&& result)
-				: m_WorkThreadIndex(workThreadId), m_Result(move(result))
-			{
-			}
-			WorkToken(WorkToken&& other) noexcept
-				: m_WorkThreadIndex(other.m_WorkThreadIndex), m_Result(move(other.m_Result))
-			{
-			}
-			~WorkToken() = default;
-
-			WorkToken& operator=(WorkToken&& other) noexcept
-			{
-				m_WorkThreadIndex = other.m_WorkThreadIndex;
-				m_Result = move(other.m_Result);
-				return *this;
-			}
-
-			nuInt GetWorkThreadIndex() const noexcept
-			{
-				return m_WorkThreadIndex;
-			}
-
-			std::future<nuInt>& GetResult() noexcept
-			{
-				return m_Result;
-			}
-
-		private:
-			nuInt m_WorkThreadIndex;
-			std::future<nuInt> m_Result;
-		};
-
 		nuInt getNextAvailableIndex();
 		nuInt getIdleThreadIndex();
-		void onWorkerThreadIdle(nuInt Index, bool isTerminating);
+		void onWorkerThreadIdle(nuInt Index, nBool isTerminating);
 
 		const nuInt m_MaxThreadCount;
 		std::unordered_map<nuInt, std::unique_ptr<WorkerThread>> m_Threads;

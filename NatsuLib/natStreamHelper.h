@@ -171,5 +171,5 @@ namespace NatsuLib
 }
 
 #ifdef _MSC_VER
-#pragma pop_macro("min")
+#	pragma pop_macro("min")
 #endif

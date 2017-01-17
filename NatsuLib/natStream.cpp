@@ -62,7 +62,7 @@ natFileStream::natFileStream(nStrView filename, nBool bReadable, nBool bWritable
 
 	if (!m_hFile || m_hFile == INVALID_HANDLE_VALUE)
 	{
-		nat_Throw(natWinException, "Open file \"%s\" failed"_nv, filename);
+		nat_Throw(natWinException, "Open file \"{0}\" failed"_nv, filename);
 	}
 }
 

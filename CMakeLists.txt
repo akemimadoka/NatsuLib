@@ -48,6 +48,8 @@ set(SOURCE_FILES
     NatsuLib/natString.cpp
     NatsuLib/natString.h
     NatsuLib/natStringUtil.h
+    NatsuLib/natTask.cpp
+    NatsuLib/natTask.h
     NatsuLib/natText.h
     NatsuLib/natTransform.h
     NatsuLib/natType.h

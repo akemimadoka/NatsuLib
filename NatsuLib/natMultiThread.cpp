@@ -312,7 +312,7 @@ nuInt natThreadPool::getIdleThreadIndex()
 	return std::numeric_limits<nuInt>::max();
 }
 
-void natThreadPool::onWorkerThreadIdle(nuInt Index, bool isTerminating)
+void natThreadPool::onWorkerThreadIdle(nuInt Index, nBool isTerminating)
 {
 	natRefScopeGuard<natCriticalSection> guard{ m_Section };
 

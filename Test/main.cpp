@@ -130,6 +130,26 @@ int main()
 			Uri a{ "http://test:2333@funamiyui.moe:80/blog/index.html?index=5#main"_nv };
 			logger.LogMsg("{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}"_nv, a.GetScheme(), a.GetUser(), a.GetPassword(), a.GetHost(), a.GetPort().value_or(80u), a.GetPath(), a.GetQuery(), a.GetFragment());
 		}
+
+		{
+			struct RefTest : natRefObjImpl<natRefObj>
+			{
+				RefTest()
+				{
+					std::cout << "constructed" << std::endl;
+				}
+
+				~RefTest()
+				{
+					std::cout << "destroyed" << std::endl;
+				}
+			};
+
+			auto pTest = make_ref<RefTest>();
+			const auto pWeakTest = pTest->ForkWeakRef<RefTest>();
+			pTest = nullptr;
+			logger.LogMsg("%b"_nv, pWeakTest.IsExpired());
+		}
 	}
 #ifdef _WIN32
 	catch (natWinException& e)

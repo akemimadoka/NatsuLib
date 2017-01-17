@@ -130,7 +130,7 @@ void Uri::ParseUri()
 		Reject
 	} state { State::Scheme };
 
-	// 假设pRead, pLastBegin和pEnd都是RandomAccessIterator，且都在同一内存块或其后恰好一字节处
+	// 假设pRead, pLastBegin和pEnd都是RandomAccessIterator，且都指向同一内存块或其后恰好一字节处
 
 	auto pRead = m_UriInfo.UriString.cbegin();
 	auto pLastBegin = pRead;

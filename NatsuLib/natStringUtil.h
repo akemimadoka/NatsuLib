@@ -11,6 +11,12 @@ namespace NatsuLib
 {
 	namespace natUtil
 	{
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4800)
+#endif
+
 		namespace detail_
 		{
 			template <size_t I>
@@ -122,6 +128,10 @@ namespace NatsuLib
 			}
 		};
 
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
 		template <typename F, template <typename...> class T, typename... Ts>
 		void visit_at(T<Ts...> const& tup, size_t idx, F fun)
 		{
@@ -155,6 +165,9 @@ namespace NatsuLib
 					case '%':
 						ss << '%';
 						break;
+					case 'b':	// À©Õ¹
+						visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::boolalpha); ss << Expect<nBool>::Get(item); ss.setf(fmt); });
+						break;
 					case 'c':
 						visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<nTChar>::Get(item); });
 						break;
@@ -166,13 +179,13 @@ namespace NatsuLib
 						visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<nInt>::Get(item); });
 						break;
 					case 'o':
-						visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::oct, std::ios_base::basefield); ss << Expect<nuInt>::Get(item); ss.setf(fmt); });
+						visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::oct, std::ios_base::basefield); ss << Expect<nuInt>::Get(item); ss.setf(fmt); });
 						break;
 					case 'x':
-						visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::hex, std::ios_base::basefield); ss << Expect<nuInt>::Get(item); ss.setf(fmt); });
+						visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::hex, std::ios_base::basefield); ss << Expect<nuInt>::Get(item); ss.setf(fmt); });
 						break;
 					case 'X':
-						visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::hex, std::ios_base::basefield); ss.setf(std::ios_base::uppercase); ss << Expect<nuInt>::Get(item); ss.setf(fmt); });
+						visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::hex, std::ios_base::basefield); ss.setf(std::ios_base::uppercase); ss << Expect<nuInt>::Get(item); ss.setf(fmt); });
 						break;
 					case 'u':
 						visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<nuInt>::Get(item); });
@@ -182,16 +195,16 @@ namespace NatsuLib
 						visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<nFloat>::Get(item); });
 						break;
 					case 'e':
-						visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::scientific, std::ios_base::floatfield); ss << Expect<nFloat>::Get(item); ss.setf(fmt); });
+						visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::scientific, std::ios_base::floatfield); ss << Expect<nFloat>::Get(item); ss.setf(fmt); });
 						break;
 					case 'E':
-						visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::scientific, std::ios_base::floatfield); ss.setf(std::ios_base::uppercase); ss << Expect<nFloat>::Get(item); ss.setf(fmt); });
+						visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::scientific, std::ios_base::floatfield); ss.setf(std::ios_base::uppercase); ss << Expect<nFloat>::Get(item); ss.setf(fmt); });
 						break;
 					case 'a':
-						visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::fixed | std::ios_base::scientific, std::ios_base::floatfield); ss << Expect<nFloat>::Get(item); ss.setf(fmt); });
+						visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::fixed | std::ios_base::scientific, std::ios_base::floatfield); ss << Expect<nFloat>::Get(item); ss.setf(fmt); });
 						break;
 					case 'A':
-						visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::fixed | std::ios_base::scientific, std::ios_base::floatfield); ss.setf(std::ios_base::uppercase); ss << Expect<nFloat>::Get(item); ss.setf(fmt); });
+						visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::fixed | std::ios_base::scientific, std::ios_base::floatfield); ss.setf(std::ios_base::uppercase); ss << Expect<nFloat>::Get(item); ss.setf(fmt); });
 						break;
 					case 'p':
 						visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<const void*>::Get(item); });
@@ -204,13 +217,13 @@ namespace NatsuLib
 							visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<nShort>::Get(item); });
 							break;
 						case 'o':
-							visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::oct, std::ios_base::basefield); ss << Expect<nuShort>::Get(item); ss.setf(fmt); });
+							visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::oct, std::ios_base::basefield); ss << Expect<nuShort>::Get(item); ss.setf(fmt); });
 							break;
 						case 'x':
-							visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::hex, std::ios_base::basefield); ss << Expect<nuShort>::Get(item); ss.setf(fmt); });
+							visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::hex, std::ios_base::basefield); ss << Expect<nuShort>::Get(item); ss.setf(fmt); });
 							break;
 						case 'X':
-							visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::hex, std::ios_base::basefield); ss.setf(std::ios_base::uppercase); ss << Expect<nuShort>::Get(item); ss.setf(fmt); });
+							visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::hex, std::ios_base::basefield); ss.setf(std::ios_base::uppercase); ss << Expect<nuShort>::Get(item); ss.setf(fmt); });
 							break;
 						case 'u':
 							visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<nuShort>::Get(item); });
@@ -223,13 +236,13 @@ namespace NatsuLib
 								visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<int8_t>::Get(item); });
 								break;
 							case 'o':
-								visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::oct, std::ios_base::basefield); ss << Expect<nByte>::Get(item); ss.setf(fmt); });
+								visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::oct, std::ios_base::basefield); ss << Expect<nByte>::Get(item); ss.setf(fmt); });
 								break;
 							case 'x':
-								visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::hex, std::ios_base::basefield); ss << Expect<nByte>::Get(item); ss.setf(fmt); });
+								visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::hex, std::ios_base::basefield); ss << Expect<nByte>::Get(item); ss.setf(fmt); });
 								break;
 							case 'X':
-								visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::hex, std::ios_base::basefield); ss.setf(std::ios_base::uppercase); ss << Expect<nByte>::Get(item); ss.setf(fmt); });
+								visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::hex, std::ios_base::basefield); ss.setf(std::ios_base::uppercase); ss << Expect<nByte>::Get(item); ss.setf(fmt); });
 								break;
 							case 'u':
 								visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<nByte>::Get(item); });
@@ -250,13 +263,13 @@ namespace NatsuLib
 							visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<long>::Get(item); });
 							break;
 						case 'o':
-							visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::oct, std::ios_base::basefield); ss << Expect<unsigned long>::Get(item); ss.setf(fmt); });
+							visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::oct, std::ios_base::basefield); ss << Expect<unsigned long>::Get(item); ss.setf(fmt); });
 							break;
 						case 'x':
-							visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::hex, std::ios_base::basefield); ss << Expect<unsigned long>::Get(item); ss.setf(fmt); });
+							visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::hex, std::ios_base::basefield); ss << Expect<unsigned long>::Get(item); ss.setf(fmt); });
 							break;
 						case 'X':
-							visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::hex, std::ios_base::basefield); ss.setf(std::ios_base::uppercase); ss << Expect<unsigned long>::Get(item); ss.setf(fmt); });
+							visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::hex, std::ios_base::basefield); ss.setf(std::ios_base::uppercase); ss << Expect<unsigned long>::Get(item); ss.setf(fmt); });
 							break;
 						case 'u':
 							visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<unsigned long>::Get(item); });
@@ -266,16 +279,16 @@ namespace NatsuLib
 							visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<nDouble>::Get(item); });
 							break;
 						case 'e':
-							visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::scientific, std::ios_base::floatfield); ss << Expect<nDouble>::Get(item); ss.setf(fmt); });
+							visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::scientific, std::ios_base::floatfield); ss << Expect<nDouble>::Get(item); ss.setf(fmt); });
 							break;
 						case 'E':
-							visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::scientific, std::ios_base::floatfield); ss.setf(std::ios_base::uppercase); ss << Expect<nDouble>::Get(item); ss.setf(fmt); });
+							visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::scientific, std::ios_base::floatfield); ss.setf(std::ios_base::uppercase); ss << Expect<nDouble>::Get(item); ss.setf(fmt); });
 							break;
 						case 'a':
-							visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::fixed | std::ios_base::scientific, std::ios_base::floatfield); ss << Expect<nDouble>::Get(item); ss.setf(fmt); });
+							visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::fixed | std::ios_base::scientific, std::ios_base::floatfield); ss << Expect<nDouble>::Get(item); ss.setf(fmt); });
 							break;
 						case 'A':
-							visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::fixed | std::ios_base::scientific, std::ios_base::floatfield); ss.setf(std::ios_base::uppercase); ss << Expect<nDouble>::Get(item); ss.setf(fmt); });
+							visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::fixed | std::ios_base::scientific, std::ios_base::floatfield); ss.setf(std::ios_base::uppercase); ss << Expect<nDouble>::Get(item); ss.setf(fmt); });
 							break;
 						case 'l':
 							switch (*++lpStr)
@@ -285,13 +298,13 @@ namespace NatsuLib
 								visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<nLong>::Get(item); });
 								break;
 							case 'o':
-								visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::oct, std::ios_base::basefield); ss << Expect<nuLong>::Get(item); ss.setf(fmt); });
+								visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::oct, std::ios_base::basefield); ss << Expect<nuLong>::Get(item); ss.setf(fmt); });
 								break;
 							case 'x':
-								visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::hex, std::ios_base::basefield); ss << Expect<nuLong>::Get(item); ss.setf(fmt); });
+								visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::hex, std::ios_base::basefield); ss << Expect<nuLong>::Get(item); ss.setf(fmt); });
 								break;
 							case 'X':
-								visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::hex, std::ios_base::basefield); ss.setf(std::ios_base::uppercase); ss << Expect<nuLong>::Get(item); ss.setf(fmt); });
+								visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::hex, std::ios_base::basefield); ss.setf(std::ios_base::uppercase); ss << Expect<nuLong>::Get(item); ss.setf(fmt); });
 								break;
 							case 'u':
 								visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<nuLong>::Get(item); });
@@ -312,16 +325,16 @@ namespace NatsuLib
 							visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<long double>::Get(item); });
 							break;
 						case 'e':
-							visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::scientific, std::ios_base::floatfield); ss << Expect<long double>::Get(item); ss.setf(fmt); });
+							visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::scientific, std::ios_base::floatfield); ss << Expect<long double>::Get(item); ss.setf(fmt); });
 							break;
 						case 'E':
-							visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::scientific, std::ios_base::floatfield); ss.setf(std::ios_base::uppercase); ss << Expect<long double>::Get(item); ss.setf(fmt); });
+							visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::scientific, std::ios_base::floatfield); ss.setf(std::ios_base::uppercase); ss << Expect<long double>::Get(item); ss.setf(fmt); });
 							break;
 						case 'a':
-							visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::fixed | std::ios_base::scientific, std::ios_base::floatfield); ss << Expect<long double>::Get(item); ss.setf(fmt); });
+							visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::fixed | std::ios_base::scientific, std::ios_base::floatfield); ss << Expect<long double>::Get(item); ss.setf(fmt); });
 							break;
 						case 'A':
-							visit_at(argsTuple, index++, [&ss](auto&& item) { auto fmt = ss.setf(std::ios_base::fixed | std::ios_base::scientific, std::ios_base::floatfield); ss.setf(std::ios_base::uppercase); ss << Expect<long double>::Get(item); ss.setf(fmt); });
+							visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::fixed | std::ios_base::scientific, std::ios_base::floatfield); ss.setf(std::ios_base::uppercase); ss << Expect<long double>::Get(item); ss.setf(fmt); });
 							break;
 						default:
 							nat_Throw(natException, "Unknown token '%c'"_nv, *lpStr);
@@ -332,7 +345,8 @@ namespace NatsuLib
 						{
 							ss << std::setfill(*lpStr++);
 						}
-						else
+
+						if (!std::isdigit(*lpStr, std::locale{}))
 						{
 							nat_Throw(natException, "Unknown token '%c'"_nv, *lpStr);
 						}
