@@ -24,6 +24,7 @@ namespace NatsuLib
 	{
 		virtual ~natRefObj() = default;
 
+		virtual size_t GetRefCount() const volatile noexcept = 0;
 		virtual nBool TryAddRef() const volatile = 0;
 		virtual void AddRef() const volatile = 0;
 		virtual nBool Release() const volatile = 0;
@@ -71,7 +72,7 @@ namespace NatsuLib
 				return GetRefCount() == 1;
 			}
 
-			size_t GetRefCount() const volatile noexcept
+			virtual size_t GetRefCount() const volatile noexcept
 			{
 				return m_RefCount.load(std::memory_order_relaxed);
 			}
@@ -387,9 +388,40 @@ namespace NatsuLib
 			return *this;
 		}
 
-		bool operator==(natRefPointer const& other) const
+		template <typename U>
+		nBool operator==(natRefPointer<U> const& other) const noexcept
 		{
-			return (m_pPointer == other.m_pPointer);
+			return m_pPointer == other.Get();
+		}
+
+		template <typename U>
+		nBool operator!=(natRefPointer<U> const& other) const noexcept
+		{
+			return m_pPointer != other.Get();
+		}
+
+		template <typename U>
+		nBool operator<(natRefPointer<U> const& other) const noexcept
+		{
+			return m_pPointer < other.Get();
+		}
+
+		template <typename U>
+		nBool operator>(natRefPointer<U> const& other) const noexcept
+		{
+			return m_pPointer > other.Get();
+		}
+
+		template <typename U>
+		nBool operator<=(natRefPointer<U> const& other) const noexcept
+		{
+			return m_pPointer <= other.Get();
+		}
+
+		template <typename U>
+		nBool operator>=(natRefPointer<U> const& other) const noexcept
+		{
+			return m_pPointer >= other.Get();
 		}
 
 		natRefPointer& operator=(natRefPointer const& other)&
@@ -437,6 +469,23 @@ namespace NatsuLib
 			return m_pPointer;
 		}
 
+		size_t GetRefCount() const noexcept
+		{
+			const auto ptr = m_pPointer;
+			if (!ptr)
+			{
+				return 0;
+			}
+			return static_cast<const volatile natRefObj*>(ptr)->GetRefCount();
+		}
+
+		void swap(natRefPointer& other) noexcept
+		{
+			const auto ptr = m_pPointer;
+			m_pPointer = other.m_pPointer;
+			other.m_pPointer = ptr;
+		}
+
 		template <typename P>
 		operator natRefPointer<P>() const;
 
@@ -456,6 +505,9 @@ namespace NatsuLib
 	template <typename T>
 	class natWeakRefPointer
 	{
+		template <typename>
+		friend class natWeakRefPointer;
+
 		typedef typename T::WeakRefView WeakRefView;
 
 		static WeakRefView* GetViewFrom(const volatile T* item)
@@ -482,6 +534,34 @@ namespace NatsuLib
 		{
 		}
 
+		template <typename U, std::enable_if_t<std::is_convertible<typename natWeakRefPointer<U>::pointer, pointer>::value, int> = 0>
+		natWeakRefPointer(natRefPointer<U> const& other) noexcept
+			: natWeakRefPointer(GetViewFrom(other.Get()))
+		{
+		}
+
+		template <typename U, std::enable_if_t<std::is_convertible<typename natWeakRefPointer<U>::pointer, pointer>::value, int> = 0>
+		natWeakRefPointer(natWeakRefPointer<U> const& other) noexcept
+			:natWeakRefPointer(other.fork())
+		{
+		}
+
+		template <typename U, std::enable_if_t<std::is_convertible<typename natWeakRefPointer<U>::pointer, pointer>::value, int> = 0>
+		natWeakRefPointer(natWeakRefPointer<U> && other) noexcept
+			: natWeakRefPointer(other.release())
+		{
+		}
+
+		natWeakRefPointer(natWeakRefPointer const& other) noexcept
+			: natWeakRefPointer(other.fork())
+		{
+		}
+
+		natWeakRefPointer(natWeakRefPointer && other) noexcept
+			: natWeakRefPointer(other.release())
+		{
+		}
+
 		~natWeakRefPointer()
 		{
 			const auto view = m_View;
@@ -489,6 +569,18 @@ namespace NatsuLib
 			{
 				view->Release();
 			}
+		}
+
+		natWeakRefPointer& operator=(natWeakRefPointer const& other) noexcept
+		{
+			Reset(other);
+			return *this;
+		}
+
+		natWeakRefPointer& operator=(natWeakRefPointer && other) noexcept
+		{
+			Reset(std::move(other));
+			return *this;
 		}
 
 		nBool IsExpired() const noexcept
@@ -522,11 +614,91 @@ namespace NatsuLib
 			return view->template LockOwner<U>();
 		}
 
+		void Reset(std::nullptr_t = nullptr) noexcept
+		{
+			natWeakRefPointer{}.swap(*this);
+		}
+
+		void Reset(pointer ptr) noexcept
+		{
+			natWeakRefPointer{ ptr }.swap(*this);
+		}
+
+		template <typename U>
+		void Reset(natRefPointer<U> const& other) noexcept
+		{
+			natWeakRefPointer{ other }.swap(*this);
+		}
+
+		template <typename U>
+		void Reset(natWeakRefPointer<U> const& other) noexcept
+		{
+			natWeakRefPointer{ other }.swap(*this);
+		}
+
+		template <typename U>
+		void Reset(natWeakRefPointer<U> && other) noexcept
+		{
+			natWeakRefPointer{ std::move(other) }.swap(*this);
+		}
+
+		void Reset(natWeakRefPointer const& other) noexcept
+		{
+			natWeakRefPointer{ other }.swap(*this);
+		}
+
+		void Reset(natWeakRefPointer && other) noexcept
+		{
+			natWeakRefPointer{ std::move(other) }.swap(*this);
+		}
+
 		void swap(natWeakRefPointer& other) noexcept
 		{
 			const auto view = m_View;
 			m_View = other.m_View;
 			other.m_View = view;
+		}
+
+		template <typename U>
+		nBool operator==(natWeakRefPointer<U> const& other) const noexcept
+		{
+			return m_View == other.m_View;
+		}
+
+		template <typename U>
+		nBool operator!=(natWeakRefPointer<U> const& other) const noexcept
+		{
+			return m_View != other.m_View;
+		}
+
+		template <typename U>
+		nBool operator<(natWeakRefPointer<U> const& other) const noexcept
+		{
+			return m_View < other.m_View;
+		}
+
+		template <typename U>
+		nBool operator>(natWeakRefPointer<U> const& other) const noexcept
+		{
+			return m_View > other.m_View;
+		}
+
+		template <typename U>
+		nBool operator<=(natWeakRefPointer<U> const& other) const noexcept
+		{
+			return m_View <= other.m_View;
+		}
+
+		template <typename U>
+		nBool operator>=(natWeakRefPointer<U> const& other) const noexcept
+		{
+			return m_View >= other.m_View;
+		}
+
+		// Workaround
+		size_t GetHashCode() const noexcept
+		{
+			return std::hash<WeakRefView*>{}(m_View);
 		}
 
 	private:
@@ -535,6 +707,21 @@ namespace NatsuLib
 		constexpr natWeakRefPointer(WeakRefView* view) noexcept
 			: m_View{ view }
 		{
+		}
+
+		WeakRefView* fork() const
+		{
+			const auto view = m_View;
+			if (view)
+			{
+				static_cast<const volatile natRefObj*>(m_View)->AddRef();
+			}
+			return view;
+		}
+
+		WeakRefView* release() noexcept
+		{
+			return std::exchange(m_View, nullptr);
 		}
 	};
 }
@@ -550,9 +737,18 @@ namespace std
 	template <typename T>
 	struct hash<NatsuLib::natRefPointer<T>>
 	{
-		size_t operator()(NatsuLib::natRefPointer<T> const& _Keyval) const
+		size_t operator()(NatsuLib::natRefPointer<T> const& ptr) const
 		{
-			return hash<T*>()(_Keyval.Get());
+			return hash<T*>()(ptr.Get());
+		}
+	};
+
+	template <typename T>
+	struct hash<NatsuLib::natWeakRefPointer<T>>
+	{
+		size_t operator()(NatsuLib::natWeakRefPointer<T> const& ptr) const
+		{
+			return ptr.GetHashCode();
 		}
 	};
 }
