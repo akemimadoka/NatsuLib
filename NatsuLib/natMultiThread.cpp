@@ -193,6 +193,9 @@ void natThreadPool::WaitAllJobsFinish(nuInt WaitTime)
 	for (auto&& thread : m_Threads)
 	{
 		thread.second->RequestTerminate();
+	}
+	for (auto&& thread : m_Threads)
+	{
 		thread.second->Wait(WaitTime);
 	}
 }

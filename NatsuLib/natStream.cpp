@@ -19,7 +19,7 @@ nByte natStream::ReadByte()
 
 std::future<nLen> natStream::ReadBytesAsync(nData pData, nLen Length)
 {
-	return std::async([&]
+	return std::async([=]
 	{
 		return ReadBytes(pData, Length);
 	});
@@ -35,7 +35,7 @@ void natStream::WriteByte(nByte byte)
 
 std::future<nLen> natStream::WriteBytesAsync(ncData pData, nLen Length)
 {
-	return std::async([&]
+	return std::async([=]
 	{
 		return WriteBytes(pData, Length);
 	});
@@ -488,7 +488,7 @@ std::future<nLen> natStdStream::ReadBytesAsync(nData pData, nLen Length)
 		return m_InternalStream->ReadBytesAsync(pData, Length);
 	}
 	
-	return std::async([&]
+	return std::async([=]
 	{
 		return ReadBytes(pData, Length);
 	});
@@ -536,7 +536,7 @@ std::future<nLen> natStdStream::WriteBytesAsync(ncData pData, nLen Length)
 		return m_InternalStream->WriteBytesAsync(pData, Length);
 	}
 
-	return std::async([&]
+	return std::async([=]
 	{
 		return WriteBytes(pData, Length);
 	});
