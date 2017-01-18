@@ -56,6 +56,11 @@ nuInt natThread::GetExitCode()
 	return m_Result.get();
 }
 
+natThread::ResultType natThread::ThreadJob()
+{
+	return {};
+}
+
 #ifdef _WIN32
 natCriticalSection::natCriticalSection()
 {

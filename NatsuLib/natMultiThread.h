@@ -70,7 +70,7 @@ namespace NatsuLib
 
 	protected:
 		///	@brief	重写此方法以实现线程工作
-		virtual ResultType ThreadJob() = 0;
+		virtual ResultType ThreadJob();
 
 	private:
 		std::atomic_bool m_Paused;

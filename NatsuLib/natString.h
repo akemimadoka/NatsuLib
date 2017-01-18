@@ -1330,11 +1330,16 @@ std::basic_istream<CharType>& operator>>(std::basic_istream<CharType>& is, Natsu
 	return is;
 }
 #else
+template <typename CharType>
+std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::StringView<NatsuLib::StringType::Utf8> const& str)
+{
+	return os.write(str.data(), str.size());
+}
+
 template <typename CharType, NatsuLib::StringType stringType>
 std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::StringView<stringType> const& str)
 {
-	os << str.data();
-	return os;
+	return os << NatsuLib::String<NatsuLib::StringType::Utf8>{ str }.GetView();
 }
 
 template <typename CharType, NatsuLib::StringType stringType>
