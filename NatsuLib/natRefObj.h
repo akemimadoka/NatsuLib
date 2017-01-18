@@ -784,8 +784,6 @@ namespace NatsuLib
 	template <typename P>
 	natRefPointer<T>::operator natRefPointer<P>() const
 	{
-		static_assert(std::is_convertible<T*, P*>::value, "T* cannot be converted to P*.");
-
 		if (!m_pPointer)
 		{
 			return {};
