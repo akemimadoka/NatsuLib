@@ -116,7 +116,9 @@ int main()
 		{
 			natVFS vfs;
 			auto req = static_cast<natRefPointer<LocalFileRequest>>(vfs.CreateRequest("file:///main.cpp"));
+#ifdef _WIN32
 			req->SetAsync(true);
+#endif
 			auto fs = req->GetResponse()->GetResponseStream();
 			std::vector<nByte> buffer(static_cast<size_t>(fs->GetSize()));
 			logger.LogMsg("Read {0} bytes."_nv, fs->ReadBytesAsync(buffer.data(), buffer.size()).get());

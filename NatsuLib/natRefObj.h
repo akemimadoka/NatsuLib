@@ -119,7 +119,7 @@ namespace NatsuLib
 
 			~RefCountBase()
 			{
-				assert(GetRefCount() <= 1);
+				assert(RefCountBase::GetRefCount() <= 1);
 			}
 
 		private:
@@ -332,7 +332,7 @@ namespace NatsuLib
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	智能指针实现
+	///	@brief	强引用指针实现
 	///	@note	仅能用于引用计数对象
 	////////////////////////////////////////////////////////////////////////////////
 	template <typename T>
@@ -373,19 +373,36 @@ namespace NatsuLib
 			SafeRelease(m_pPointer);
 		}
 
-		natRefPointer& Reset(T* ptr)
+		void Reset(std::nullptr_t = nullptr) noexcept
 		{
-			if (ptr != m_pPointer)
-			{
-				SafeRelease(m_pPointer);
-				m_pPointer = ptr;
-				if (m_pPointer)
-				{
-					m_pPointer->AddRef();
-				}
-			}
+			natRefPointer{}.swap(*this);
+		}
 
-			return *this;
+		void Reset(T* ptr) noexcept
+		{
+			natRefPointer{ ptr }.swap(*this);
+		}
+
+		template <typename U>
+		void Reset(natRefPointer<U> const& other) noexcept
+		{
+			natRefPointer{ other }.swap(*this);
+		}
+
+		template <typename U>
+		void Reset(natRefPointer<U> && other) noexcept
+		{
+			natRefPointer{ other }.swap(*this);
+		}
+
+		void Reset(natRefPointer const& other) noexcept
+		{
+			natRefPointer{ other }.swap(*this);
+		}
+
+		void Reset(natRefPointer && other) noexcept
+		{
+			natRefPointer{ std::move(other) }.swap(*this);
 		}
 
 		template <typename U>
@@ -502,6 +519,10 @@ namespace NatsuLib
 		return std::move(Ret);
 	}
 
+	////////////////////////////////////////////////////////////////////////////////
+	///	@brief	弱引用指针实现
+	///	@note	仅能用于引用计数对象
+	////////////////////////////////////////////////////////////////////////////////
 	template <typename T>
 	class natWeakRefPointer
 	{
@@ -564,11 +585,7 @@ namespace NatsuLib
 
 		~natWeakRefPointer()
 		{
-			const auto view = m_View;
-			if (view)
-			{
-				view->Release();
-			}
+			SafeRelease(m_View);
 		}
 
 		natWeakRefPointer& operator=(natWeakRefPointer const& other) noexcept
@@ -727,6 +744,12 @@ namespace NatsuLib
 }
 
 template <typename T>
+NATINLINE void swap(NatsuLib::natRefPointer<T>& lhs, NatsuLib::natRefPointer<T>& rhs) noexcept
+{
+	lhs.swap(rhs);
+}
+
+template <typename T>
 NATINLINE void swap(NatsuLib::natWeakRefPointer<T>& lhs, NatsuLib::natWeakRefPointer<T>& rhs) noexcept
 {
 	lhs.swap(rhs);
@@ -739,7 +762,7 @@ namespace std
 	{
 		size_t operator()(NatsuLib::natRefPointer<T> const& ptr) const
 		{
-			return hash<T*>()(ptr.Get());
+			return hash<T*>{}(ptr.Get());
 		}
 	};
 
@@ -761,14 +784,14 @@ namespace NatsuLib
 	template <typename P>
 	natRefPointer<T>::operator natRefPointer<P>() const
 	{
-		static_assert(std::disjunction<std::is_base_of<T, P>, std::is_base_of<P, T>>::value, "Type P cannot be converted to T.");
+		static_assert(std::is_convertible<T*, P*>::value, "T* cannot be converted to P*.");
 
 		if (!m_pPointer)
 		{
-			return{};
+			return {};
 		}
 
-		auto pTarget = dynamic_cast<P*>(m_pPointer);
+		auto pTarget = detail_::static_cast_or_dynamic_cast<P*>(m_pPointer);
 		if (pTarget)
 		{
 			return natRefPointer<P> { pTarget };

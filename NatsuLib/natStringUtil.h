@@ -80,9 +80,9 @@ namespace NatsuLib
 				return detail_::ExpectImpl<std::is_convertible<U, T>::value, false, T>::Get(std::forward<U>(value));
 			}
 
-			constexpr static T&& Get(T&& value)
+			constexpr static decltype(auto) Get(T&& value)
 			{
-				return value;
+				return std::forward<T>(value);
 			}
 		};
 
