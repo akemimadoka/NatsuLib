@@ -19,7 +19,7 @@ nByte natStream::ReadByte()
 
 std::future<nLen> natStream::ReadBytesAsync(nData pData, nLen Length)
 {
-	return std::async([=]
+	return std::async(std::launch::async, [=]
 	{
 		return ReadBytes(pData, Length);
 	});
@@ -35,7 +35,7 @@ void natStream::WriteByte(nByte byte)
 
 std::future<nLen> natStream::WriteBytesAsync(ncData pData, nLen Length)
 {
-	return std::async([=]
+	return std::async(std::launch::async, [=]
 	{
 		return WriteBytes(pData, Length);
 	});
@@ -266,7 +266,7 @@ std::future<nLen> natFileStream::ReadBytesAsync(nData pData, nLen Length)
 			nat_Throw(natErrException, NatErr_InvalidArg, "pData cannot be nullptr."_nv);
 		}
 
-		return std::async([=]() -> nLen
+		return std::async(std::launch::async, [=]() -> nLen
 		{
 			auto hEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
 			OVERLAPPED olp{};
@@ -291,7 +291,7 @@ std::future<nLen> natFileStream::ReadBytesAsync(nData pData, nLen Length)
 		});
 	}
 
-	return std::async([=]
+	return std::async(std::launch::async, [=]
 	{
 		return ReadBytes(pData, Length);
 	});
@@ -318,7 +318,7 @@ std::future<nLen> natFileStream::WriteBytesAsync(ncData pData, nLen Length)
 			nat_Throw(natErrException, NatErr_InvalidArg, "pData cannot be nullptr."_nv);
 		}
 
-		return std::async([=]() -> nLen
+		return std::async(std::launch::async, [=]() -> nLen
 		{
 			auto hEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
 			OVERLAPPED olp{};
@@ -343,7 +343,7 @@ std::future<nLen> natFileStream::WriteBytesAsync(ncData pData, nLen Length)
 		});
 	}
 
-	return std::async([=]
+	return std::async(std::launch::async, [=]
 	{
 		return WriteBytes(pData, Length);
 	});
@@ -488,7 +488,7 @@ std::future<nLen> natStdStream::ReadBytesAsync(nData pData, nLen Length)
 		return m_InternalStream->ReadBytesAsync(pData, Length);
 	}
 	
-	return std::async([=]
+	return std::async(std::launch::async, [=]
 	{
 		return ReadBytes(pData, Length);
 	});
@@ -536,7 +536,7 @@ std::future<nLen> natStdStream::WriteBytesAsync(ncData pData, nLen Length)
 		return m_InternalStream->WriteBytesAsync(pData, Length);
 	}
 
-	return std::async([=]
+	return std::async(std::launch::async, [=]
 	{
 		return WriteBytes(pData, Length);
 	});
@@ -819,7 +819,7 @@ nLen natStdStream::ReadBytes(nData pData, nLen Length)
 
 std::future<nLen> natStdStream::ReadBytesAsync(nData pData, nLen Length)
 {
-	return std::async([=]()
+	return std::async(std::launch::async, [=]()
 	{
 		return ReadBytes(pData, Length);
 	});
@@ -843,7 +843,7 @@ nLen natStdStream::WriteBytes(ncData pData, nLen Length)
 
 std::future<nLen> natStdStream::WriteBytesAsync(ncData pData, nLen Length)
 {
-	return std::async([=]()
+	return std::async(std::launch::async, [=]()
 	{
 		return WriteBytes(pData, Length);
 	});
@@ -1004,7 +1004,7 @@ nLen natMemoryStream::ReadBytes(nData pData, nLen Length)
 
 std::future<nLen> natMemoryStream::ReadBytesAsync(nData pData, nLen Length)
 {
-	return std::async([=]()
+	return std::async(std::launch::async, [=]()
 	{
 		natRefScopeGuard<natCriticalSection> guard(m_CriSection);
 		return ReadBytes(pData, Length);
@@ -1053,7 +1053,7 @@ nLen natMemoryStream::WriteBytes(ncData pData, nLen Length)
 
 std::future<nLen> natMemoryStream::WriteBytesAsync(ncData pData, nLen Length)
 {
-	return std::async([=]()
+	return std::async(std::launch::async, [=]()
 	{
 		natRefScopeGuard<natCriticalSection> guard(m_CriSection);
 		return WriteBytes(pData, Length);

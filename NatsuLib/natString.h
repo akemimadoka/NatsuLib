@@ -1330,16 +1330,51 @@ std::basic_istream<CharType>& operator>>(std::basic_istream<CharType>& is, Natsu
 	return is;
 }
 #else
+
+namespace NatsuLib
+{
+	namespace detail_
+	{
+		template <typename CharType>
+		struct SelectStringType;
+
+		template <>
+		struct SelectStringType<char>
+		{
+			static constexpr StringType SelectedStringType = StringType::Utf8;
+		};
+
+		template <>
+		struct SelectStringType<char16_t>
+		{
+			static constexpr StringType SelectedStringType = StringType::Utf16;
+		};
+
+		template <>
+		struct SelectStringType<char32_t>
+		{
+			static constexpr StringType SelectedStringType = StringType::Utf32;
+		};
+
+		// Bug?
+		template <>
+		struct SelectStringType<wchar_t>
+		{
+			static constexpr StringType SelectedStringType = StringType::Utf32;
+		};
+	}
+}
+
 template <typename CharType>
-std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::StringView<NatsuLib::StringType::Utf8> const& str)
+std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::StringView<NatsuLib::detail_::SelectStringType<CharType>::SelectedStringType> const& str)
 {
 	return os.write(str.data(), str.size());
 }
 
-template <typename CharType, NatsuLib::StringType stringType>
+template <typename CharType, NatsuLib::StringType stringType, std::enable_if_t<NatsuLib::detail_::SelectStringType<CharType>::SelectedStringType != stringType, int> = 0>
 std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::StringView<stringType> const& str)
 {
-	return os << NatsuLib::String<NatsuLib::StringType::Utf8>{ str }.GetView();
+	return os << NatsuLib::String<NatsuLib::detail_::SelectStringType<CharType>::SelectedStringType>{ str }.GetView();
 }
 
 template <typename CharType, NatsuLib::StringType stringType>
