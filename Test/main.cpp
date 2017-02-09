@@ -12,7 +12,9 @@
 #include <natStream.h>
 #include <natStreamHelper.h>
 #include <natVFS.h>
-#include "natLocalFileScheme.h"
+#include <natLocalFileScheme.h>
+#include <natCompression.h>
+#include <natCompressionStream.h>
 
 using namespace NatsuLib;
 
@@ -151,6 +153,30 @@ int main()
 			const auto pWeakTest = pTest->ForkWeakRef<RefTest>();
 			pTest = nullptr;
 			logger.LogMsg("%b"_nv, pWeakTest.IsExpired());
+		}
+
+		{
+			nByte buffer[128]{};
+			size_t dataLength;
+			{
+				natDeflateStream str{ natMemoryStream::CreateFromExternMemory(buffer, 128, true, true), natDeflateStream::CompressionLevel::Optimal };
+				dataLength = str.WriteBytes(reinterpret_cast<ncData>("3"), 1);
+			}
+			{
+				natDeflateStream instr{ natMemoryStream::CreateFromExternMemory(buffer, dataLength, true, true) };
+				nByte inflatedData[128]{};
+				instr.ReadBytes(inflatedData, sizeof inflatedData);
+				assert(memcmp(inflatedData, "3", 1) == 0);
+			}
+		}
+
+		{
+			natZipArchive zip{ make_ref<natFileStream>("1.zip"_nv, true, false) };
+			const auto entry = zip.GetEntry("1/2.txt"_nv);
+			nByte data[128]{};
+			const auto stream = entry->Open();
+			stream->ReadBytes(data, sizeof data);
+			stream.GetRefCount();
 		}
 	}
 #ifdef _WIN32

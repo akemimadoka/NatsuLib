@@ -58,6 +58,51 @@ natNamedPipeServerStream::~natNamedPipeServerStream()
 	CloseHandle(m_hPipe);
 }
 
+nBool natNamedPipeServerStream::CanWrite() const
+{
+	return m_bWritable;
+}
+
+nBool natNamedPipeServerStream::CanRead() const
+{
+	return m_bReadable;
+}
+
+nBool natNamedPipeServerStream::CanResize() const
+{
+	return false;
+}
+
+nBool natNamedPipeServerStream::CanSeek() const
+{
+	return false;
+}
+
+nBool natNamedPipeServerStream::IsEndOfStream() const
+{
+	return false;
+}
+
+nLen natNamedPipeServerStream::GetSize() const
+{
+	return 0ul;
+}
+
+void natNamedPipeServerStream::SetSize(nLen)
+{
+	nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support SetSize."_nv);
+}
+
+nLen natNamedPipeServerStream::GetPosition() const
+{
+	return 0ul;
+}
+
+void natNamedPipeServerStream::SetPosition(NatSeek, nLong)
+{
+	nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support SetPosition."_nv);
+}
+
 nLen natNamedPipeServerStream::ReadBytes(nData pData, nLen Length)
 {
 	DWORD tReadBytes = 0ul;
@@ -198,6 +243,45 @@ std::future<void> natNamedPipeServerStream::WaitForConnectionAsync()
 natNamedPipeClientStream::natNamedPipeClientStream(nStrView Pipename, nBool bReadable, nBool bWritable)
 	: m_PipeName(Pipename), m_bReadable(bReadable), m_bWritable(bWritable)
 {
+}
+
+natNamedPipeClientStream::~natNamedPipeClientStream()
+{
+}
+
+nBool natNamedPipeClientStream::CanResize() const
+{
+	return false;
+}
+
+nBool natNamedPipeClientStream::CanSeek() const
+{
+	return false;
+}
+
+nLen natNamedPipeClientStream::GetSize() const
+{
+	return 0ul;
+}
+
+nBool natNamedPipeClientStream::IsEndOfStream() const
+{
+	return false;
+}
+
+void natNamedPipeClientStream::SetSize(nLen)
+{
+	nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support SetSize."_nv);
+}
+
+nLen natNamedPipeClientStream::GetPosition() const
+{
+	return 0ul;
+}
+
+void natNamedPipeClientStream::SetPosition(NatSeek, nLong)
+{
+	nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support SetPosition."_nv);
 }
 
 nBool natNamedPipeClientStream::CanWrite() const

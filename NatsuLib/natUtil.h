@@ -17,9 +17,9 @@ namespace NatsuLib
 		};
 
 		///	@brief	多字节转Unicode
-		std::wstring MultibyteToUnicode(ncStr Str, nuInt CodePage = DefaultCodePage);
+		std::wstring MultibyteToUnicode(ncStr Str, nInt StrLength = -1, nuInt CodePage = DefaultCodePage);
 		///	@brief	宽字符转多字节
-		std::string WidecharToMultibyte(ncWStr Str, nuInt CodePage = DefaultCodePage);
+		std::string WidecharToMultibyte(ncWStr Str, nInt StrLength = -1, nuInt CodePage = DefaultCodePage);
 
 		///	@brief	获得资源字符串
 		///	@param[in]	ResourceID	资源ID

@@ -7,5 +7,14 @@ namespace NatsuLib
 	namespace Environment
 	{
 		nStrView GetNewLine();
+
+		enum class Endianness
+		{
+			BigEndian,
+			LittleEndian,
+			MiddleEndian,	// 并不支持，只是放在这里而已
+		};
+
+		Endianness GetEndianness();
 	}
 }

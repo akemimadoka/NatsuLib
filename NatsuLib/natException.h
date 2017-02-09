@@ -212,6 +212,7 @@ public:\
 
 	DeclareException(OutOfRange, natException, "Out of range."_nv);
 	DeclareException(MemoryAllocFail, natException, "Failed to allocate memory."_nv);
+	DeclareException(InvalidData, natException, "Data is invalid."_nv);
 }
 
 #define nat_Throw(ExceptionClass, ...) do { throw ExceptionClass(nStrView{ __FUNCTION__ }, NV(__FILE__), __LINE__, __VA_ARGS__); } while (false)

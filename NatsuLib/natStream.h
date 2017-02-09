@@ -30,7 +30,7 @@ namespace NatsuLib
 	struct natStream
 		: natRefObj
 	{
-		virtual ~natStream() = default;
+		virtual ~natStream();
 
 		///	@brief		流是否可写
 		virtual nBool CanWrite() const = 0;
@@ -71,6 +71,12 @@ namespace NatsuLib
 		///	@return		实际读取长度
 		virtual nLen ReadBytes(nData pData, nLen Length) = 0;
 
+		///	@brief		强制读取字节数据
+		///	@param[out]	pData	数据缓冲区
+		///	@param[in]	Length	读取的长度
+		///	@note		重复读取操作直到成功读取的字节数不小于Length为止，注意本方法可能造成死循环
+		virtual void ForceReadBytes(nData pData, nLen Length);
+
 		/// @brief		异步读取字节数据
 		/// @param[out]	pData	数据缓冲区
 		/// @param[in]	Length	读取的长度
@@ -85,6 +91,12 @@ namespace NatsuLib
 		///	@param[in]	Length	写入的长度
 		///	@return		实际写入长度
 		virtual nLen WriteBytes(ncData pData, nLen Length) = 0;
+
+		///	@brief		强制写入字节数据
+		///	@param[in]	pData	数据缓冲区
+		///	@param[in]	Length	写入的长度
+		///	@note		重复写入操作直到成功写入的字节数不小于Length为止，注意本方法可能造成死循环
+		virtual void ForceWriteBytes(ncData pData, nLen Length);
 
 		///	@brief		异步写入字节数据
 		///	@param[in]	pData	数据缓冲区
@@ -109,6 +121,7 @@ namespace NatsuLib
 		~natMemoryStream();
 
 		static natRefPointer<natMemoryStream> CreateFromExternMemory(nData pData, nLen Length, nBool bReadable, nBool bWritable);
+		static natRefPointer<natMemoryStream> CreateFromExternMemory(ncData pData, nLen Length, nBool bReadable);
 
 		nBool CanWrite() const override;
 		nBool CanRead() const override;
@@ -204,6 +217,42 @@ namespace NatsuLib
 		nBool m_bReadable, m_bWritable;
 	};
 
+	class natSubStream
+		: public natRefObjImpl<natStream>
+	{
+	public:
+		natSubStream(natRefPointer<natStream> stream, nLen startPosition, nLen endPosition);
+		~natSubStream();
+
+		natRefPointer<natStream> GetUnderlyingStream() const noexcept;
+
+		nBool CanWrite() const override;
+		nBool CanRead() const override;
+		nBool CanResize() const override;
+		nBool CanSeek() const override;
+		nBool IsEndOfStream() const override;
+		nLen GetSize() const override;
+		void SetSize(nLen Size) override;
+		nLen GetPosition() const override;
+		void SetPosition(NatSeek Origin, nLong Offset) override;
+		nByte ReadByte() override;
+		nLen ReadBytes(nData pData, nLen Length) override;
+		std::future<nLen> ReadBytesAsync(nData pData, nLen Length) override;
+		void WriteByte(nByte byte) override;
+		nLen WriteBytes(ncData pData, nLen Length) override;
+		std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) override;
+		void Flush() override;
+
+	private:
+		const natRefPointer<natStream> m_InternalStream;
+		const nLen m_StartPosition;
+		const nLen m_EndPosition;
+		nLen m_CurrentPosition;
+
+		void adjustPosition() const;
+		void checkPosition() const;
+	};
+
 	class natStdStream
 		: public natRefObjImpl<natStream>
 	{
@@ -226,51 +275,15 @@ namespace NatsuLib
 		explicit natStdStream(StdStreamType stdStreamType);
 		~natStdStream();
 
-		nBool CanWrite() const override
-		{
-			return m_StdStreamType != StdIn;
-		}
-
-		nBool CanRead() const override
-		{
-			return m_StdStreamType == StdIn;
-		}
-
-		nBool CanResize() const override
-		{
-			return false;
-		}
-
-		nBool CanSeek() const override
-		{
-			return false;
-		}
-
-		nBool IsEndOfStream() const override
-		{
-			return false;
-		}
-
-		nLen GetSize() const override
-		{
-			return 0;
-		}
-
-		void SetSize(nLen /*Size*/) override
-		{
-			nat_Throw(natErrException, NatErr_NotSupport, "This stream cannot set size."_nv);
-		}
-
-		nLen GetPosition() const override
-		{
-			return 0;
-		}
-
-		void SetPosition(NatSeek /*Origin*/, nLong /*Offset*/) override
-		{
-			nat_Throw(natErrException, NatErr_NotSupport, "This stream cannot set position."_nv);
-		}
-
+		nBool CanWrite() const override;
+		nBool CanRead() const override;
+		nBool CanResize() const override;
+		nBool CanSeek() const override;
+		nBool IsEndOfStream() const override;
+		nLen GetSize() const override;
+		void SetSize(nLen /*Size*/) override;
+		nLen GetPosition() const override;
+		void SetPosition(NatSeek /*Origin*/, nLong /*Offset*/) override;
 		nByte ReadByte() override;
 		nLen ReadBytes(nData pData, nLen Length) override;
 		std::future<nLen> ReadBytesAsync(nData pData, nLen Length) override;

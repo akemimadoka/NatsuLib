@@ -30,12 +30,12 @@ namespace NatsuLib
 		{
 		public:
 			constexpr CommonStorage() noexcept
-				: m_Constructed(false), m_Storage{0}
+				: m_Constructed(false), m_Storage{}
 			{
 			}
 
 			CommonStorage(CommonStorage const& other) noexcept(noexcept(std::declval<CommonStorage<T>>().Init(std::declval<T const&>())))
-				: CommonStorage()
+				: m_Constructed(false), m_Storage{}
 			{
 				if (other.m_Constructed)
 				{
@@ -44,7 +44,7 @@ namespace NatsuLib
 			}
 
 			CommonStorage(CommonStorage && other) noexcept(noexcept(std::declval<CommonStorage<T>>().Init(std::declval<T &&>())))
-				: CommonStorage()
+				: m_Constructed(false), m_Storage{}
 			{
 				if (other.m_Constructed)
 				{
@@ -53,26 +53,26 @@ namespace NatsuLib
 			}
 
 			constexpr explicit CommonStorage(defaultconstruct_t) noexcept(std::is_nothrow_default_constructible<T>::value)
-				: CommonStorage()
+				: m_Constructed(false), m_Storage{}
 			{
 				Init(defaultconstruct);
 			}
 
 			constexpr explicit CommonStorage(const T& obj) noexcept(noexcept(std::declval<CommonStorage<T>>().Init(obj)))
-				: CommonStorage()
+				: m_Constructed(false), m_Storage{}
 			{
 				Init(obj);
 			}
 
 			constexpr explicit CommonStorage(T&& obj) noexcept(noexcept(std::declval<CommonStorage<T>>().Init(std::move(obj))))
-				: CommonStorage()
+				: m_Constructed(false), m_Storage{}
 			{
 				Init(std::move(obj));
 			}
 
 			template <typename... Args>
 			constexpr explicit CommonStorage(Args&&... args) noexcept(noexcept(std::declval<CommonStorage<T>>().Init(std::forward<Args>(args)...)))
-				: CommonStorage()
+				: m_Constructed(false), m_Storage{}
 			{
 				Init(std::forward<Args>(args)...);
 			}

@@ -48,51 +48,15 @@ namespace NatsuLib
 		natNamedPipeServerStream(nStrView Pipename, PipeDirection Direction, nuInt MaxInstances, nuInt OutBuffer = 1024, nuInt InBuffer = 1024, nuInt TimeOut = 0, PipeMode TransmissionMode = PipeMode::Message, PipeMode ReadMode = PipeMode::Message, PipeOptions Options = PipeOptions::WriteThrough);
 		~natNamedPipeServerStream();
 
-		nBool CanWrite() const override
-		{
-			return m_bWritable;
-		}
-
-		nBool CanRead() const override
-		{
-			return m_bReadable;
-		}
-
-		nBool CanResize() const override
-		{
-			return false;
-		}
-
-		nBool CanSeek() const override
-		{
-			return false;
-		}
-
-		nBool IsEndOfStream() const override
-		{
-			return false;
-		}
-
-		nLen GetSize() const override
-		{
-			return 0ul;
-		}
-
-		void SetSize(nLen /*Size*/) override
-		{
-			nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support SetSize."_nv);
-		}
-
-		nLen GetPosition() const override
-		{
-			return 0ul;
-		}
-
-		void SetPosition(NatSeek /*Origin*/, nLong /*Offset*/) override
-		{
-			nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support SetPosition."_nv);
-		}
-
+		nBool CanWrite() const override;
+		nBool CanRead() const override;
+		nBool CanResize() const override;
+		nBool CanSeek() const override;
+		nBool IsEndOfStream() const override;
+		nLen GetSize() const override;
+		void SetSize(nLen /*Size*/) override;
+		nLen GetPosition() const override;
+		void SetPosition(NatSeek /*Origin*/, nLong /*Offset*/) override;
 		nLen ReadBytes(nData pData, nLen Length) override;
 		nLen WriteBytes(ncData pData, nLen Length) override;
 		void Flush() override;
@@ -100,17 +64,17 @@ namespace NatsuLib
 		void WaitForConnection();
 		std::future<void> WaitForConnectionAsync();
 
-		nBool IsAsync() const
+		nBool IsAsync() const noexcept
 		{
 			return m_bAsync;
 		}
 
-		nBool IsConnected() const
+		nBool IsConnected() const noexcept
 		{
 			return m_bConnected;
 		}
 
-		nBool IsMessageComplete() const
+		nBool IsMessageComplete() const noexcept
 		{
 			return m_bMessageComplete;
 		}
@@ -130,43 +94,15 @@ namespace NatsuLib
 		};
 
 		natNamedPipeClientStream(nStrView Pipename, nBool bReadable, nBool bWritable);
-		~natNamedPipeClientStream() = default;
+		~natNamedPipeClientStream();
 
-		nBool CanResize() const override
-		{
-			return false;
-		}
-
-		nBool CanSeek() const override
-		{
-			return false;
-		}
-
-		nLen GetSize() const override
-		{
-			return 0ul;
-		}
-
-		nBool IsEndOfStream() const override
-		{
-			return false;
-		}
-
-		void SetSize(nLen /*Size*/) override
-		{
-			nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support SetSize."_nv);
-		}
-
-		nLen GetPosition() const override
-		{
-			return 0ul;
-		}
-
-		void SetPosition(NatSeek /*Origin*/, nLong /*Offset*/) override
-		{
-			nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support SetPosition."_nv);
-		}
-
+		nBool CanResize() const override;
+		nBool CanSeek() const override;
+		nLen GetSize() const override;
+		nBool IsEndOfStream() const override;
+		void SetSize(nLen /*Size*/) override;
+		nLen GetPosition() const override;
+		void SetPosition(NatSeek /*Origin*/, nLong /*Offset*/) override;
 		nBool CanWrite() const override;
 		nBool CanRead() const override;
 		nByte ReadByte() override;

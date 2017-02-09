@@ -244,6 +244,8 @@ namespace NatsuLib
 	class StringView
 	{
 	public:
+		static constexpr StringType UsingStringType = stringType;
+
 		typedef typename StringEncodingTrait<stringType>::CharType CharType;
 		typedef CharType Element;
 		typedef const CharType* CharIterator;
@@ -810,6 +812,8 @@ namespace NatsuLib
 	class String
 	{
 	public:
+		static constexpr StringType UsingStringType = stringType;
+
 		typedef StringView<stringType> View;
 		typedef typename View::CharType CharType;
 		typedef CharType Element;
@@ -1308,27 +1312,41 @@ namespace NatsuLib
 }
 
 #ifdef _WIN32
-template <typename CharType, NatsuLib::StringType stringType>
-std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::StringView<stringType> const& str)
+
+namespace NatsuLib
 {
-	os << static_cast<std::basic_string<CharType>>(static_cast<std::conditional_t<std::is_same<CharType, char>::value, NatsuLib::AnsiString, NatsuLib::WideString>>(str));
-	return os;
+	namespace detail_
+	{
+		template <typename CharType>
+		struct SelectStringType;
+
+		template <>
+		struct SelectStringType<char>
+		{
+			static constexpr StringType SelectedStringType = StringType::Ansi;
+		};
+
+		template <>
+		struct SelectStringType<char16_t>
+		{
+			static constexpr StringType SelectedStringType = StringType::Utf16;
+		};
+
+		template <>
+		struct SelectStringType<char32_t>
+		{
+			static constexpr StringType SelectedStringType = StringType::Utf32;
+		};
+
+		// Bug?
+		template <>
+		struct SelectStringType<wchar_t>
+		{
+			static constexpr StringType SelectedStringType = StringType::Wide;
+		};
+	}
 }
 
-template <typename CharType, NatsuLib::StringType stringType>
-std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::String<stringType> const& str)
-{
-	return os << static_cast<std::basic_string<CharType>>(str);
-}
-
-template <typename CharType, NatsuLib::StringType stringType>
-std::basic_istream<CharType>& operator>>(std::basic_istream<CharType>& is, NatsuLib::String<stringType>& str)
-{
-	std::basic_string<CharType> tmpStr;
-	is >> tmpStr;
-	str.Assign(static_cast<typename NatsuLib::String<stringType>::View>(tmpStr.c_str()));
-	return is;
-}
 #else
 
 namespace NatsuLib
@@ -1365,6 +1383,8 @@ namespace NatsuLib
 	}
 }
 
+#endif
+
 template <typename CharType>
 std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::StringView<NatsuLib::detail_::SelectStringType<CharType>::SelectedStringType> const& str)
 {
@@ -1384,14 +1404,13 @@ std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, Natsu
 }
 
 template <typename CharType, NatsuLib::StringType stringType>
-std::basic_istream<CharType>& operator >> (std::basic_istream<CharType>& is, NatsuLib::String<stringType>& str)
+std::basic_istream<CharType>& operator>>(std::basic_istream<CharType>& is, NatsuLib::String<stringType>& str)
 {
 	std::basic_string<CharType> tmpStr;
 	is >> tmpStr;
 	str.Assign(tmpStr.c_str());
 	return is;
 }
-#endif
 
 #ifdef _MSC_VER
 #pragma pop_macro("max")
