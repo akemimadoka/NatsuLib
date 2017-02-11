@@ -721,7 +721,7 @@ namespace NatsuLib
 	private:
 		WeakRefView* m_View;
 
-		constexpr natWeakRefPointer(WeakRefView* view) noexcept
+		constexpr explicit natWeakRefPointer(WeakRefView* view) noexcept
 			: m_View{ view }
 		{
 		}

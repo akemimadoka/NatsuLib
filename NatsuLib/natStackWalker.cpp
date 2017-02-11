@@ -60,10 +60,10 @@ void natStackWalker::CaptureStack(size_t skipFrames, nStrView unknownSymbolName,
 	{
 		nByte dummy[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
 		SYMBOL_INFO SymbolInfo;
-	} symbol{ 0 };
+	} symbol{};
 	symbol.SymbolInfo.SizeOfStruct = sizeof(SYMBOL_INFO);
 	symbol.SymbolInfo.MaxNameLen = MAX_SYM_NAME;
-	IMAGEHLP_LINE64 line{ 0 };
+	IMAGEHLP_LINE64 line{};
 	line.SizeOfStruct = sizeof line;
 	DWORD displacement;
 

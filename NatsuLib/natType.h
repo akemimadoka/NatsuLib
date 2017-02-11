@@ -6,7 +6,7 @@
 
 #include "natConfig.h"
 #include <cstdint>
-#include <string>
+#include <type_traits>
 #define NVIMPL(text) text##_nv
 #define NV(text) NVIMPL(text)
 
@@ -80,11 +80,11 @@ using nUnsafePtr = std::add_pointer_t<T>;
 ///	@brief		常见错误
 ///	@{
 
-enum /*[[nodiscard]]*/ NatErr
+enum /*[[nodiscard]]*/ NatErr : nResult
 {
-	NatErr_Interrupted	=	nResult(1),		///< @brief	正常中断
+	NatErr_Interrupted	=	1,		///< @brief	正常中断
 
-	NatErr_OK			=	nResult(0),		///< @brief	正常
+	NatErr_OK			=	0,		///< @brief	正常
 
 	NatErr_Unknown		=	NATMAKEERR(1),	///< @brief	未知错误
 	NatErr_IllegalState	=	NATMAKEERR(2),	///< @brief	非法状态
@@ -104,17 +104,19 @@ enum /*[[nodiscard]]*/ NatErr
 ///	@brief		Natsu库基本内联函数定义
 ///	@{
 
-///	@brief	安全删除指针
+///	@brief		安全删除指针
+///	@warning	避免使用本函数
 template <typename T>
-NATINLINE void SafeDel(T*& ptr)
+NATINLINE void SafeDel(T* volatile & ptr)
 {
 	delete ptr;
 	ptr = nullptr;
 }
 
-///	@brief	安全删除数组
+///	@brief		安全删除数组
+///	@warning	避免使用本函数
 template <typename T>
-NATINLINE void SafeDelArr(T*& ptr)
+NATINLINE void SafeDelArr(T* volatile & ptr)
 {
 	delete[] ptr;
 	ptr = nullptr;
@@ -131,19 +133,19 @@ namespace NatsuLib
 		};
 
 		template <typename T>
-		struct CanAddRef<T, std::void_t<decltype(std::declval<const T>().AddRef())>>
+		struct CanAddRef<T, std::void_t<decltype(std::declval<const volatile T>().AddRef())>>
 			: std::true_type
 		{
 		};
 
 		template <typename T, typename Enable = void>
-		struct IsReleasable
+		struct CanRelease
 			: std::false_type
 		{
 		};
 
 		template <typename T>
-		struct IsReleasable<T, std::void_t<decltype(std::declval<const T>().Release())>>
+		struct CanRelease<T, std::void_t<decltype(std::declval<const volatile T>().Release())>>
 			: std::true_type
 		{
 		};
@@ -152,7 +154,7 @@ namespace NatsuLib
 
 ///	@brief	安全释放
 template <typename T>
-NATINLINE std::enable_if_t<NatsuLib::detail_::IsReleasable<T>::value> SafeRelease(T* volatile & ptr)
+NATINLINE std::enable_if_t<NatsuLib::detail_::CanRelease<T>::value> SafeRelease(T* volatile & ptr)
 {
 	const auto ptrToRelease = ptr;
 	if (ptrToRelease != nullptr)

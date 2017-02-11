@@ -240,13 +240,13 @@ namespace NatsuLib
 	private:
 		nBool m_ShouldCall;
 		T m_CallableObj;
-		std::tuple<Args&&...> m_Args;
+		std::tuple<Args const&...> m_Args;
 	};
 	
 	template <typename T, typename ...Args>
 	constexpr auto make_scope(T CallableObj, Args&&... args)
 	{
-		return natScope<T, Args&&...>{ CallableObj, std::forward<Args>(args)... };
+		return natScope<T, decltype(args)...>{ CallableObj, std::forward<Args>(args)... };
 	}
 
 	using detail_::nullopt_t;
@@ -746,7 +746,9 @@ namespace NatsuLib
 		noncopyable() = default;
 
 		noncopyable(noncopyable const&) = delete;
+		noncopyable(noncopyable &&) = default;
 		noncopyable& operator=(noncopyable const&) = delete;
+		noncopyable& operator=(noncopyable &&) = default;
 
 	protected:
 		~noncopyable() = default;
@@ -770,9 +772,9 @@ namespace std
 	template <typename T>
 	struct hash<NatsuLib::Optional<T>>
 	{
-		size_t operator()(NatsuLib::Optional<T> const& _Keyval) const
+		size_t operator()(NatsuLib::Optional<T> const& keyval) const
 		{
-			return _Keyval ? hash<T>{}(*_Keyval) : 0u;
+			return keyval ? hash<T>{}(*keyval) : 0;
 		}
 	};
 }

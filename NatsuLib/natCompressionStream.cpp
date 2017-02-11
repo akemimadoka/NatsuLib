@@ -121,7 +121,7 @@ namespace NatsuLib
 			}
 
 			z_stream ZStream;
-			nBool Compress;
+			const nBool Compress;
 			size_t InputBufferLeft, OutputBufferLeft;
 		};
 	}
@@ -241,6 +241,7 @@ nLen natDeflateStream::ReadBytes(nData pData, nLen Length)
 			nat_Throw(InvalidData, "Invalid data with zlib message ({0})."_nv, U8StringView{ m_Impl->ZStream.msg });
 		}
 		const auto currentReadBytes = Length - m_Impl->OutputBufferLeft - m_Impl->ZStream.avail_out;
+		assert(dataRemain >= currentReadBytes);
 		pRead += currentReadBytes;
 		dataRemain -= currentReadBytes;
 
@@ -266,6 +267,7 @@ nLen natDeflateStream::ReadBytes(nData pData, nLen Length)
 		
 		assert(readBytes <= sizeof m_Buffer);
 
+		// 检查了输入已经全部处理完毕了吗？
 		m_Impl->SetInput(m_Buffer, readBytes);
 	}
 
@@ -292,7 +294,7 @@ void natDeflateStream::Flush()
 	{
 		writeAll();
 
-		do
+		while (true)
 		{
 			m_Impl->SetOutput(m_Buffer, sizeof m_Buffer);
 			const auto ret = m_Impl->Flush();
@@ -302,9 +304,9 @@ void natDeflateStream::Flush()
 			}
 			else
 			{
-				break;
+				break; // 忽略错误
 			}
-		} while (true);
+		}
 	}
 }
 
@@ -320,8 +322,14 @@ nLen natDeflateStream::writeAll()
 		{
 			ret = m_Impl->DoNext();
 
+			if (ret == Z_DATA_ERROR)
+			{
+				nat_Throw(InvalidData, "Invalid data with zlib message ({0})."_nv, U8StringView{ m_Impl->ZStream.msg });
+			}
+
 			const auto availableDataSize = DefaultBufferSize - m_Impl->OutputBufferLeft - m_Impl->ZStream.avail_out;
 			const auto currentWrittenBytes = m_InternalStream->WriteBytes(m_Buffer, availableDataSize);
+			// 是否需要检查？
 			if (currentWrittenBytes < availableDataSize)
 			{
 				nat_Throw(natErrException, NatErr_InternalErr, "Partial data written({0}/{1} requested)."_nv, currentWrittenBytes, availableDataSize);

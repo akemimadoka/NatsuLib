@@ -4,8 +4,8 @@
 
 using namespace NatsuLib;
 
-detail_::natExceptionStorage::natExceptionStorage(std::exception_ptr nestedException, std::chrono::system_clock::time_point const& time, nString const& file, nuInt line, nString const& src, nString const& desc)
-	: m_NestedException(nestedException), m_Time(time), m_File(file), m_Line(line), m_Source(src), m_Description(desc)
+detail_::natExceptionStorage::natExceptionStorage(std::exception_ptr nestedException, std::chrono::system_clock::time_point const& time, nString file, nuInt line, nString src, nString desc)
+	: m_NestedException(nestedException), m_Time(time), m_File(std::move(file)), m_Line(line), m_Source(std::move(src)), m_Description(std::move(desc))
 {
 }
 
@@ -57,6 +57,10 @@ ncStr natException::what() const noexcept
 
 #ifdef _WIN32
 
+natWinException::~natWinException()
+{
+}
+
 DWORD natWinException::GetErrNo() const noexcept
 {
 	return m_LastErr;
@@ -87,6 +91,10 @@ nStrView natWinException::GetErrMsg() const noexcept
 
 #endif
 
+natErrException::~natErrException()
+{
+}
+
 NatErr natErrException::GetErrNo() const noexcept
 {
 	return m_Errno;
@@ -95,4 +103,18 @@ NatErr natErrException::GetErrNo() const noexcept
 nStrView natErrException::GetErrMsg() const noexcept
 {
 	return GetErrDescription(m_Errno);
+}
+
+NotImplementedException::NotImplementedException(nStrView Src, nStrView File, nuInt Line)
+	: BaseException(Src, File, Line, NatErr_NotImpl, "This feature has not implemented yet."_nv)
+{
+}
+
+NotImplementedException::NotImplementedException(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line)
+	: BaseException(nestedException, Src, File, Line, NatErr_NotImpl, "This feature has not implemented yet."_nv)
+{
+}
+
+NotImplementedException::~NotImplementedException()
+{
 }

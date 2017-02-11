@@ -25,7 +25,7 @@ namespace NatsuLib
 	{
 		struct natExceptionStorage
 		{
-			natExceptionStorage(std::exception_ptr nestedException, std::chrono::system_clock::time_point const& time, nString const& file, nuInt line, nString const& src, nString const& desc);
+			natExceptionStorage(std::exception_ptr nestedException, std::chrono::system_clock::time_point const& time, nString file, nuInt line, nString src, nString desc);
 
 			std::exception_ptr m_NestedException;
 			std::chrono::system_clock::time_point m_Time;
@@ -120,6 +120,8 @@ namespace NatsuLib
 			m_Description.Append(natUtil::FormatString(" (LastErr = {0})"_nv, m_LastErr));
 		}
 
+		~natWinException();
+
 		DWORD GetErrNo() const noexcept;
 		nStrView GetErrMsg() const noexcept;
 
@@ -146,6 +148,8 @@ namespace NatsuLib
 		{
 			m_Description.Append(natUtil::FormatString(" (Errno = {0})"_nv, m_Errno));
 		}
+
+		~natErrException();
 
 		NatErr GetErrNo() const noexcept;
 		nStrView GetErrMsg() const noexcept;
@@ -180,6 +184,7 @@ namespace NatsuLib
 			case NatErr_NotFound:
 				return "Not found"_nv;
 			default:
+				assert(!"Invalid Errno.");
 				return "No description"_nv;
 			}
 		}
@@ -213,6 +218,27 @@ public:\
 	DeclareException(OutOfRange, natException, "Out of range."_nv);
 	DeclareException(MemoryAllocFail, natException, "Failed to allocate memory."_nv);
 	DeclareException(InvalidData, natException, "Data is invalid."_nv);
+
+	class NotImplementedException
+		: public natErrException
+	{
+	public:
+		typedef natErrException BaseException;
+
+		NotImplementedException(nStrView Src, nStrView File, nuInt Line);
+		NotImplementedException(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line);
+		template <typename... Args>
+		NotImplementedException(nStrView Src, nStrView File, nuInt Line, nStrView Desc, Args&&... args)
+			: BaseException(Src, File, Line, NatErr_NotImpl, Desc, std::forward<Args>(args)...)
+		{
+		}
+		template <typename... Args>
+		NotImplementedException(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line, nStrView Desc, Args&&... args)
+			: BaseException(nestedException, Src, File, Line, NatErr_NotImpl, Desc, std::forward<Args>(args)...)
+		{
+		}
+		~NotImplementedException();
+	};
 }
 
 #define nat_Throw(ExceptionClass, ...) do { throw ExceptionClass(nStrView{ __FUNCTION__ }, NV(__FILE__), __LINE__, __VA_ARGS__); } while (false)

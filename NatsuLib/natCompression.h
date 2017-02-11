@@ -41,6 +41,21 @@ namespace NatsuLib
 			FindingBufferSize = 32,
 		};
 
+		enum class ZipVersionNeeded : nuShort
+		{
+			Default = 10,
+			ExplicitDirectory = 20,
+			Deflate = 20,
+			Deflate64 = 21,
+			Zip64 = 45
+		};
+
+		enum class ZipVersionMadeByPlatform : nByte
+		{
+			Windows = 0,
+			Unix = 3
+		};
+
 		static constexpr nuInt Mask32Bit = 0xFFFFFFFF;
 		static constexpr nuShort Mask16Bit = 0xFFFF;
 
@@ -135,7 +150,7 @@ namespace NatsuLib
 			nString ArchiveComment;
 
 			void Read(natBinaryReader* reader, StringType encoding);
-			void Write(natBinaryWriter* writer);
+			static void Write(natBinaryWriter* writer, nuLong numberOfEntries, nuLong startOfCentralDirectory, nuLong sizeOfCentralDirectory, nStrView archiveComment, StringType encoding = nString::UsingStringType);
 		};
 
 		ZipEndOfCentralDirectory m_ZipEndOfCentralDirectory;
@@ -150,7 +165,7 @@ namespace NatsuLib
 			nuInt TotalNumberOfDisks;
 
 			void Read(natBinaryReader* reader);
-			void Write(natBinaryWriter* writer);
+			static void Write(natBinaryWriter* writer, nuLong zip64EOCDRecordStart);
 		};
 
 		Zip64EndOfCentralDirectoryLocator m_Zip64EndOfCentralDirectoryLocator;
@@ -158,7 +173,7 @@ namespace NatsuLib
 		struct Zip64EndOfCentralDirectory
 		{
 			static constexpr nuInt Signature = 0x06064B50;
-			static constexpr nuLong SizeWithoutExtraFields = 0x2C;
+			static constexpr nuLong SizeWithoutExtraData = 0x2C;
 
 			nuLong SizeOfThisRecord;
 			nuShort VersionMadeBy;
@@ -171,7 +186,7 @@ namespace NatsuLib
 			nuLong OffsetOfCentralDirectory;
 
 			void Read(natBinaryReader* reader);
-			void Write(natBinaryWriter* writer);
+			static void Write(natBinaryWriter* writer, nuLong numberOfEntries, nuLong startOfCentralDirectory, nuLong sizeOfCentralDirectory);
 		};
 
 		Zip64EndOfCentralDirectory m_Zip64EndOfCentralDirectory;
