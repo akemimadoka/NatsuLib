@@ -27,38 +27,31 @@ natRefPointer<natStream> natZipArchive::ZipEntry::Open()
 	switch (m_Archive->m_Mode)
 	{
 	case ZipArchiveMode::Create:
-		break;
+		return openForCreate();
 	case ZipArchiveMode::Read:
-		openInReadMode();
-		break;
+		return openForRead();
 	case ZipArchiveMode::Update:
-		break;
+		return openForUpdate();
 	default:
 		assert(!"Invalid m_Mode.");
+		nat_Throw(natErrException, NatErr_InternalErr, "Invalid m_Mode."_nv);
 	}
-	
-	return m_Stream;
 }
 
 natZipArchive::ZipEntry::ZipEntry(natZipArchive* archive, CentralDirectoryFileHeader const& centralDirectoryFileHeader)
-	: m_Archive{ archive }, m_CentralDirectoryFileHeader(centralDirectoryFileHeader)
+	: m_Archive{ archive }, m_OriginallyInArchive{ true }, m_CentralDirectoryFileHeader(centralDirectoryFileHeader)
 {
 }
 
-void natZipArchive::ZipEntry::openInReadMode()
+natRefPointer<natStream> natZipArchive::ZipEntry::openForRead()
 {
-	if (m_Stream)
-	{
-		return;
-	}
-
 	if (!m_OffsetOfCompressedData)
 	{
 		const auto localHeaderOffset = m_CentralDirectoryFileHeader.RelativeOffsetOfLocalHeader;
 		m_Archive->m_Stream->SetPosition(NatSeek::Beg, localHeaderOffset);
 		if (!LocalFileHeader::TrySkip(m_Archive->m_Reader))
 		{
-			nat_Throw(InvalidData, "Invalid data."_nv);
+			nat_Throw(InvalidData);
 		}
 		m_OffsetOfCompressedData = m_Archive->m_Stream->GetPosition();
 	}
@@ -68,30 +61,48 @@ void natZipArchive::ZipEntry::openInReadMode()
 	switch (static_cast<CompressionMethod>(m_CentralDirectoryFileHeader.CompressionMethod))
 	{
 	case CompressionMethod::Deflate:
-		m_Stream = make_ref<natDeflateStream>(std::move(compressedStream));
-		break;
+		return make_ref<natDeflateStream>(std::move(compressedStream));
 	case CompressionMethod::Deflate64:
 	case CompressionMethod::BZip2:
 	case CompressionMethod::LZMA:
-		nat_Throw(NotImplementedException, "This compress method has not implemented yet."_nv);
+		nat_Throw(NotImplementedException, "This compress method has not implemented yet (value is {0})."_nv, m_CentralDirectoryFileHeader.CompressionMethod);
 	case CompressionMethod::Stored:
 	default:
-		m_Stream = std::move(compressedStream);
+		assert(static_cast<CompressionMethod>(m_CentralDirectoryFileHeader.CompressionMethod) == CompressionMethod::Stored && "Invalid CompressionMethod.");
+		return std::move(compressedStream);
 	}
 }
 
-void natZipArchive::ZipEntry::openInCreateMode()
+natRefPointer<natStream> natZipArchive::ZipEntry::openForCreate()
 {
 	nat_Throw(NotImplementedException);
 }
 
-void natZipArchive::ZipEntry::openInUpdateMode()
+natRefPointer<natStream> natZipArchive::ZipEntry::openForUpdate()
 {
 	nat_Throw(NotImplementedException);
+}
+
+natRefPointer<natStream> const& natZipArchive::ZipEntry::getUncompressedData()
+{
+	if (!m_UncompressedData)
+	{
+		if (m_OriginallyInArchive)
+		{
+			const auto decompressor = openForRead();
+			const auto uncompressedData = make_ref<natMemoryStream>(decompressor->GetSize(), true, true, true);
+			decompressor->CopyTo(uncompressedData);
+			m_UncompressedData = std::move(uncompressedData);
+		}
+
+		m_CentralDirectoryFileHeader.CompressionMethod = static_cast<nuShort>(CompressionMethod::Deflate);
+	}
+
+	return m_UncompressedData;
 }
 
 natZipArchive::ZipEntry::ZipEntry(natZipArchive* archive, nStrView const& entryName)
-	: m_Archive{ archive }, m_CentralDirectoryFileHeader{}, m_OffsetOfCompressedData{}
+	: m_Archive{ archive }, m_OriginallyInArchive{ false }, m_CentralDirectoryFileHeader{}, m_OffsetOfCompressedData{}
 {
 	m_CentralDirectoryFileHeader.Filename = entryName;
 	m_CentralDirectoryFileHeader.FilenameLength = static_cast<nuShort>(m_CentralDirectoryFileHeader.Filename.size() * sizeof(StringEncodingTrait<nString::UsingStringType>::CharType));
@@ -221,7 +232,7 @@ nBool natZipArchive::Zip64ExtraField::ReadFromExtraField(ExtraField const& extra
 		return false;
 	}
 
-	natBinaryReader reader{ natMemoryStream::CreateFromExternMemory(extraField.Data.data(), extraField.Data.size(), true),
+	natBinaryReader reader{ make_ref<natExternMemoryStream>(extraField.Data.data(), extraField.Data.size(), true),
 		Environment::Endianness::LittleEndian };
 
 	Size = extraField.Size;

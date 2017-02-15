@@ -148,7 +148,7 @@ natDeflateStream::natDeflateStream(natRefPointer<natStream> stream, CompressionL
 	{
 		nat_Throw(natErrException, NatErr_InvalidArg, "stream should be writable."_nv);
 	}
-
+	
 	switch (compressionLevel)
 	{
 	case CompressionLevel::Optimal:
@@ -344,4 +344,100 @@ nLen natDeflateStream::writeAll()
 	}
 	
 	return totalWrittenBytes;
+}
+
+natCrc32Stream::natCrc32Stream(natRefPointer<natStream> stream)
+	: m_InternalStream{ std::move(stream) }, m_Crc32{}, m_CurrentPosition{}
+{
+	if (!m_InternalStream->CanWrite())
+	{
+		nat_Throw(natErrException, NatErr_InvalidArg, "stream should be writable."_nv);
+	}
+}
+
+natCrc32Stream::~natCrc32Stream()
+{
+}
+
+natRefPointer<natStream> natCrc32Stream::GetUnderlyingStream() const noexcept
+{
+	assert(m_InternalStream && "m_InternalStream should not be nullptr.");
+	return m_InternalStream;
+}
+
+nuInt natCrc32Stream::GetCrc32() const noexcept
+{
+	return m_Crc32;
+}
+
+nBool natCrc32Stream::CanWrite() const
+{
+	return true;
+}
+
+nBool natCrc32Stream::CanRead() const
+{
+	return false;
+}
+
+nBool natCrc32Stream::CanResize() const
+{
+	return false;
+}
+
+nBool natCrc32Stream::CanSeek() const
+{
+	return false;
+}
+
+nBool natCrc32Stream::IsEndOfStream() const
+{
+	assert(m_InternalStream && "m_InternalStream should not be nullptr.");
+	return m_InternalStream->IsEndOfStream();
+}
+
+nLen natCrc32Stream::GetSize() const
+{
+	nat_Throw(natErrException, NatErr_NotSupport, "The type of this stream does not support this operation."_nv);
+}
+
+void natCrc32Stream::SetSize(nLen)
+{
+	nat_Throw(natErrException, NatErr_NotSupport, "The type of this stream does not support this operation."_nv);
+}
+
+nLen natCrc32Stream::GetPosition() const
+{
+	return m_CurrentPosition;
+}
+
+void natCrc32Stream::SetPosition(NatSeek, nLong)
+{
+	nat_Throw(natErrException, NatErr_NotSupport, "The type of this stream does not support this operation."_nv);
+}
+
+nLen natCrc32Stream::ReadBytes(nData /*pData*/, nLen /*Length*/)
+{
+	nat_Throw(natErrException, NatErr_NotSupport, "The type of this stream does not support this operation."_nv);
+}
+
+nLen natCrc32Stream::WriteBytes(ncData pData, nLen Length)
+{
+	assert(m_InternalStream && "m_InternalStream should not be nullptr.");
+
+	if (!Length)
+	{
+		return 0;
+	}
+
+	m_Crc32 = static_cast<nuInt>(crc32_z(m_Crc32, pData, static_cast<z_size_t>(Length)));
+	const auto writtenBytes = m_InternalStream->WriteBytes(pData, Length);
+	m_CurrentPosition += writtenBytes;
+	return writtenBytes;
+}
+
+void natCrc32Stream::Flush()
+{
+	assert(m_InternalStream && "m_InternalStream should not be nullptr.");
+	m_InternalStream->Flush();
 }

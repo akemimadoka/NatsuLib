@@ -159,11 +159,11 @@ int main()
 			nByte buffer[128]{};
 			size_t dataLength;
 			{
-				natDeflateStream str{ natMemoryStream::CreateFromExternMemory(buffer, 128, true, true), natDeflateStream::CompressionLevel::Optimal };
+				natDeflateStream str{ make_ref<natExternMemoryStream>(buffer, 128, true, true), natDeflateStream::CompressionLevel::Optimal };
 				dataLength = str.WriteBytes(reinterpret_cast<ncData>("3"), 1);
 			}
 			{
-				natDeflateStream instr{ natMemoryStream::CreateFromExternMemory(buffer, dataLength, true, true) };
+				natDeflateStream instr{ make_ref<natExternMemoryStream>(buffer, dataLength, true, true) };
 				nByte inflatedData[128]{};
 				instr.ReadBytes(inflatedData, sizeof inflatedData);
 				assert(memcmp(inflatedData, "3", 1) == 0);

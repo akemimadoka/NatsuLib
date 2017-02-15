@@ -223,15 +223,18 @@ namespace NatsuLib
 			};
 
 			natZipArchive* m_Archive;
+			const nBool m_OriginallyInArchive;
 			CentralDirectoryFileHeader m_CentralDirectoryFileHeader;
 			Optional<nLen> m_OffsetOfCompressedData;
-			natRefPointer<natStream> m_Stream;
+			natRefPointer<natStream> m_UncompressedData;
 
 			ZipEntry(natZipArchive* archive, CentralDirectoryFileHeader const& centralDirectoryFileHeader);
 
-			void openInReadMode();
-			void openInCreateMode();
-			void openInUpdateMode();
+			natRefPointer<natStream> openForRead();
+			natRefPointer<natStream> openForCreate();
+			natRefPointer<natStream> openForUpdate();
+
+			natRefPointer<natStream> const& getUncompressedData();
 		};
 	};
 }

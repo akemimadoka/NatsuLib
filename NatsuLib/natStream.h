@@ -30,6 +30,11 @@ namespace NatsuLib
 	struct natStream
 		: natRefObj
 	{
+		enum
+		{
+			DefaultCopyToBufferSize = 1024,
+		};
+
 		virtual ~natStream();
 
 		///	@brief		流是否可写
@@ -104,6 +109,12 @@ namespace NatsuLib
 		///	@return		实际写入长度
 		virtual std::future<nLen> WriteBytesAsync(ncData pData, nLen Length);
 
+		///	@brief		将流中的内容复制到另一流
+		///	@param[in]	other	要复制到的流	
+		///	@return		总实际读取长度
+		///	@note		读取长度不意味着成功写入到另一流的长度
+		virtual nLen CopyTo(natRefPointer<natStream> const& other);
+
 		///	@brief		刷新流
 		///	@note		仅对有缓存机制的流有效且有意义
 		virtual void Flush() = 0;
@@ -116,12 +127,9 @@ namespace NatsuLib
 		: public natRefObjImpl<natStream>
 	{
 	public:
-		natMemoryStream();
-		natMemoryStream(ncData pData, nLen Length, nBool bReadable, nBool bWritable, nBool bResizable);
+		natMemoryStream(ncData pData, nLen Length, nBool bReadable, nBool bWritable, nBool autoResize);
+		natMemoryStream(nLen Length, nBool bReadable, nBool bWritable, nBool autoResize);
 		~natMemoryStream();
-
-		static natRefPointer<natMemoryStream> CreateFromExternMemory(nData pData, nLen Length, nBool bReadable, nBool bWritable);
-		static natRefPointer<natMemoryStream> CreateFromExternMemory(ncData pData, nLen Length, nBool bReadable);
 
 		nBool CanWrite() const override;
 		nBool CanRead() const override;
@@ -143,16 +151,52 @@ namespace NatsuLib
 		nData GetInternalBuffer() noexcept;
 		ncData GetInternalBuffer() const noexcept;
 
+		void Reserve(nLen newCapacity);
+
 	private:
 		natCriticalSection m_CriSection;
 
 		nData m_pData;
-		nLen m_Length;
+		nLen m_Size;
+		nLen m_Capacity;
 		nLen m_CurPos;
 		nBool m_bReadable;
 		nBool m_bWritable;
 		nBool m_bResizable;
-		nBool m_bExtern;
+		nBool m_AutoResize;
+	};
+
+	class natExternMemoryStream
+		: public natRefObjImpl<natStream>
+	{
+	public:
+		natExternMemoryStream(nData externData, nLen size, nBool readable, nBool writable);
+		natExternMemoryStream(ncData externData, nLen size, nBool readable);
+		~natExternMemoryStream();
+
+		nBool CanWrite() const override;
+		nBool CanRead() const override;
+		nBool CanResize() const override;
+		nBool CanSeek() const override;
+		nBool IsEndOfStream() const override;
+		nLen GetSize() const override;
+		void SetSize(nLen Size) override;
+		nLen GetPosition() const override;
+		void SetPosition(NatSeek Origin, nLong Offset) override;
+		nByte ReadByte() override;
+		nLen ReadBytes(nData pData, nLen Length) override;
+		void WriteByte(nByte byte) override;
+		nLen WriteBytes(ncData pData, nLen Length) override;
+		void Flush() override;
+
+		ncData GetExternData() const noexcept;
+
+	private:
+		const nData m_ExternData;
+		nLen m_Size;
+		nLen m_CurrentPos;
+		nBool m_Readable;
+		nBool m_Writable;
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
