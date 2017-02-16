@@ -24,7 +24,25 @@ Environment::Endianness natBinaryReader::GetEndianness() const noexcept
 
 void natBinaryReader::Skip(nLen bytes)
 {
-	m_Stream->SetPosition(NatSeek::Cur, static_cast<nLong>(bytes));
+	if (!bytes)
+	{
+		return;
+	}
+
+	if (m_Stream->CanSeek())
+	{
+		m_Stream->SetPosition(NatSeek::Cur, static_cast<nLong>(bytes));
+	}
+	else
+	{
+		auto remainedBytes = bytes;
+		std::vector<nByte> buffer(std::min(remainedBytes, std::numeric_limits<size_t>::max()));
+		while (remainedBytes)
+		{
+			m_Stream->ReadBytes(buffer.data(), std::min(remainedBytes, buffer.size()));
+			remainedBytes -= buffer.size();
+		}
+	}
 }
 
 natBinaryWriter::natBinaryWriter(natRefPointer<natStream> stream, Environment::Endianness endianness) noexcept

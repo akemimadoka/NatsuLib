@@ -80,7 +80,7 @@ namespace NatsuLib
 
 			void Read(natBinaryReader* reader);
 			nBool ReadWithLimit(natBinaryReader* reader, nLen endExtraField);
-			void Write(natBinaryWriter* writer);
+			void Write(natBinaryWriter* writer) const;
 
 			size_t GetSize() const noexcept;
 		};
@@ -103,8 +103,8 @@ namespace NatsuLib
 		{
 			static constexpr nuInt Signature = 0x02014B50;
 
-			nByte VersionMadeByCompatibility;
 			nByte VersionMadeBySpecification;
+			nByte VersionMadeByCompatibility;
 			nuShort VersionNeededToExtract;
 			nuShort GeneralPurposeBitFlag;
 			nuShort CompressionMethod;
@@ -125,7 +125,7 @@ namespace NatsuLib
 			std::vector<ExtraField> ExtraFields;
 
 			nBool Read(natBinaryReader* reader, nBool saveExtraFieldsAndComments, StringType encoding);
-			void Write(natBinaryWriter* writer);
+			void Write(natBinaryWriter* writer, StringType encoding);
 		};
 
 		struct LocalFileHeader
@@ -134,6 +134,7 @@ namespace NatsuLib
 			static constexpr nuInt Signature = 0x04034B50;
 
 			static nBool TrySkip(natBinaryReader* reader);
+			static nBool Write(natBinaryWriter* writer, CentralDirectoryFileHeader const& header, StringType encoding);
 		};
 
 		struct ZipEndOfCentralDirectory
@@ -235,6 +236,34 @@ namespace NatsuLib
 			natRefPointer<natStream> openForUpdate();
 
 			natRefPointer<natStream> const& getUncompressedData();
+
+			class ZipEntryWriteStream final
+				: public natRefObjImpl<natStream>
+			{
+			public:
+				ZipEntryWriteStream(ZipEntry& entry, natRefPointer<natCrc32Stream> crc32Stream);
+				~ZipEntryWriteStream();
+
+				nBool CanWrite() const override;
+				nBool CanRead() const override;
+				nBool CanResize() const override;
+				nBool CanSeek() const override;
+				nBool IsEndOfStream() const override;
+				nLen GetSize() const override;
+				void SetSize(nLen /*Size*/) override;
+				nLen GetPosition() const override;
+				void SetPosition(NatSeek /*Origin*/, nLong /*Offset*/) override;
+				nLen ReadBytes(nData pData, nLen Length) override;
+				nLen WriteBytes(ncData pData, nLen Length) override;
+				void Flush() override;
+
+			private:
+				ZipEntry& m_Entry;
+				natRefPointer<natCrc32Stream> m_InternalStream;
+				nBool m_WroteData, m_UseZip64;
+
+				void finish();
+			};
 		};
 	};
 }

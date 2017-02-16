@@ -349,6 +349,10 @@ nLen natDeflateStream::writeAll()
 natCrc32Stream::natCrc32Stream(natRefPointer<natStream> stream)
 	: m_InternalStream{ std::move(stream) }, m_Crc32{}, m_CurrentPosition{}
 {
+	if (!m_InternalStream)
+	{
+		nat_Throw(natErrException, NatErr_InvalidArg, "stream should not be nullptr."_nv);
+	}
 	if (!m_InternalStream->CanWrite())
 	{
 		nat_Throw(natErrException, NatErr_InvalidArg, "stream should be writable."_nv);
@@ -361,7 +365,6 @@ natCrc32Stream::~natCrc32Stream()
 
 natRefPointer<natStream> natCrc32Stream::GetUnderlyingStream() const noexcept
 {
-	assert(m_InternalStream && "m_InternalStream should not be nullptr.");
 	return m_InternalStream;
 }
 
@@ -392,7 +395,6 @@ nBool natCrc32Stream::CanSeek() const
 
 nBool natCrc32Stream::IsEndOfStream() const
 {
-	assert(m_InternalStream && "m_InternalStream should not be nullptr.");
 	return m_InternalStream->IsEndOfStream();
 }
 
@@ -423,8 +425,6 @@ nLen natCrc32Stream::ReadBytes(nData /*pData*/, nLen /*Length*/)
 
 nLen natCrc32Stream::WriteBytes(ncData pData, nLen Length)
 {
-	assert(m_InternalStream && "m_InternalStream should not be nullptr.");
-
 	if (!Length)
 	{
 		return 0;
@@ -438,6 +438,5 @@ nLen natCrc32Stream::WriteBytes(ncData pData, nLen Length)
 
 void natCrc32Stream::Flush()
 {
-	assert(m_InternalStream && "m_InternalStream should not be nullptr.");
 	m_InternalStream->Flush();
 }

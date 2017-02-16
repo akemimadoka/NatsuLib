@@ -5,3 +5,5 @@
 #ifdef EnableStackWalker
 #	define EnableExceptionStackTrace 1
 #endif
+
+#define UseFastInverseSqrt 1

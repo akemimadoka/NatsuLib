@@ -3,6 +3,7 @@
 ///	@brief	NatsuLib±‰ªªœ‡πÿ
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
+#include "natConfig.h"
 #include <cmath>
 #include "natVec.h"
 #include "natMat.h"
@@ -21,8 +22,6 @@ namespace NatsuLib
 	{
 		struct Constants final
 		{
-			Constants() = delete;
-
 			static constexpr nDouble PI =
 #ifdef M_PI
 				M_PI
@@ -103,18 +102,20 @@ namespace NatsuLib
 			return static_cast<T>(1) / v.call(sqrt);
 		}
 
+#if UseFastInverseSqrt
 		template <template <typename> class vectype, std::enable_if_t<std::is_base_of<natVec, vectype<nFloat>>::value, bool> = true>
 		vectype<nFloat> inversesqrt(vectype<nFloat> const& v) noexcept
 		{
 			auto tmp(v);
-			auto xhalf(tmp * 0.5f);
-			auto p = reinterpret_cast<vectype<nuInt>*>(const_cast<vectype<nFloat>*>(&v));
-			auto i = vectype<nuInt>(0x5f375a86) - (*p >> vectype<nuInt>(1));
-			auto ptmp = reinterpret_cast<vectype<nFloat>*>(&i);
+			const auto xhalf(tmp * 0.5f);
+			const auto p = reinterpret_cast<vectype<nuInt>*>(const_cast<vectype<nFloat>*>(&v));
+			const auto i = vectype<nuInt>(0x5f375a86) - (*p >> vectype<nuInt>(1));
+			const auto ptmp = reinterpret_cast<vectype<nFloat>*>(&i);
 			tmp = *ptmp;
 			tmp = tmp * (1.5f - xhalf * tmp * tmp);
 			return tmp;
 		}
+#endif
 
 		template <typename T, std::enable_if_t<std::is_arithmetic<T>::value, bool> = true>
 		T normalize(T const& x) noexcept
@@ -185,7 +186,7 @@ namespace NatsuLib
 		vecType<T> mix(vecType<T> const& x, vecType<T> const& y, vecType<nBool> const& a) noexcept
 		{
 			vecType<T> Result;
-			for (nuInt i = 0u; i < x.length(); ++i)
+			for (auto i = 0u; i < x.length(); ++i)
 			{
 				Result[i] = a[i] ? y[i] : x[i];
 			}
