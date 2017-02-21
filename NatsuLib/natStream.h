@@ -129,15 +129,26 @@ namespace NatsuLib
 	public:
 		natMemoryStream(ncData pData, nLen Length, nBool bReadable, nBool bWritable, nBool autoResize);
 		natMemoryStream(nLen Length, nBool bReadable, nBool bWritable, nBool autoResize);
+		natMemoryStream(natMemoryStream const& other);
+		natMemoryStream(natMemoryStream && other) noexcept;
 		~natMemoryStream();
+
+		natMemoryStream& operator=(natMemoryStream const& other);
+		natMemoryStream& operator=(natMemoryStream && other) noexcept;
 
 		nBool CanWrite() const override;
 		nBool CanRead() const override;
 		nBool CanResize() const override;
 		nBool CanSeek() const override;
 		nBool IsEndOfStream() const override;
+
+		///	@brief	获得实际流内数据大小，并非总容量
 		nLen GetSize() const override;
+
+		///	@brief	设置流的大小
+		///	@note	无法通过设置较小的大小来截断数据，流只能增长容量而无法缩小
 		void SetSize(nLen Size) override;
+
 		nLen GetPosition() const override;
 		void SetPosition(NatSeek Origin, nLong Offset) override;
 		nByte ReadByte() override;
@@ -152,9 +163,10 @@ namespace NatsuLib
 		ncData GetInternalBuffer() const noexcept;
 
 		void Reserve(nLen newCapacity);
+		nLen GetCapacity() const noexcept;
 
 	private:
-		natCriticalSection m_CriSection;
+		mutable natCriticalSection m_CriSection;
 
 		nData m_pData;
 		nLen m_Size;
@@ -162,14 +174,27 @@ namespace NatsuLib
 		nLen m_CurPos;
 		nBool m_bReadable;
 		nBool m_bWritable;
-		nBool m_bResizable;
 		nBool m_AutoResize;
+
+		void allocateAndInvalidateOldData(nLen newCapacity);
 	};
 
 	class natExternMemoryStream
 		: public natRefObjImpl<natStream>
 	{
 	public:
+		template <size_t N>
+		natExternMemoryStream(nByte(&array)[N], nBool readable, nBool writable)
+			: natExternMemoryStream(array, N, readable, writable)
+		{
+		}
+
+		template <size_t N>
+		natExternMemoryStream(const nByte(&array)[N], nBool readable)
+			: natExternMemoryStream(array, N, readable)
+		{
+		}
+
 		natExternMemoryStream(nData externData, nLen size, nBool readable, nBool writable);
 		natExternMemoryStream(ncData externData, nLen size, nBool readable);
 		~natExternMemoryStream();
@@ -192,7 +217,7 @@ namespace NatsuLib
 		ncData GetExternData() const noexcept;
 
 	private:
-		const nData m_ExternData;
+		nData m_ExternData;
 		nLen m_Size;
 		nLen m_CurrentPos;
 		nBool m_Readable;
@@ -203,7 +228,7 @@ namespace NatsuLib
 	///	@brief	NatsuLib文件流实现
 	////////////////////////////////////////////////////////////////////////////////
 	class natFileStream
-		: public natRefObjImpl<natStream>
+		: public natRefObjImpl<natStream>, public nonmovable
 	{
 	public:
 #ifdef _WIN32
@@ -298,7 +323,7 @@ namespace NatsuLib
 	};
 
 	class natStdStream
-		: public natRefObjImpl<natStream>
+		: public natRefObjImpl<natStream>, public nonmovable
 	{
 	public:
 		enum StdStreamType

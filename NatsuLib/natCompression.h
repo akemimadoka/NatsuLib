@@ -87,6 +87,7 @@ namespace NatsuLib
 
 		struct Zip64ExtraField
 		{
+			static constexpr size_t OffsetToFirstField = 4;
 			static constexpr nuShort Tag = 1;
 
 			nuShort Size;
@@ -132,9 +133,14 @@ namespace NatsuLib
 		{
 			static constexpr nuInt DataDescriptorSignature = 0x08074B50;
 			static constexpr nuInt Signature = 0x04034B50;
+			static constexpr size_t OffsetToCrcFromHeaderStart = 14;
+			static constexpr size_t SizeOfLocalHeader = 30;
 
 			static nBool TrySkip(natBinaryReader* reader);
-			static nBool Write(natBinaryWriter* writer, CentralDirectoryFileHeader const& header, StringType encoding);
+
+			// 会修改header中的FilenameLength为实际写入的文件名长度
+			static nBool Write(natBinaryWriter* writer, CentralDirectoryFileHeader& header, StringType encoding);
+			static void WriteCrcAndSizes(natBinaryWriter* writer, CentralDirectoryFileHeader const& header, nBool usedZip64);
 		};
 
 		struct ZipEndOfCentralDirectory
@@ -207,7 +213,6 @@ namespace NatsuLib
 		{
 			friend class natZipArchive;
 		public:
-			ZipEntry(natZipArchive* archive, nStrView const& entryName);
 			~ZipEntry();
 
 			void Delete();
@@ -223,12 +228,19 @@ namespace NatsuLib
 				LZMA = 0xE
 			};
 
+			enum class BitFlag : nuShort
+			{
+				DataDescriptor = 0x8,
+				UnicodeFileName = 0x800
+			};
+
 			natZipArchive* m_Archive;
 			const nBool m_OriginallyInArchive;
 			CentralDirectoryFileHeader m_CentralDirectoryFileHeader;
 			Optional<nLen> m_OffsetOfCompressedData;
 			natRefPointer<natStream> m_UncompressedData;
 
+			ZipEntry(natZipArchive* archive, nStrView const& entryName);
 			ZipEntry(natZipArchive* archive, CentralDirectoryFileHeader const& centralDirectoryFileHeader);
 
 			natRefPointer<natStream> openForRead();
@@ -236,6 +248,8 @@ namespace NatsuLib
 			natRefPointer<natStream> openForUpdate();
 
 			natRefPointer<natStream> const& getUncompressedData();
+
+			natRefPointer<natStream> createCompressor(natRefPointer<natStream> stream);
 
 			class ZipEntryWriteStream final
 				: public natRefObjImpl<natStream>

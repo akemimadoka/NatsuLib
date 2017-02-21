@@ -14,7 +14,8 @@ namespace NatsuLib
 		{
 			enum
 			{
-				DefaultWindowBits = -15,	// 使用负数以略过头部
+				DefaultWindowBitsWithHeader = 15,
+				DefaultWindowBitsWithoutHeader = -15,	// 使用负数以略过头部
 			};
 
 			DeflateStreamImpl(int level, int method, int windowBits, int memLevel, int strategy)
@@ -128,7 +129,7 @@ namespace NatsuLib
 }
 
 natDeflateStream::natDeflateStream(natRefPointer<natStream> stream)
-	: m_InternalStream{ std::move(stream) }, m_Buffer{}, m_Impl{ std::make_unique<detail_::DeflateStreamImpl>(detail_::DeflateStreamImpl::DefaultWindowBits) }, m_WroteData{ false }
+	: m_InternalStream{ std::move(stream) }, m_Buffer{}, m_Impl{ std::make_unique<detail_::DeflateStreamImpl>(detail_::DeflateStreamImpl::DefaultWindowBitsWithoutHeader) }, m_WroteData{ false }
 {
 	if (!m_InternalStream->CanRead())
 	{
@@ -152,13 +153,13 @@ natDeflateStream::natDeflateStream(natRefPointer<natStream> stream, CompressionL
 	switch (compressionLevel)
 	{
 	case CompressionLevel::Optimal:
-		m_Impl = std::make_unique<detail_::DeflateStreamImpl>(Z_BEST_COMPRESSION, Z_DEFLATED, detail_::DeflateStreamImpl::DefaultWindowBits, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY);
+		m_Impl = std::make_unique<detail_::DeflateStreamImpl>(Z_BEST_COMPRESSION, Z_DEFLATED, detail_::DeflateStreamImpl::DefaultWindowBitsWithoutHeader, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY);
 		break;
 	case CompressionLevel::Fastest:
-		m_Impl = std::make_unique<detail_::DeflateStreamImpl>(Z_BEST_SPEED, Z_DEFLATED, detail_::DeflateStreamImpl::DefaultWindowBits, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY);
+		m_Impl = std::make_unique<detail_::DeflateStreamImpl>(Z_BEST_SPEED, Z_DEFLATED, detail_::DeflateStreamImpl::DefaultWindowBitsWithoutHeader, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY);
 		break;
 	case CompressionLevel::NoCompression:
-		m_Impl = std::make_unique<detail_::DeflateStreamImpl>(Z_NO_COMPRESSION, Z_DEFLATED, detail_::DeflateStreamImpl::DefaultWindowBits, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY);
+		m_Impl = std::make_unique<detail_::DeflateStreamImpl>(Z_NO_COMPRESSION, Z_DEFLATED, detail_::DeflateStreamImpl::DefaultWindowBitsWithoutHeader, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY);
 		break;
 	default:
 		assert(!"Invalid compressionLevel.");
@@ -430,9 +431,10 @@ nLen natCrc32Stream::WriteBytes(ncData pData, nLen Length)
 		return 0;
 	}
 
-	m_Crc32 = static_cast<nuInt>(crc32_z(m_Crc32, pData, static_cast<z_size_t>(Length)));
 	const auto writtenBytes = m_InternalStream->WriteBytes(pData, Length);
-	m_CurrentPosition += writtenBytes;
+	m_Crc32 = static_cast<nuInt>(crc32_z(m_Crc32, pData, static_cast<z_size_t>(Length)));
+	m_CurrentPosition += Length;
+
 	return writtenBytes;
 }
 

@@ -21,7 +21,7 @@ natRefPointer<natStream> natZipArchive::ZipEntry::Open()
 {
 	if (!m_Archive)
 	{
-		nat_Throw(natErrException, NatErr_IllegalState, "Archive has already disposed."_nv);
+		nat_Throw(natErrException, NatErr_IllegalState, "Archive or this entry has already disposed."_nv);
 	}
 
 	switch (m_Archive->m_Mode)
@@ -87,12 +87,13 @@ natRefPointer<natStream> const& natZipArchive::ZipEntry::getUncompressedData()
 {
 	if (!m_UncompressedData)
 	{
+		m_UncompressedData = make_ref<natMemoryStream>(0, true, true, true);
+
 		if (m_OriginallyInArchive)
 		{
 			const auto decompressor = openForRead();
-			const auto uncompressedData = make_ref<natMemoryStream>(decompressor->GetSize(), true, true, true);
-			decompressor->CopyTo(uncompressedData);
-			m_UncompressedData = std::move(uncompressedData);
+			m_UncompressedData->SetSize(decompressor->GetSize());
+			decompressor->CopyTo(m_UncompressedData);
 		}
 
 		m_CentralDirectoryFileHeader.CompressionMethod = static_cast<nuShort>(CompressionMethod::Deflate);
@@ -101,14 +102,29 @@ natRefPointer<natStream> const& natZipArchive::ZipEntry::getUncompressedData()
 	return m_UncompressedData;
 }
 
+natRefPointer<natStream> natZipArchive::ZipEntry::createCompressor(natRefPointer<natStream> stream)
+{
+	return make_ref<natCrc32Stream>(make_ref<natDeflateStream>(std::move(stream), natDeflateStream::CompressionLevel::Optimal));
+}
+
 natZipArchive::ZipEntry::ZipEntryWriteStream::ZipEntryWriteStream(ZipEntry& entry, natRefPointer<natCrc32Stream> crc32Stream)
 	: m_Entry{ entry }, m_InternalStream{ std::move(crc32Stream) }, m_WroteData{}, m_UseZip64{}
 {
+	assert(m_InternalStream && "crc32Stream should not be nullptr.");
 }
 
 natZipArchive::ZipEntry::ZipEntryWriteStream::~ZipEntryWriteStream()
 {
-	finish();
+	try
+	{
+		finish();
+	}
+	catch (...)
+	{
+		// 不应该发生
+		assert(!"Some unhandled exception caught!");
+		throw; // 由于析构函数默认noexcept(true)，立即引发std::terminate
+	}
 }
 
 nBool natZipArchive::ZipEntry::ZipEntryWriteStream::CanWrite() const
@@ -156,7 +172,7 @@ void natZipArchive::ZipEntry::ZipEntryWriteStream::SetPosition(NatSeek, nLong)
 	nat_Throw(natErrException, NatErr_NotSupport, "The type of this stream does not support this operation."_nv);
 }
 
-nLen natZipArchive::ZipEntry::ZipEntryWriteStream::ReadBytes(nData pData, nLen Length)
+nLen natZipArchive::ZipEntry::ZipEntryWriteStream::ReadBytes(nData /*pData*/, nLen /*Length*/)
 {
 	nat_Throw(natErrException, NatErr_NotSupport, "The type of this stream does not support this operation."_nv);
 }
@@ -184,14 +200,26 @@ void natZipArchive::ZipEntry::ZipEntryWriteStream::Flush()
 
 void natZipArchive::ZipEntry::ZipEntryWriteStream::finish()
 {
-	nat_Throw(NotImplementedException);
+	m_Entry.m_CentralDirectoryFileHeader.Crc32 = m_InternalStream->GetCrc32();
+	m_Entry.m_CentralDirectoryFileHeader.UncompressedSize = m_InternalStream->GetPosition();
+	m_Entry.m_CentralDirectoryFileHeader.CompressedSize = m_InternalStream->GetUnderlyingStream()->GetPosition();
+	
+	if (m_WroteData)
+	{
+		// 已经写了 LocalFileHeader，补充Crc32以及大小信息（原本写入的是不完整的，需要修正）
+		LocalFileHeader::WriteCrcAndSizes(m_Entry.m_Archive->m_Writer, m_Entry.m_CentralDirectoryFileHeader, m_UseZip64);
+	}
+	else
+	{
+		LocalFileHeader::Write(m_Entry.m_Archive->m_Writer, m_Entry.m_CentralDirectoryFileHeader, m_Entry.m_Archive->m_Encoding);
+	}
 }
 
 natZipArchive::ZipEntry::ZipEntry(natZipArchive* archive, nStrView const& entryName)
 	: m_Archive{ archive }, m_OriginallyInArchive{ false }, m_CentralDirectoryFileHeader{}, m_OffsetOfCompressedData{}
 {
 	m_CentralDirectoryFileHeader.Filename = entryName;
-	m_CentralDirectoryFileHeader.FilenameLength = static_cast<nuShort>(m_CentralDirectoryFileHeader.Filename.size() * sizeof(StringEncodingTrait<nString::UsingStringType>::CharType));
+	m_CentralDirectoryFileHeader.FilenameLength = static_cast<nuShort>(m_CentralDirectoryFileHeader.Filename.size() * sizeof(nString::CharType));
 }
 
 natZipArchive::natZipArchive(natRefPointer<natStream> stream, ZipArchiveMode mode)
@@ -209,9 +237,9 @@ natZipArchive::natZipArchive(natRefPointer<natStream> stream, StringType encodin
 	switch (mode)
 	{
 	case ZipArchiveMode::Create:
-		if (!m_Stream->CanWrite())
+		if (!m_Stream->CanWrite() || !m_Stream->CanSeek())
 		{
-			nat_Throw(natErrException, NatErr_InvalidArg, "stream should be writable with ZipArchiveMode::Create mode."_nv);
+			nat_Throw(natErrException, NatErr_InvalidArg, "stream should be writable and seekable with ZipArchiveMode::Create mode."_nv);
 		}
 		m_Writer = make_ref<natBinaryWriter>(m_Stream, Environment::Endianness::LittleEndian);
 		break;
@@ -631,7 +659,7 @@ nBool natZipArchive::LocalFileHeader::TrySkip(natBinaryReader* reader)
 	return true;
 }
 
-nBool natZipArchive::LocalFileHeader::Write(natBinaryWriter* writer, CentralDirectoryFileHeader const& header, StringType encoding)
+nBool natZipArchive::LocalFileHeader::Write(natBinaryWriter* writer, CentralDirectoryFileHeader& header, StringType encoding)
 {
 	assert(writer);
 
@@ -643,6 +671,8 @@ nBool natZipArchive::LocalFileHeader::Write(natBinaryWriter* writer, CentralDire
 	{
 		nat_Throw(natErrException, NatErr_InternalErr, "Filename is too long."_nv);
 	}
+
+	fileHeader.FilenameLength = static_cast<nuShort>(filenameBytes.size());
 
 	auto needZip64 = false;
 	Zip64ExtraField zip64ExtraField;
@@ -667,7 +697,7 @@ nBool natZipArchive::LocalFileHeader::Write(natBinaryWriter* writer, CentralDire
 	writer->WritePod(fileHeader.Crc32);
 	writer->WritePod(zip64ExtraField.CompressedSize ? Mask32Bit : static_cast<nuInt>(fileHeader.CompressedSize));
 	writer->WritePod(zip64ExtraField.UncompressedSize ? Mask32Bit : static_cast<nuInt>(fileHeader.UncompressedSize));
-	writer->WritePod(static_cast<nuShort>(filenameBytes.size()));
+	writer->WritePod(fileHeader.FilenameLength);
 	writer->WritePod(fileHeader.ExtraFieldLength);
 	stream->WriteBytes(filenameBytes.data(), filenameBytes.size());
 
@@ -682,6 +712,31 @@ nBool natZipArchive::LocalFileHeader::Write(natBinaryWriter* writer, CentralDire
 	}
 
 	return needZip64;
+}
+
+void natZipArchive::LocalFileHeader::WriteCrcAndSizes(natBinaryWriter* writer, CentralDirectoryFileHeader const& header, nBool usedZip64)
+{
+	const auto stream = writer->GetUnderlyingStream();
+	const auto dataEndPosition = stream->GetPosition();
+
+	stream->SetPosition(NatSeek::Beg, header.RelativeOffsetOfLocalHeader + OffsetToCrcFromHeaderStart);
+	writer->WritePod(header.Crc32);
+	if (usedZip64)
+	{
+		writer->WritePod(Mask32Bit);
+		writer->WritePod(Mask32Bit);
+
+		stream->SetPosition(NatSeek::Beg, header.RelativeOffsetOfLocalHeader + SizeOfLocalHeader + header.FilenameLength + Zip64ExtraField::OffsetToFirstField);
+		writer->WritePod(header.UncompressedSize);
+		writer->WritePod(header.CompressedSize);
+	}
+	else
+	{
+		writer->WritePod(static_cast<nuInt>(header.CompressedSize));
+		writer->WritePod(static_cast<nuInt>(header.UncompressedSize));
+	}
+
+	stream->SetPosition(NatSeek::Beg, dataEndPosition);
 }
 
 void natZipArchive::ZipEndOfCentralDirectory::Read(natBinaryReader* reader, StringType encoding)

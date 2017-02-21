@@ -789,7 +789,7 @@ namespace NatsuLib
 			return {};
 		}
 
-		auto pTarget = detail_::static_cast_or_dynamic_cast<P*>(m_pPointer);
+		const auto pTarget = detail_::static_cast_or_dynamic_cast<P*>(m_pPointer);
 		if (pTarget)
 		{
 			return natRefPointer<P> { pTarget };

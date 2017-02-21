@@ -1156,7 +1156,7 @@ void natStdStream::Flush()
 #endif
 
 natMemoryStream::natMemoryStream(ncData pData, nLen Length, nBool bReadable, nBool bWritable, nBool autoResize)
-	: m_pData(nullptr), m_CurPos(0u), m_bReadable(bReadable), m_bWritable(bWritable), m_bResizable(true), m_AutoResize(autoResize)
+	: m_pData(nullptr), m_CurPos(0u), m_bReadable(bReadable), m_bWritable(bWritable), m_AutoResize(autoResize)
 {
 	Reserve(Length);
 	m_Size = Length;
@@ -1171,6 +1171,18 @@ natMemoryStream::natMemoryStream(nLen Length, nBool bReadable, nBool bWritable, 
 {
 }
 
+natMemoryStream::natMemoryStream(natMemoryStream const& other)
+	: m_pData(), m_Size(), m_Capacity(), m_CurPos(), m_bReadable(), m_bWritable(), m_AutoResize()
+{
+	*this = other;
+}
+
+natMemoryStream::natMemoryStream(natMemoryStream&& other) noexcept
+	: m_pData(), m_Size(), m_Capacity(), m_CurPos(), m_bReadable(), m_bWritable(), m_AutoResize()
+{
+	*this = std::move(other);
+}
+
 nBool natMemoryStream::CanWrite() const
 {
 	return m_bWritable;
@@ -1183,7 +1195,7 @@ nBool natMemoryStream::CanRead() const
 
 nBool natMemoryStream::CanResize() const
 {
-	return m_bResizable;
+	return true;
 }
 
 nBool natMemoryStream::CanSeek() const
@@ -1204,6 +1216,8 @@ nLen natMemoryStream::GetSize() const
 void natMemoryStream::SetSize(nLen Size)
 {
 	Reserve(Size);
+	m_Size = Size;
+	m_CurPos = std::min(m_CurPos, m_Size);
 }
 
 nLen natMemoryStream::GetPosition() const
@@ -1261,6 +1275,8 @@ nLen natMemoryStream::ReadBytes(nData pData, nLen Length)
 		return tReadBytes;
 	}
 
+	natRefScopeGuard<natCriticalSection> guard(m_CriSection);
+
 	tReadBytes = std::min(Length, m_Size - m_CurPos);
 	memmove(pData + m_CurPos, m_pData, static_cast<size_t>(tReadBytes));
 	m_CurPos += tReadBytes;
@@ -1272,7 +1288,6 @@ std::future<nLen> natMemoryStream::ReadBytesAsync(nData pData, nLen Length)
 {
 	return std::async(std::launch::async, [=]()
 	{
-		natRefScopeGuard<natCriticalSection> guard(m_CriSection);
 		return ReadBytes(pData, Length);
 	});
 }
@@ -1302,6 +1317,8 @@ nLen natMemoryStream::WriteBytes(ncData pData, nLen Length)
 		return tWriteBytes;
 	}
 
+	natRefScopeGuard<natCriticalSection> guard(m_CriSection);
+
 	if (Length > m_Capacity - m_CurPos)
 	{
 		if (m_AutoResize)
@@ -1325,7 +1342,6 @@ std::future<nLen> natMemoryStream::WriteBytesAsync(ncData pData, nLen Length)
 {
 	return std::async(std::launch::async, [=]()
 	{
-		natRefScopeGuard<natCriticalSection> guard(m_CriSection);
 		return WriteBytes(pData, Length);
 	});
 }
@@ -1367,9 +1383,77 @@ void natMemoryStream::Reserve(nLen newCapacity)
 	swap(m_pData, pNewStorage);
 }
 
+nLen natMemoryStream::GetCapacity() const noexcept
+{
+	return m_Capacity;
+}
+
 natMemoryStream::~natMemoryStream()
 {
 	SafeDelArr(m_pData);
+}
+
+natMemoryStream& natMemoryStream::operator=(natMemoryStream const& other)
+{
+	if (this == &other)
+	{
+		return *this;
+	}
+
+	natRefScopeGuard<natCriticalSection> otherguard(m_CriSection);
+	natRefScopeGuard<natCriticalSection> selfguard(other.m_CriSection);
+
+	allocateAndInvalidateOldData(other.m_Size);
+
+	if (other.m_pData)
+	{
+		memmove(m_pData, other.m_pData, other.m_Size);
+	}
+	
+	m_Size = other.m_Size;
+	m_CurPos = other.m_CurPos;
+	m_bReadable = other.m_bReadable;
+	m_bWritable = other.m_bWritable;
+	m_AutoResize = other.m_AutoResize;
+
+	return *this;
+}
+
+natMemoryStream& natMemoryStream::operator=(natMemoryStream&& other) noexcept
+{
+	using std::swap;
+
+	if (this == &other)
+	{
+		return *this;
+	}
+
+	natRefScopeGuard<natCriticalSection> otherguard(m_CriSection);
+	natRefScopeGuard<natCriticalSection> selfguard(other.m_CriSection);
+
+	swap(m_pData, other.m_pData);
+	swap(m_Size, other.m_Size);
+	swap(m_Capacity, other.m_Capacity);
+	swap(m_CurPos, other.m_CurPos);
+	swap(m_bReadable, other.m_bReadable);
+	swap(m_bWritable, other.m_bWritable);
+	swap(m_AutoResize, other.m_AutoResize);
+
+	return *this;
+}
+
+void natMemoryStream::allocateAndInvalidateOldData(nLen newCapacity)
+{
+	using std::swap;
+
+	if (newCapacity <= m_Capacity)
+	{
+		return;
+	}
+
+	auto pNewStorage = new nByte[newCapacity];
+	swap(m_pData, pNewStorage); // 假设swap总是noexcept的 
+	delete[] pNewStorage;
 }
 
 natExternMemoryStream::natExternMemoryStream(nData externData, nLen size, nBool readable, nBool writable)

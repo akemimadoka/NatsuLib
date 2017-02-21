@@ -11,13 +11,16 @@ using namespace NatsuLib;
 #ifdef _WIN32
 std::atomic_bool natStackWalker::s_Initialized{ false };
 
-natScope<std::function<void()>> StackWalkerUninitializer{[]
+namespace
 {
-	if (natStackWalker::HasInitialized())
+	natScope<std::function<void()>> StackWalkerUninitializer{ []
 	{
-		SymCleanup(GetCurrentProcess());
-	}
-}};
+		if (natStackWalker::HasInitialized())
+		{
+			SymCleanup(GetCurrentProcess());
+		}
+	} };
+}
 
 natStackWalker::natStackWalker(nStrView userSearchPath)
 {

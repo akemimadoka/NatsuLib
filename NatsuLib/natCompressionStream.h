@@ -10,7 +10,7 @@ namespace NatsuLib
 	}
 
 	class natDeflateStream
-		: public natRefObjImpl<natStream>
+		: public natRefObjImpl<natStream>, public nonmovable
 	{
 		enum : size_t
 		{
