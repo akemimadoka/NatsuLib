@@ -75,11 +75,13 @@ natRefPointer<natStream> natZipArchive::ZipEntry::openForRead()
 
 natRefPointer<natStream> natZipArchive::ZipEntry::openForCreate()
 {
+	// TODO: 实现以创建模式打开
 	nat_Throw(NotImplementedException);
 }
 
 natRefPointer<natStream> natZipArchive::ZipEntry::openForUpdate()
 {
+	// TODO: 实现以更新模式打开
 	nat_Throw(NotImplementedException);
 }
 
@@ -123,7 +125,8 @@ natZipArchive::ZipEntry::ZipEntryWriteStream::~ZipEntryWriteStream()
 	{
 		// 不应该发生
 		assert(!"Some unhandled exception caught!");
-		throw; // 由于析构函数默认noexcept(true)，立即引发std::terminate
+		//throw; // 由于析构函数默认noexcept(true)，立即引发std::terminate
+		std::terminate(); // 还是直接std::terminate吧【
 	}
 }
 
@@ -213,6 +216,8 @@ void natZipArchive::ZipEntry::ZipEntryWriteStream::finish()
 	{
 		LocalFileHeader::Write(m_Entry.m_Archive->m_Writer, m_Entry.m_CentralDirectoryFileHeader, m_Entry.m_Archive->m_Encoding);
 	}
+
+	// TODO: 实现接下来的结束处理
 }
 
 natZipArchive::ZipEntry::ZipEntry(natZipArchive* archive, nStrView const& entryName)
@@ -271,9 +276,11 @@ natZipArchive::~natZipArchive()
 
 natRefPointer<natZipArchive::ZipEntry> natZipArchive::CreateEntry(nStrView entryName)
 {
-	auto entry = make_ref<ZipEntry>(this, entryName);
-	m_EntriesMap.emplace(entry->m_CentralDirectoryFileHeader.Filename, entry);
-	return std::move(entry);
+	auto entry = new ZipEntry(this, entryName);
+	const natRefPointer<ZipEntry> pEntry{ entry };
+	SafeRelease(entry);
+	m_EntriesMap.emplace(entry->m_CentralDirectoryFileHeader.Filename, pEntry);
+	return pEntry;
 }
 
 Linq<const natRefPointer<natZipArchive::ZipEntry>> natZipArchive::GetEntries() const
@@ -870,6 +877,7 @@ void natZipArchive::Zip64EndOfCentralDirectory::Write(natBinaryWriter* writer, n
 
 void natZipArchive::internalOpen()
 {
+	// TODO: 完成读取模式以外的打开
 	readEndOfCentralDirectory();
 	readCentralDirectory();
 }
@@ -933,6 +941,7 @@ void natZipArchive::readEndOfCentralDirectory()
 
 void natZipArchive::removeEntry(ZipEntry* entry)
 {
+	// TODO: 完成移除入口以后的操作
 	m_EntriesMap.erase(entry->m_CentralDirectoryFileHeader.Filename);
 }
 
