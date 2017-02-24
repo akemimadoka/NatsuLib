@@ -26,7 +26,12 @@ void natStream::ForceReadBytes(nData pData, nLen Length)
 	nLen totalReadBytes{};
 	do
 	{
-		totalReadBytes += ReadBytes(pData + totalReadBytes, Length - totalReadBytes);
+		const auto currentReadBytes = ReadBytes(pData + totalReadBytes, Length - totalReadBytes);
+		if (!currentReadBytes)
+		{
+			nat_Throw(natErrException, NatErr_InternalErr, "Unexpected end of stream."_nv);
+		}
+		totalReadBytes += currentReadBytes;
 	} while (totalReadBytes < Length);
 }
 
@@ -51,7 +56,12 @@ void natStream::ForceWriteBytes(ncData pData, nLen Length)
 	nLen totalWrittenBytes{};
 	do
 	{
-		totalWrittenBytes += WriteBytes(pData + totalWrittenBytes, Length - totalWrittenBytes);
+		const auto currentWrittenBytes = WriteBytes(pData + totalWrittenBytes, Length - totalWrittenBytes);
+		if (!currentWrittenBytes)
+		{
+			nat_Throw(natErrException, NatErr_InternalErr, "Unexpected end of stream."_nv);
+		}
+		totalWrittenBytes += currentWrittenBytes;
 	} while (totalWrittenBytes < Length);
 }
 

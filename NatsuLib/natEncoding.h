@@ -15,16 +15,16 @@ namespace NatsuLib
 			switch (encoding)
 			{
 			case StringType::Utf8:
-				return { U8StringView{ reinterpret_cast<const char*>(data), size } };
+				return { U8StringView{ reinterpret_cast<const char*>(data), size / sizeof(char) } };
 			case StringType::Utf16:
-				return { U16StringView{ reinterpret_cast<const char16_t*>(data), size } };
+				return { U16StringView{ reinterpret_cast<const char16_t*>(data), size / sizeof(char16_t) } };
 			case StringType::Utf32:
-				return { U32StringView{ reinterpret_cast<const char32_t*>(data), size} };
+				return { U32StringView{ reinterpret_cast<const char32_t*>(data), size / sizeof(char32_t) } };
 #ifdef _WIN32
 			case StringType::Ansi:
-				return { AnsiStringView{ reinterpret_cast<const char*>(data), size } };
+				return { AnsiStringView{ reinterpret_cast<const char*>(data), size / sizeof(char) } };
 			case StringType::Wide:
-				return { WideStringView{ reinterpret_cast<const wchar_t*>(data), size } };
+				return { WideStringView{ reinterpret_cast<const wchar_t*>(data), size / sizeof(wchar_t) } };
 #endif
 			default:
 				assert(!"Invalid encodingAs.");

@@ -69,6 +69,8 @@ namespace NatsuLib
 		const ZipArchiveMode m_Mode;
 
 		void addEntry(natRefPointer<ZipEntry> entry);
+		void close();
+		void writeToFile();
 
 		struct ExtraField
 		{
@@ -238,7 +240,13 @@ namespace NatsuLib
 			const nBool m_OriginallyInArchive;
 			CentralDirectoryFileHeader m_CentralDirectoryFileHeader;
 			Optional<nLen> m_OffsetOfCompressedData;
+
+			nBool m_EverOpenedForWrite;
+
+			// 缓存写入的数据，若从未被写入打开则为空
 			natRefPointer<natStream> m_UncompressedData;
+			// 在更新模式且入口未由于写入而加载时缓存原文件内容，在写入模式无作用
+			Optional<std::deque<nByte>> m_CachedCompressedData;
 
 			ZipEntry(natZipArchive* archive, nStrView const& entryName);
 			ZipEntry(natZipArchive* archive, CentralDirectoryFileHeader const& centralDirectoryFileHeader);
@@ -251,11 +259,13 @@ namespace NatsuLib
 
 			natRefPointer<natStream> createCompressor(natRefPointer<natStream> stream);
 
+			void loadExtraFieldAndCompressedData();
+
 			class ZipEntryWriteStream final
 				: public natRefObjImpl<natStream>
 			{
 			public:
-				ZipEntryWriteStream(ZipEntry& entry, natRefPointer<natCrc32Stream> crc32Stream);
+				ZipEntryWriteStream(ZipEntry& entry, natRefPointer<natCrc32Stream> crc32Stream, std::function<void(ZipEntry&)> finishCallback = {});
 				~ZipEntryWriteStream();
 
 				nBool CanWrite() const override;
@@ -275,6 +285,7 @@ namespace NatsuLib
 				ZipEntry& m_Entry;
 				natRefPointer<natCrc32Stream> m_InternalStream;
 				nBool m_WroteData, m_UseZip64;
+				std::function<void(ZipEntry&)> m_FinishCallback;
 
 				void finish();
 			};
