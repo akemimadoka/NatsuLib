@@ -84,6 +84,7 @@ namespace NatsuLib
 	///	@note	用于快速为代码加锁以解决多线程冲突
 	////////////////////////////////////////////////////////////////////////////////
 	class natCriticalSection final
+		: public nonmovable
 	{
 	public:
 		natCriticalSection();
@@ -221,6 +222,7 @@ namespace NatsuLib
 	};
 
 	class natThreadPool final
+		: public nonmovable
 	{
 	public:
 		class WorkToken final

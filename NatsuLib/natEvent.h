@@ -3,6 +3,7 @@
 ///	@brief	Event¿‡ µœ÷
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
+
 #include "natConfig.h"
 
 #include <map>
@@ -61,7 +62,7 @@ namespace NatsuLib
 
 			if (!Succeeded)
 			{
-				nat_Throw(natException, "Cannot register event \"{0}\""_nv, typeid(EventClass).name());
+				nat_Throw(natException, "Cannot register event \"{0}\""_nv, U8StringView{ typeid(EventClass).name() });
 			}
 		}
 

@@ -84,7 +84,7 @@ namespace NatsuLib
 			return fabs(x);
 		}
 
-		template <typename T, template <typename> class vectype, std::enable_if_t<std::is_base_of<natVec, vectype<T>>::value, bool> = true>
+		template <typename T, template <typename> class vectype, std::enable_if_t<IsVec<vectype<nFloat>>::value, bool> = true>
 		T length(vectype<T> const& v) noexcept
 		{
 			return sqrt(dot(v, v));
@@ -96,14 +96,14 @@ namespace NatsuLib
 			return static_cast<T>(1) / sqrt(x);
 		}
 
-		template <typename T, template <typename> class vectype, std::enable_if_t<std::is_base_of<natVec, vectype<T>>::value, bool> = true>
+		template <typename T, template <typename> class vectype, std::enable_if_t<IsVec<vectype<nFloat>>::value, bool> = true>
 		auto inversesqrt(vectype<T> const& v) noexcept -> decltype(v.call(sqrt))
 		{
 			return static_cast<T>(1) / v.call(sqrt);
 		}
 
 #if UseFastInverseSqrt
-		template <template <typename> class vectype, std::enable_if_t<std::is_base_of<natVec, vectype<nFloat>>::value, bool> = true>
+		template <template <typename> class vectype, std::enable_if_t<IsVec<vectype<nFloat>>::value, bool> = true>
 		vectype<nFloat> inversesqrt(vectype<nFloat> const& v) noexcept
 		{
 			auto tmp(v);
@@ -123,7 +123,7 @@ namespace NatsuLib
 			return x < T(0) ? T(-1) : T(1);
 		}
 
-		template <typename T, template <typename> class vectype, std::enable_if_t<std::is_base_of<natVec, vectype<T>>::value, bool> = true>
+		template <typename T, template <typename> class vectype, std::enable_if_t<IsVec<vectype<nFloat>>::value, bool> = true>
 		vectype<T> normalize(vectype<T> const& v) noexcept
 		{
 			return v * inversesqrt(dot(v, v));

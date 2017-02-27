@@ -1,7 +1,7 @@
 #pragma once
 
-#include <functional>
 #include "natRefObj.h"
+#include <functional>
 
 namespace NatsuLib
 {

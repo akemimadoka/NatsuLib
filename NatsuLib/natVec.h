@@ -48,8 +48,6 @@ auto operator##op(natVec2<T> const& v1, natVec2<U> const& v2) noexcept\
 	return natVec2<decltype(v1.x op v2.x)>(v1.x op v2.x, v1.y op v2.y);\
 }
 
-	struct natVec {};
-
 	template <typename T>
 	struct natVec3;
 
@@ -61,7 +59,6 @@ auto operator##op(natVec2<T> const& v1, natVec2<U> const& v2) noexcept\
 	////////////////////////////////////////////////////////////////////////////////
 	template <typename T = nFloat>
 	struct natVec2 final
-		: natVec
 	{
 		static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
 		typedef T type;
@@ -331,7 +328,6 @@ auto operator##op(natVec3<T> const& v1, natVec3<U> const& v2) noexcept\
 	////////////////////////////////////////////////////////////////////////////////
 	template <typename T = nFloat>
 	struct natVec3 final
-		: natVec
 	{
 		static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
 		typedef T type;
@@ -613,7 +609,6 @@ auto operator##op(natVec4<T> const& v1, natVec4<U> const& v2) noexcept\
 	////////////////////////////////////////////////////////////////////////////////
 	template <typename T = nFloat>
 	struct natVec4 final
-		: natVec
 	{
 		static_assert(std::is_arithmetic<T>::value || std::is_class<T>::value, "T should be an arithmetic type or a class.");
 		typedef T type;
@@ -888,6 +883,30 @@ auto operator##op(natVec4<T> const& v1, natVec4<U> const& v2) noexcept\
 		: x(static_cast<T>(v.x)), y(static_cast<T>(v.y)), z(static_cast<T>(v.z))
 	{
 	}
+
+	template <typename T>
+	struct IsVec
+		: std::false_type
+	{
+	};
+
+	template <typename T>
+	struct IsVec<natVec2<T>>
+		: std::true_type
+	{
+	};
+
+	template <typename T>
+	struct IsVec<natVec3<T>>
+		: std::true_type
+	{
+	};
+
+	template <typename T>
+	struct IsVec<natVec4<T>>
+		: std::true_type
+	{
+	};
 
 	///	@}
 }

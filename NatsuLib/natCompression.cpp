@@ -153,8 +153,6 @@ void natZipArchive::ZipEntry::loadExtraFieldAndCompressedData()
 		const auto extraFieldLength = reader->ReadPod<nuShort>();
 		stream->SetPosition(NatSeek::Beg, fileNameLength);
 
-		const auto endPosition = stream->GetPosition() + extraFieldLength;
-
 		m_LocalHeaderFields.emplace();
 		auto& fields = m_LocalHeaderFields.value();
 		ExtraField field;

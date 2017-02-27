@@ -43,6 +43,12 @@ auto operator##op(U const& Scalar, natQuat<T> const& q) noexcept\
 		return natQuat<decltype(q1.w op q2.w)>(q1.w op q2.w, q1.x op q2.x, q1.y op q2.y, q1.z op q2.z);\
 	}
 
+	namespace detail_
+	{
+		template <typename T, typename U>
+		struct QuatCast;
+	}
+
 	template <typename T = nFloat>
 	struct natQuat
 	{
@@ -196,34 +202,9 @@ auto operator##op(U const& Scalar, natQuat<T> const& q) noexcept\
 		natQuat inverse() const noexcept;
 
 		template <typename U>
-		U cast() const noexcept;
-
-		template <>
-		natMat3<T> cast<natMat3<T>>() const noexcept
+		U cast() const noexcept
 		{
-			natMat3<T> Result;
-			T qxx(x * x);
-			T qyy(y * y);
-			T qzz(z * z);
-			T qxz(x * z);
-			T qxy(x * y);
-			T qyz(y * z);
-			T qwx(w * x);
-			T qwy(w * y);
-			T qwz(w * z);
-
-			Result[0][0] = T(1) - T(2) * (qyy + qzz);
-			Result[0][1] = T(2) * (qxy + qwz);
-			Result[0][2] = T(2) * (qxz - qwy);
-
-			Result[1][0] = T(2) * (qxy - qwz);
-			Result[1][1] = T(1) - T(2) * (qxx + qzz);
-			Result[1][2] = T(2) * (qyz + qwx);
-
-			Result[2][0] = T(2) * (qxz + qwy);
-			Result[2][1] = T(2) * (qyz - qwx);
-			Result[2][2] = T(1) - T(2) * (qxx + qyy);
-			return Result;
+			return detail_::QuatCast<T, U>::Impl(*this);
 		}
 
 		explicit natQuat(natMat3<T> const& m) noexcept
@@ -590,4 +571,38 @@ auto operator##op(U const& Scalar, natQuat<T> const& q) noexcept\
 #ifdef TOPERATORSCALARNM
 #	undef TOPERATORSCALARNM
 #endif
+
+	namespace detail_
+	{
+		template <typename T, typename U>
+		struct QuatCast<T, natMat3<U>>
+		{
+			natMat3<U> Impl(natQuat<T> const& quat)
+			{
+				natMat3<T> Result;
+				const T qxx(quat.x * quat.x);
+				const T qyy(quat.y * quat.y);
+				const T qzz(quat.z * quat.z);
+				const T qxz(quat.x * quat.z);
+				const T qxy(quat.x * quat.y);
+				const T qyz(quat.y * quat.z);
+				const T qwx(quat.w * quat.x);
+				const T qwy(quat.w * quat.y);
+				const T qwz(quat.w * quat.z);
+
+				Result[0][0] = T(1) - T(2) * (qyy + qzz);
+				Result[0][1] = T(2) * (qxy + qwz);
+				Result[0][2] = T(2) * (qxz - qwy);
+
+				Result[1][0] = T(2) * (qxy - qwz);
+				Result[1][1] = T(1) - T(2) * (qxx + qzz);
+				Result[1][2] = T(2) * (qyz + qwx);
+
+				Result[2][0] = T(2) * (qxz + qwy);
+				Result[2][1] = T(2) * (qyz - qwx);
+				Result[2][2] = T(1) - T(2) * (qxx + qyy);
+				return Result;
+			}
+		};
+	}
 }
