@@ -221,6 +221,9 @@ namespace NatsuLib
 		[[noreturn]] void SizeOutOfRange();
 	}
 
+	////////////////////////////////////////////////////////////////////////////////
+	///	@brief	编码结果
+	////////////////////////////////////////////////////////////////////////////////
 	enum class EncodingResult
 	{
 		Accept,
@@ -299,7 +302,8 @@ namespace NatsuLib
 		{
 		}
 
-		bool IsEmpty() const noexcept
+		///	@brief	字符串视图是否为空
+		nBool IsEmpty() const noexcept
 		{
 			return m_StrBegin == m_StrEnd;
 		}
@@ -354,7 +358,7 @@ namespace NatsuLib
 			return GetSize();
 		}
 
-		bool empty() const noexcept
+		nBool empty() const noexcept
 		{
 			return m_StrBegin == m_StrEnd;
 		}
@@ -369,7 +373,7 @@ namespace NatsuLib
 			return UncheckGet(pos);
 		}
 
-		bool operator==(StringView const& other) const noexcept
+		nBool operator==(StringView const& other) const noexcept
 		{
 			if (GetSize() != other.GetSize())
 			{
@@ -379,7 +383,7 @@ namespace NatsuLib
 			return Compare(other) == 0;
 		}
 
-		bool operator!=(StringView const& other) const noexcept
+		nBool operator!=(StringView const& other) const noexcept
 		{
 			if (GetSize() != other.GetSize())
 			{
@@ -389,22 +393,22 @@ namespace NatsuLib
 			return Compare(other) != 0;
 		}
 
-		bool operator<(StringView const& other) const noexcept
+		nBool operator<(StringView const& other) const noexcept
 		{
 			return Compare(other) < 0;
 		}
 
-		bool operator>(StringView const& other) const noexcept
+		nBool operator>(StringView const& other) const noexcept
 		{
 			return Compare(other) > 0;
 		}
 
-		bool operator<=(StringView const& other) const noexcept
+		nBool operator<=(StringView const& other) const noexcept
 		{
 			return Compare(other) <= 0;
 		}
 
-		bool operator>=(StringView const& other) const noexcept
+		nBool operator>=(StringView const& other) const noexcept
 		{
 			return Compare(other) >= 0;
 		}
@@ -621,8 +625,9 @@ namespace NatsuLib
 			return FindCharRepeatBackward(findChar, 1, nEnd);
 		}
 
-		bool DoesOverlapWith(StringView const& other) const noexcept
+		nBool DoesOverlapWith(StringView const& other) const noexcept
 		{
+			// FIXME: 可能是UB，参见n4640 5.9 (3)
 			return m_StrBegin < other.m_StrEnd && m_StrEnd > other.m_StrBegin;
 		}
 
@@ -1338,7 +1343,6 @@ namespace NatsuLib
 			static constexpr StringType SelectedStringType = StringType::Utf32;
 		};
 
-		// Bug?
 		template <>
 		struct SelectStringType<wchar_t>
 		{

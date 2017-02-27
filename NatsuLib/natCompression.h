@@ -1,4 +1,9 @@
+////////////////////////////////////////////////////////////////////////////////
+///	@file	natCompression.h
+///	@brief	压缩/解压工具类
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
+
 #include "natConfig.h"
 #include "natRefObj.h"
 #include "natStream.h"
@@ -11,7 +16,7 @@ namespace NatsuLib
 {
 	
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	压缩文档
+	///	@brief	Zip压缩文档
 	///	@note	不会进行缓存，如果提供的流不符合条件请自行进行缓存
 	////////////////////////////////////////////////////////////////////////////////
 	class natZipArchive
@@ -31,8 +36,12 @@ namespace NatsuLib
 		natZipArchive(natRefPointer<natStream> stream, StringType encoding, ZipArchiveMode mode = ZipArchiveMode::Read);
 		~natZipArchive();
 
+		///	@brief	以特定的入口名创建入口
 		natRefPointer<ZipEntry> CreateEntry(nStrView entryName);
+		///	@brief	获得所有入口
 		Linq<const natRefPointer<ZipEntry>> GetEntries() const;
+		///	@brief	以特定的入口名查找入口
+		///	@note	若未找到会返回nullptr，请务必对返回值进行检查
 		natRefPointer<ZipEntry> GetEntry(nStrView entryName) const;
 
 	private:
@@ -72,7 +81,7 @@ namespace NatsuLib
 		void close();
 		void writeToFile();
 
-		// 所有ZipBlock必须保证Read类方法完成后所有成员都已初始化
+		// 实现提示：所有ZipBlock必须保证Read类方法完成后所有成员都已初始化
 
 		struct ExtraField
 		{
@@ -143,7 +152,7 @@ namespace NatsuLib
 
 			static nBool TrySkip(natBinaryReader* reader);
 
-			// 会修改header中的FilenameLength为实际写入的文件名长度
+			// 实现提示：会修改header中的FilenameLength为实际写入的文件名长度
 			static nBool Write(natBinaryWriter* writer, CentralDirectoryFileHeader& header, Optional<std::deque<ExtraField>> const& localFileHeaderFields, StringType encoding);
 			static void WriteCrcAndSizes(natBinaryWriter* writer, CentralDirectoryFileHeader const& header, nBool usedZip64);
 		};
@@ -213,6 +222,9 @@ namespace NatsuLib
 		static std::pair<nBool, size_t> readStreamBackward(natStream* stream, nData buffer, size_t bufferSize);
 
 	public:
+		////////////////////////////////////////////////////////////////////////////////
+		///	@brief	Zip压缩文档入口
+		////////////////////////////////////////////////////////////////////////////////
 		class ZipEntry
 			: public natRefObjImpl<natRefObj>
 		{
@@ -220,7 +232,10 @@ namespace NatsuLib
 		public:
 			~ZipEntry();
 
+			///	@brief	删除入口
+			///	@note	只能在更新模式下删除入口，如果入口正在被写入删除将会失败
 			void Delete();
+			///	@brief	打开入口并返回流
 			natRefPointer<natStream> Open();
 
 		private:

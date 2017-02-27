@@ -9,7 +9,7 @@ namespace NatsuLib
 {
 	namespace detail_
 	{
-		// 无线程安全保证
+		// 实现提示：无线程安全保证
 		struct DeflateStreamImpl
 		{
 			enum
@@ -55,7 +55,7 @@ namespace NatsuLib
 				assert(ZStream.avail_in == 0 && "Some data left in previous input.");
 
 				constexpr auto max = std::numeric_limits<uInt>::max();
-				// 假定nByte与Bytef相同
+				// 实现提示：假定nByte与Bytef相同
 				ZStream.next_in = const_cast<z_const Bytef*>(inputBuffer);
 				if (bufferLength > static_cast<size_t>(max))
 				{
@@ -72,7 +72,7 @@ namespace NatsuLib
 			void SetOutput(nData outputBuffer, size_t bufferLength) noexcept
 			{
 				constexpr auto max = std::numeric_limits<uInt>::max();
-				// 假定nByte与Bytef相同
+				// 实现提示：假定nByte与Bytef相同
 				ZStream.next_out = outputBuffer;
 				if (bufferLength > static_cast<size_t>(max))
 				{
@@ -236,7 +236,7 @@ nLen natDeflateStream::ReadBytes(nData pData, nLen Length)
 	{
 		// 输出之前可能未输出的内容
 		m_Impl->SetOutput(pRead, dataRemain);
-		const auto ret = m_Impl->DoNext();	// 忽略此处可能的部分错误
+		const auto ret = m_Impl->DoNext();	// 实现提示：忽略此处可能的部分错误
 		if (ret == Z_DATA_ERROR)
 		{
 			nat_Throw(InvalidData, "Invalid data with zlib message ({0})."_nv, U8StringView{ m_Impl->ZStream.msg });
@@ -268,7 +268,7 @@ nLen natDeflateStream::ReadBytes(nData pData, nLen Length)
 		
 		assert(readBytes <= sizeof m_Buffer);
 
-		// 检查了输入已经全部处理完毕了吗？
+		// 实现提示：检查了输入已经全部处理完毕了吗？
 		m_Impl->SetInput(m_Buffer, readBytes);
 	}
 
@@ -305,7 +305,7 @@ void natDeflateStream::Flush()
 			}
 			else
 			{
-				break; // 忽略错误
+				break; // 实现提示：忽略错误
 			}
 		}
 	}
@@ -330,7 +330,7 @@ nLen natDeflateStream::writeAll()
 
 			const auto availableDataSize = DefaultBufferSize - m_Impl->OutputBufferLeft - m_Impl->ZStream.avail_out;
 			const auto currentWrittenBytes = m_InternalStream->WriteBytes(m_Buffer, availableDataSize);
-			// 是否需要检查？
+			// 实现提示：是否需要检查？
 			if (currentWrittenBytes < availableDataSize)
 			{
 				nat_Throw(natErrException, NatErr_InternalErr, "Partial data written({0}/{1} requested)."_nv, currentWrittenBytes, availableDataSize);

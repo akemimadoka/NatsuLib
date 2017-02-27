@@ -1,4 +1,9 @@
+////////////////////////////////////////////////////////////////////////////////
+///	@file	natBinary.h
+///	@brief	二进制读写工具类
+////////////////////////////////////////////////////////////////////////////////
 #pragma once
+
 #include "natConfig.h"
 #include "natStream.h"
 #include "natEnvironment.h"
@@ -19,6 +24,11 @@ namespace NatsuLib
 		}
 	}
 
+	////////////////////////////////////////////////////////////////////////////////
+	///	@brief		二进制读取类
+	///	@note		读取类并以特定字节序作为特定POD类型解读
+	///	@warning	不适用于多个成员的结构体
+	////////////////////////////////////////////////////////////////////////////////
 	class natBinaryReader
 		: public natRefObjImpl<natRefObj>
 	{
@@ -31,7 +41,8 @@ namespace NatsuLib
 
 		void Skip(nLen bytes);
 
-		// 不适用于多个成员的结构体
+		///	@brief		读取流并作为POD类型T解读
+		///	@warning	不适用于多个成员的结构体
 		template <typename T>
 		std::enable_if_t<std::is_pod<T>::value, T> ReadPod()
 		{
@@ -41,7 +52,8 @@ namespace NatsuLib
 			return ret;
 		}
 
-		// 不适用于多个成员的结构体
+		///	@brief		读取流并作为POD类型T解读
+		///	@warning	不适用于多个成员的结构体
 		template <typename T>
 		std::enable_if_t<std::is_pod<T>::value> ReadPod(T& obj)
 		{
@@ -63,6 +75,11 @@ namespace NatsuLib
 		const nBool m_NeedSwapEndian;
 	};
 
+	////////////////////////////////////////////////////////////////////////////////
+	///	@brief		二进制写入类
+	///	@note		将特定POD类型以特定字节序写入流
+	///	@warning	不适用于多个成员的结构体
+	////////////////////////////////////////////////////////////////////////////////
 	class natBinaryWriter
 		: public natRefObjImpl<natRefObj>
 	{
@@ -73,7 +90,8 @@ namespace NatsuLib
 		natRefPointer<natStream> GetUnderlyingStream() const noexcept;
 		Environment::Endianness GetEndianness() const noexcept;
 
-		// 不适用于多个成员的结构体
+		///	@brief		将POD类型的实例写入流
+		///	@warning	不适用于多个成员的结构体
 		template <typename T>
 		std::enable_if_t<std::is_pod<T>::value> WritePod(T const& obj)
 		{

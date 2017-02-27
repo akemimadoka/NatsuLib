@@ -10,16 +10,23 @@ natZipArchive::ZipEntry::~ZipEntry()
 
 void natZipArchive::ZipEntry::Delete()
 {
+	if (!m_Archive)
+	{
+		return;
+	}
+
 	if (m_CurrentOpeningForWrite)
 	{
 		nat_Throw(natErrException, NatErr_IllegalState, "Cannot delete a entry while opening for write."_nv);
 	}
 
-	if (m_Archive)
+	if (m_Archive->m_Mode != ZipArchiveMode::Update)
 	{
-		m_Archive->removeEntry(this);
-		m_Archive = nullptr;
+		nat_Throw(natErrException, NatErr_IllegalState, "Cannot delete a entry while mode is not ZipArchiveMode::Update."_nv);
 	}
+
+	m_Archive->removeEntry(this);
+	m_Archive = nullptr;
 }
 
 natRefPointer<natStream> natZipArchive::ZipEntry::Open()
@@ -513,7 +520,7 @@ natRefPointer<natZipArchive::ZipEntry> natZipArchive::GetEntry(nStrView entryNam
 	const auto iter = m_EntriesMap.find(entryName);
 	if (iter == m_EntriesMap.cend())
 	{
-		nat_Throw(natErrException, NatErr_NotFound, "No such entry."_nv);
+		return {};
 	}
 	return iter->second;
 }

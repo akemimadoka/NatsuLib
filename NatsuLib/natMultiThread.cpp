@@ -270,7 +270,14 @@ natThread::ResultType natThreadPool::WorkerThread::ThreadJob()
 		}
 
 		m_Idle = false;
-		m_LastResult.set_value(m_CallableObj(m_Arg));
+		try
+		{
+			m_LastResult.set_value(m_CallableObj(m_Arg));
+		}
+		catch (...)
+		{
+			m_LastResult.set_exception(std::current_exception());
+		}
 		m_Idle = true;
 		m_Pool.onWorkerThreadIdle(m_Index, value);
 

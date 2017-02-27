@@ -328,12 +328,24 @@ void Uri::ParseUri()
 	}
 }
 
+IRequest::~IRequest()
+{
+}
+
 std::future<natRefPointer<IResponse>> IRequest::GetResponseAsync()
 {
 	return std::async([this]
 	{
 		return GetResponse();
 	});
+}
+
+IResponse::~IResponse()
+{
+}
+
+IScheme::~IScheme()
+{
 }
 
 natVFS::natVFS()
