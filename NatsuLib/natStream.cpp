@@ -500,7 +500,7 @@ nLen natSubStream::GetSize() const
 	return m_EndPosition - m_StartPosition;
 }
 
-void natSubStream::SetSize(nLen Size)
+void natSubStream::SetSize(nLen /*Size*/)
 {
 	nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support SetSize."_nv);
 }
@@ -1182,7 +1182,7 @@ natMemoryStream::natMemoryStream(nLen Length, nBool bReadable, nBool bWritable, 
 }
 
 natMemoryStream::natMemoryStream(natMemoryStream const& other)
-	: m_pData(), m_Size(), m_Capacity(), m_CurPos(), m_bReadable(), m_bWritable(), m_AutoResize()
+	: natRefObjImpl<natStream>(), m_pData(), m_Size(), m_Capacity(), m_CurPos(), m_bReadable(), m_bWritable(), m_AutoResize()
 {
 	*this = other;
 }

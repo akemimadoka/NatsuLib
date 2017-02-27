@@ -171,12 +171,23 @@ int main()
 		}
 
 		{
-			natZipArchive zip{ make_ref<natFileStream>("1.zip"_nv, true, false) };
-			const auto entry = zip.GetEntry("1/2.txt"_nv);
-			nByte data[128]{};
-			const auto stream = entry->Open();
-			stream->ReadBytes(data, sizeof data);
-			stream.GetRefCount();
+			{
+				natZipArchive zip{ make_ref<natFileStream>("1.zip"_nv, true, false), natZipArchive::ZipArchiveMode::Read };
+				const auto entry = zip.GetEntry("1/2.txt"_nv);
+				nByte data[128]{};
+				const auto stream = entry->Open();
+				stream->ReadBytes(data, sizeof data);
+				stream.GetRefCount();
+			}
+			{
+				const auto fileStream = make_ref<natFileStream>("2.zip"_nv, true, true);
+				fileStream->SetSize(0);
+				natZipArchive zip{ fileStream, natZipArchive::ZipArchiveMode::Create };
+				const auto entry = zip.CreateEntry("1.txt"_nv);
+				const auto stream = entry->Open();
+				stream->WriteBytes(reinterpret_cast<ncData>("2333"), 4);
+				stream.GetRefCount();
+			}
 		}
 	}
 #ifdef _WIN32

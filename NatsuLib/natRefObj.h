@@ -196,11 +196,11 @@ namespace NatsuLib
 			: m_View{ nullptr }
 		{
 #ifdef TraceRefObj
-			OutputDebugString(natUtil::FormatString("Type %s created at (%p)\n"_nv, AnsiStringView{ typeid(*this).name() }, this).c_str());
+			OutputDebugString(natUtil::FormatString("Type %s created at (%p)\n"_nv, nStringView{ typeid(*this).name() }, this).c_str());
 #endif
 		}
 		constexpr natRefObjImpl(natRefObjImpl const&) noexcept
-			: natRefObjImpl()
+			: m_View{ nullptr }
 		{
 		}
 		natRefObjImpl& operator=(natRefObjImpl const&) noexcept
@@ -211,7 +211,7 @@ namespace NatsuLib
 		virtual ~natRefObjImpl()
 		{
 #ifdef TraceRefObj
-			OutputDebugString(natUtil::FormatString("Type %s destroyed at (%p)\n"_nv, AnsiStringView{ typeid(*this).name() }, this).c_str());
+			OutputDebugString(natUtil::FormatString("Type %s destroyed at (%p)\n"_nv, nStringView{ typeid(*this).name() }, this).c_str());
 #endif
 			const auto view = m_View.load(std::memory_order_consume);
 			if (view)

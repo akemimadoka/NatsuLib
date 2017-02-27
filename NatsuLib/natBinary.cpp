@@ -46,7 +46,7 @@ void natBinaryReader::Skip(nLen bytes)
 }
 
 natBinaryWriter::natBinaryWriter(natRefPointer<natStream> stream, Environment::Endianness endianness) noexcept
-	: m_Stream{ std::move(stream) }, m_Endianness{ endianness }, m_NeedSwapEndian{ endianness == Environment::GetEndianness() }
+	: m_Stream{ std::move(stream) }, m_Endianness{ endianness }, m_NeedSwapEndian{ endianness != Environment::GetEndianness() }
 {
 }
 

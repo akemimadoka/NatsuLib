@@ -72,6 +72,8 @@ namespace NatsuLib
 		void close();
 		void writeToFile();
 
+		// 所有ZipBlock必须保证Read类方法完成后所有成员都已初始化
+
 		struct ExtraField
 		{
 			static constexpr size_t HeaderSize = 4;
@@ -136,12 +138,13 @@ namespace NatsuLib
 			static constexpr nuInt DataDescriptorSignature = 0x08074B50;
 			static constexpr nuInt Signature = 0x04034B50;
 			static constexpr size_t OffsetToCrcFromHeaderStart = 14;
+			static constexpr size_t OffsetToFilenameLength = 26;
 			static constexpr size_t SizeOfLocalHeader = 30;
 
 			static nBool TrySkip(natBinaryReader* reader);
 
 			// 会修改header中的FilenameLength为实际写入的文件名长度
-			static nBool Write(natBinaryWriter* writer, CentralDirectoryFileHeader& header, StringType encoding);
+			static nBool Write(natBinaryWriter* writer, CentralDirectoryFileHeader& header, Optional<std::deque<ExtraField>> const& localFileHeaderFields, StringType encoding);
 			static void WriteCrcAndSizes(natBinaryWriter* writer, CentralDirectoryFileHeader const& header, nBool usedZip64);
 		};
 
@@ -241,12 +244,14 @@ namespace NatsuLib
 			CentralDirectoryFileHeader m_CentralDirectoryFileHeader;
 			Optional<nLen> m_OffsetOfCompressedData;
 
-			nBool m_EverOpenedForWrite;
+			nBool m_EverOpenedForWrite, m_CurrentOpeningForWrite;
 
-			// 缓存写入的数据，若从未被写入打开则为空
+			Optional<std::deque<ExtraField>> m_LocalHeaderFields;
+
+			// 缓存写入的数据
 			natRefPointer<natStream> m_UncompressedData;
 			// 在更新模式且入口未由于写入而加载时缓存原文件内容，在写入模式无作用
-			Optional<std::deque<nByte>> m_CachedCompressedData;
+			Optional<std::vector<nByte>> m_CachedCompressedData;
 
 			ZipEntry(natZipArchive* archive, nStrView const& entryName);
 			ZipEntry(natZipArchive* archive, CentralDirectoryFileHeader const& centralDirectoryFileHeader);
@@ -255,17 +260,20 @@ namespace NatsuLib
 			natRefPointer<natStream> openForCreate();
 			natRefPointer<natStream> openForUpdate();
 
+			nLen getOffsetOfCompressedData();
+
 			natRefPointer<natStream> const& getUncompressedData();
 
 			natRefPointer<natStream> createCompressor(natRefPointer<natStream> stream);
 
 			void loadExtraFieldAndCompressedData();
+			void writeLocalFileHeaderAndData();
 
 			class ZipEntryWriteStream final
 				: public natRefObjImpl<natStream>
 			{
 			public:
-				ZipEntryWriteStream(ZipEntry& entry, natRefPointer<natCrc32Stream> crc32Stream, std::function<void(ZipEntry&)> finishCallback = {});
+				ZipEntryWriteStream(ZipEntry& entry, natRefPointer<natCrc32Stream> crc32Stream, std::function<void()> finishCallback = {});
 				~ZipEntryWriteStream();
 
 				nBool CanWrite() const override;
@@ -284,10 +292,43 @@ namespace NatsuLib
 			private:
 				ZipEntry& m_Entry;
 				natRefPointer<natCrc32Stream> m_InternalStream;
+				nLen m_InitialPosition;
 				nBool m_WroteData, m_UseZip64;
-				std::function<void(ZipEntry&)> m_FinishCallback;
+				std::function<void()> m_FinishCallback;
 
 				void finish();
+			};
+
+			class DisposeCallbackStream final
+				: public natRefObjImpl<natStream>
+			{
+			public:
+				explicit DisposeCallbackStream(natRefPointer<natStream> internalStream, std::function<void()> disposeCallback = {});
+				~DisposeCallbackStream();
+
+				nBool HasDisposeCallback() const noexcept;
+				natRefPointer<natStream> GetUnderlyingStream() const noexcept;
+
+				nBool CanWrite() const override;
+				nBool CanRead() const override;
+				nBool CanResize() const override;
+				nBool CanSeek() const override;
+				nBool IsEndOfStream() const override;
+				nLen GetSize() const override;
+				void SetSize(nLen Size) override;
+				nLen GetPosition() const override;
+				void SetPosition(NatSeek Origin, nLong Offset) override;
+				nByte ReadByte() override;
+				nLen ReadBytes(nData pData, nLen Length) override;
+				std::future<nLen> ReadBytesAsync(nData pData, nLen Length) override;
+				void WriteByte(nByte byte) override;
+				nLen WriteBytes(ncData pData, nLen Length) override;
+				std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) override;
+				void Flush() override;
+
+			private:
+				natRefPointer<natStream> m_InternalStream;
+				std::function<void()> m_DisposeCallback;
 			};
 		};
 	};
