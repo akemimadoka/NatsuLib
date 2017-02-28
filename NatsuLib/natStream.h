@@ -217,11 +217,11 @@ namespace NatsuLib
 		ncData GetExternData() const noexcept;
 
 	private:
-		nData m_ExternData;
-		nLen m_Size;
+		const nData m_ExternData;
+		const nLen m_Size;
 		nLen m_CurrentPos;
-		nBool m_Readable;
-		nBool m_Writable;
+		const nBool m_Readable;
+		const nBool m_Writable;
 	};
 
 	////////////////////////////////////////////////////////////////////////////////

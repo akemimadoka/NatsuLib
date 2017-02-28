@@ -79,7 +79,7 @@ nLen natStream::CopyTo(natRefPointer<natStream> const& other)
 
 	nByte buffer[DefaultCopyToBufferSize];
 	nLen readBytes, totalReadBytes{};
-	while (!IsEndOfStream())
+	while (true)
 	{
 		readBytes = ReadBytes(buffer, sizeof buffer);
 		totalReadBytes += readBytes;
@@ -1310,6 +1310,8 @@ void natMemoryStream::WriteByte(nByte byte)
 	}
 
 	m_pData[m_CurPos++] = byte;
+	m_Size = std::max(m_CurPos, m_Size);
+	assert(m_Size <= m_Capacity);
 }
 
 nLen natMemoryStream::WriteBytes(ncData pData, nLen Length)
@@ -1344,6 +1346,7 @@ nLen natMemoryStream::WriteBytes(ncData pData, nLen Length)
 
 	memmove(m_pData, pData + m_CurPos, static_cast<size_t>(tWriteBytes));
 	m_CurPos += tWriteBytes;
+	m_Size = std::max(m_CurPos, m_Size);
 
 	return tWriteBytes;
 }
@@ -1374,7 +1377,7 @@ void natMemoryStream::Reserve(nLen newCapacity)
 {
 	using std::swap;
 
-	if (newCapacity <= m_Capacity)
+	if (newCapacity > 0 && newCapacity <= m_Capacity)
 	{
 		return;
 	}

@@ -199,8 +199,10 @@
     <ClInclude Include="natMultiThread.h" />
     <ClInclude Include="natNamedPipe.h" />
     <ClInclude Include="natNode.h" />
+    <ClInclude Include="natProperty.h" />
     <ClInclude Include="natQuat.h" />
     <ClInclude Include="natRefObj.h" />
+    <ClInclude Include="natRelationalOperator.h" />
     <ClInclude Include="natStackWalker.h" />
     <ClInclude Include="natStopWatch.h" />
     <ClInclude Include="natStream.h" />

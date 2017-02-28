@@ -129,6 +129,12 @@
     <ClInclude Include="natEncoding.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="natRelationalOperator.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="natProperty.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

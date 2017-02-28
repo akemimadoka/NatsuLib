@@ -15,6 +15,8 @@
 #include <natLocalFileScheme.h>
 #include <natCompression.h>
 #include <natCompressionStream.h>
+#include <natRelationalOperator.h>
+#include <natProperty.h>
 
 using namespace NatsuLib;
 
@@ -182,12 +184,44 @@ int main()
 			{
 				const auto fileStream = make_ref<natFileStream>("2.zip"_nv, true, true);
 				fileStream->SetSize(0);
-				natZipArchive zip{ fileStream, natZipArchive::ZipArchiveMode::Create };
-				const auto entry = zip.CreateEntry("1.txt"_nv);
-				const auto stream = entry->Open();
-				stream->WriteBytes(reinterpret_cast<ncData>("2333"), 4);
-				stream.GetRefCount();
+				{
+					natZipArchive zip{ fileStream, natZipArchive::ZipArchiveMode::Create };
+					const auto entry = zip.CreateEntry("1.txt"_nv);
+					const auto stream = entry->Open();
+					stream->WriteBytes(reinterpret_cast<ncData>("2333"), 4);
+				}
+				fileStream->SetPosition(NatSeek::Beg, 0);
+				{
+					natZipArchive zip{ fileStream, natZipArchive::ZipArchiveMode::Update };
+					zip.CreateEntry("test/"_nv);
+					const auto entry = zip.CreateEntry("test/2.txt"_nv);
+					const auto stream = entry->Open();
+					stream->WriteBytes(reinterpret_cast<ncData>("1234"), 4);
+					//zip.GetEntry("1.txt"_nv)->Delete();
+				}
 			}
+		}
+
+		{
+			struct Integer
+				: natRefObjImpl<RelationalOperator::IComparable<int>>
+			{
+				nInt CompareTo(int const& other) const override
+				{
+					return m_Value - other;
+				}
+
+			private:
+				int m_Value{};
+
+			public:
+				Property<int> value{ m_Value, Property<int>::All };
+			};
+
+			Integer a;
+			a.value = 5;
+			logger.LogMsg("%b"_nv, a < 3);
+			logger.LogMsg("%b"_nv, a > -1);
 		}
 	}
 #ifdef _WIN32

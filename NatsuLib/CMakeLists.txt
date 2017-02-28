@@ -44,8 +44,10 @@ set(SOURCE_FILES
     natNamedPipe.cpp
     natNamedPipe.h
     natNode.h
+    natProperty.h
     natQuat.h
     natRefObj.h
+    natRelationalOperator.h
     natStackWalker.cpp
     natStackWalker.h
     natStopWatch.cpp

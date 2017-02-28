@@ -246,7 +246,7 @@ namespace NatsuLib
 	template <typename T, typename ...Args>
 	constexpr auto make_scope(T CallableObj, Args&&... args)
 	{
-		return natScope<T, decltype(args)...>{ CallableObj, std::forward<Args>(args)... };
+		return natScope<T, decltype(args)...>{ std::move(CallableObj), std::forward<Args>(args)... };
 	}
 
 	using detail_::nullopt_t;
@@ -493,6 +493,11 @@ namespace NatsuLib
 		void emplace(Args&&... args)
 		{
 			m_Value.Init(std::forward<Args>(args)...);
+		}
+
+		void emplace()
+		{
+			m_Value.Init(defaultconstruct);
 		}
 
 	private:

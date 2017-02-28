@@ -164,7 +164,8 @@ void natZipArchive::ZipEntry::loadExtraFieldAndCompressedData()
 		auto& fields = m_LocalHeaderFields.value();
 		ExtraField field;
 
-		while (field.ReadWithLimit(reader, extraFieldLength))
+		const auto extraFieldStart = stream->GetPosition();
+		while (field.ReadWithLimit(reader, extraFieldStart + extraFieldLength))
 		{
 			if (field.Tag != Zip64ExtraField::Tag)
 			{
@@ -1165,7 +1166,6 @@ void natZipArchive::Zip64EndOfCentralDirectory::Write(natBinaryWriter* writer, n
 
 void natZipArchive::internalOpen()
 {
-	// TODO: 完成读取模式以外的打开
 	switch (m_Mode)
 	{
 	case ZipArchiveMode::Create:
@@ -1241,7 +1241,6 @@ void natZipArchive::readEndOfCentralDirectory()
 
 void natZipArchive::removeEntry(ZipEntry* entry)
 {
-	// TODO: 完成移除入口以后的操作
 	m_EntriesMap.erase(entry->m_CentralDirectoryFileHeader.Filename);
 }
 
