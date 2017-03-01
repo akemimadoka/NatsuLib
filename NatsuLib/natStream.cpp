@@ -95,6 +95,220 @@ nLen natStream::CopyTo(natRefPointer<natStream> const& other)
 	return totalReadBytes;
 }
 
+natSubStream::natSubStream(natRefPointer<natStream> stream, nLen startPosition, nLen endPosition)
+	: m_InternalStream{ std::move(stream) }, m_StartPosition{ startPosition }, m_EndPosition{ endPosition }, m_CurrentPosition{ startPosition }
+{
+	if (!m_InternalStream->CanSeek())
+	{
+		nat_Throw(natErrException, NatErr_InvalidArg, "stream should be seekable."_nv);
+	}
+	if (startPosition > endPosition)
+	{
+		nat_Throw(natErrException, NatErr_OutOfRange, "startPosition cannot be bigger than endPosition."_nv);
+	}
+	if (m_InternalStream->GetSize() < endPosition)
+	{
+		nat_Throw(natErrException, NatErr_OutOfRange, "Range is too big."_nv);
+	}
+	m_InternalStream->SetPosition(NatSeek::Beg, startPosition);
+}
+
+natSubStream::~natSubStream()
+{
+}
+
+natRefPointer<natStream> natSubStream::GetUnderlyingStream() const noexcept
+{
+	return m_InternalStream;
+}
+
+nBool natSubStream::CanWrite() const
+{
+	return m_InternalStream->CanWrite();
+}
+
+nBool natSubStream::CanRead() const
+{
+	return m_InternalStream->CanRead();
+}
+
+nBool natSubStream::CanResize() const
+{
+	return false;
+}
+
+nBool natSubStream::CanSeek() const
+{
+	return true;
+}
+
+nBool natSubStream::IsEndOfStream() const
+{
+	return m_CurrentPosition == m_EndPosition;
+}
+
+nLen natSubStream::GetSize() const
+{
+	return m_EndPosition - m_StartPosition;
+}
+
+void natSubStream::SetSize(nLen /*Size*/)
+{
+	nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support SetSize."_nv);
+}
+
+nLen natSubStream::GetPosition() const
+{
+	return m_CurrentPosition;
+}
+
+void natSubStream::SetPosition(NatSeek Origin, nLong Offset)
+{
+	nLen position{};
+	switch (Origin)
+	{
+	case NatSeek::Beg:
+		position = m_StartPosition + Offset;
+		break;
+	case NatSeek::Cur:
+		position = m_CurrentPosition + Offset;
+		break;
+	case NatSeek::End:
+		position = m_EndPosition + Offset;
+		break;
+	default:
+		assert(!"Invalid Origin.");
+	}
+
+	if (position < m_StartPosition || position > m_EndPosition)
+	{
+		nat_Throw(natErrException, NatErr_InvalidArg, "Out of range."_nv);
+	}
+
+	m_CurrentPosition = position;
+
+	adjustPosition();
+}
+
+nByte natSubStream::ReadByte()
+{
+	if (!m_InternalStream->CanRead())
+	{
+		nat_Throw(natErrException, NatErr_NotSupport, "Underlying stream cannot read."_nv);
+	}
+
+	if (m_CurrentPosition >= m_EndPosition)
+	{
+		nat_Throw(natErrException, NatErr_OutOfRange, "Reached end of stream."_nv);
+	}
+
+	adjustPosition();
+	return m_InternalStream->ReadByte();
+}
+
+nLen natSubStream::ReadBytes(nData pData, nLen Length)
+{
+	if (!m_InternalStream->CanRead())
+	{
+		nat_Throw(natErrException, NatErr_NotSupport, "Underlying stream cannot read."_nv);
+	}
+
+	const auto realLength = std::min(Length, m_EndPosition - m_CurrentPosition);
+	adjustPosition();
+	return m_InternalStream->ReadBytes(pData, realLength);
+}
+
+std::future<nLen> natSubStream::ReadBytesAsync(nData pData, nLen Length)
+{
+	if (!m_InternalStream->CanRead())
+	{
+		nat_Throw(natErrException, NatErr_NotSupport, "Underlying stream cannot read."_nv);
+	}
+
+	const auto realLength = std::min(Length, m_EndPosition - m_CurrentPosition);
+	adjustPosition();
+	return m_InternalStream->ReadBytesAsync(pData, realLength);
+}
+
+void natSubStream::WriteByte(nByte byte)
+{
+	if (!m_InternalStream->CanWrite())
+	{
+		nat_Throw(natErrException, NatErr_NotSupport, "Underlying stream cannot write."_nv);
+	}
+
+	if (m_CurrentPosition >= m_EndPosition)
+	{
+		nat_Throw(natErrException, NatErr_OutOfRange, "Reached end of stream."_nv);
+	}
+
+	adjustPosition();
+	return m_InternalStream->WriteByte(byte);
+}
+
+nLen natSubStream::WriteBytes(ncData pData, nLen Length)
+{
+	if (!m_InternalStream->CanWrite())
+	{
+		nat_Throw(natErrException, NatErr_NotSupport, "Underlying stream cannot write."_nv);
+	}
+
+	const auto realLength = std::min(Length, m_EndPosition - m_CurrentPosition);
+	adjustPosition();
+	return m_InternalStream->WriteBytes(pData, realLength);
+}
+
+std::future<nLen> natSubStream::WriteBytesAsync(ncData pData, nLen Length)
+{
+	if (!m_InternalStream->CanWrite())
+	{
+		nat_Throw(natErrException, NatErr_NotSupport, "Underlying stream cannot write."_nv);
+	}
+
+	const auto realLength = std::min(Length, m_EndPosition - m_CurrentPosition);
+	adjustPosition();
+	return m_InternalStream->WriteBytesAsync(pData, realLength);
+}
+
+void natSubStream::Flush()
+{
+	m_InternalStream->Flush();
+}
+
+void natSubStream::adjustPosition() const
+{
+	assert(m_CurrentPosition >= m_StartPosition && m_CurrentPosition <= m_EndPosition);
+
+	if (m_CurrentPosition == m_InternalStream->GetPosition())
+	{
+		return;
+	}
+
+	if (m_CurrentPosition <= static_cast<nLen>(std::numeric_limits<nLong>::max()))
+	{
+		m_InternalStream->SetPosition(NatSeek::Beg, m_CurrentPosition);
+	}
+	else
+	{
+		m_InternalStream->SetPosition(NatSeek::End, -static_cast<nLong>(std::numeric_limits<nLen>::max() - m_CurrentPosition));
+	}
+}
+
+void natSubStream::checkPosition() const
+{
+	if (m_CurrentPosition < m_StartPosition || m_CurrentPosition > m_EndPosition)
+	{
+		nat_Throw(natErrException, NatErr_OutOfRange, "m_CurrentPosition is out of range."_nv);
+	}
+
+	const auto position = m_InternalStream->GetPosition();
+
+	if (m_CurrentPosition != position)
+	{
+		nat_Throw(natErrException, NatErr_IllegalState, "m_CurrentPosition does not equal to real position in m_InternalStream."_nv);
+	}
+}
+
 #ifdef _WIN32
 natFileStream::natFileStream(nStrView filename, nBool bReadable, nBool bWritable, nBool isAsync)
 	: m_hMappedFile(NULL), m_ShouldDispose(true), m_IsAsync(isAsync), m_Filename(filename), m_bReadable(bReadable), m_bWritable(bWritable)
@@ -441,220 +655,6 @@ natRefPointer<natMemoryStream> natFileStream::MapToMemoryStream()
 	m_pMappedFile = make_ref<natExternMemoryStream>(static_cast<nData>(pFile), GetSize(), m_bReadable, m_bWritable);
 
 	return m_pMappedFile;
-}
-
-natSubStream::natSubStream(natRefPointer<natStream> stream, nLen startPosition, nLen endPosition)
-	: m_InternalStream{ std::move(stream) }, m_StartPosition{ startPosition }, m_EndPosition{ endPosition }, m_CurrentPosition{ startPosition }
-{
-	if (!m_InternalStream->CanSeek())
-	{
-		nat_Throw(natErrException, NatErr_InvalidArg, "stream should be seekable."_nv);
-	}
-	if (startPosition > endPosition)
-	{
-		nat_Throw(natErrException, NatErr_OutOfRange, "startPosition cannot be bigger than endPosition."_nv);
-	}
-	if (m_InternalStream->GetSize() < endPosition)
-	{
-		nat_Throw(natErrException, NatErr_OutOfRange, "Range is too big."_nv);
-	}
-	m_InternalStream->SetPosition(NatSeek::Beg, startPosition);
-}
-
-natSubStream::~natSubStream()
-{
-}
-
-natRefPointer<natStream> natSubStream::GetUnderlyingStream() const noexcept
-{
-	return m_InternalStream;
-}
-
-nBool natSubStream::CanWrite() const
-{
-	return m_InternalStream->CanWrite();
-}
-
-nBool natSubStream::CanRead() const
-{
-	return m_InternalStream->CanRead();
-}
-
-nBool natSubStream::CanResize() const
-{
-	return false;
-}
-
-nBool natSubStream::CanSeek() const
-{
-	return true;
-}
-
-nBool natSubStream::IsEndOfStream() const
-{
-	return m_CurrentPosition == m_EndPosition;
-}
-
-nLen natSubStream::GetSize() const
-{
-	return m_EndPosition - m_StartPosition;
-}
-
-void natSubStream::SetSize(nLen /*Size*/)
-{
-	nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support SetSize."_nv);
-}
-
-nLen natSubStream::GetPosition() const
-{
-	return m_CurrentPosition;
-}
-
-void natSubStream::SetPosition(NatSeek Origin, nLong Offset)
-{
-	nLen position{};
-	switch (Origin)
-	{
-	case NatSeek::Beg:
-		position = m_StartPosition + Offset;
-		break;
-	case NatSeek::Cur:
-		position = m_CurrentPosition + Offset;
-		break;
-	case NatSeek::End:
-		position = m_EndPosition + Offset;
-		break;
-	default:
-		assert(!"Invalid Origin.");
-	}
-
-	if (position < m_StartPosition || position > m_EndPosition)
-	{
-		nat_Throw(natErrException, NatErr_InvalidArg, "Out of range."_nv);
-	}
-
-	m_CurrentPosition = position;
-
-	adjustPosition();
-}
-
-nByte natSubStream::ReadByte()
-{
-	if (!m_InternalStream->CanRead())
-	{
-		nat_Throw(natErrException, NatErr_NotSupport, "Underlying stream cannot read."_nv);
-	}
-
-	if (m_CurrentPosition >= m_EndPosition)
-	{
-		nat_Throw(natErrException, NatErr_OutOfRange, "Reached end of stream."_nv);
-	}
-	
-	adjustPosition();
-	return m_InternalStream->ReadByte();
-}
-
-nLen natSubStream::ReadBytes(nData pData, nLen Length)
-{
-	if (!m_InternalStream->CanRead())
-	{
-		nat_Throw(natErrException, NatErr_NotSupport, "Underlying stream cannot read."_nv);
-	}
-
-	const auto realLength = std::min(Length, m_EndPosition - m_CurrentPosition);
-	adjustPosition();
-	return m_InternalStream->ReadBytes(pData, realLength);
-}
-
-std::future<nLen> natSubStream::ReadBytesAsync(nData pData, nLen Length)
-{
-	if (!m_InternalStream->CanRead())
-	{
-		nat_Throw(natErrException, NatErr_NotSupport, "Underlying stream cannot read."_nv);
-	}
-
-	const auto realLength = std::min(Length, m_EndPosition - m_CurrentPosition);
-	adjustPosition();
-	return m_InternalStream->ReadBytesAsync(pData, realLength);
-}
-
-void natSubStream::WriteByte(nByte byte)
-{
-	if (!m_InternalStream->CanWrite())
-	{
-		nat_Throw(natErrException, NatErr_NotSupport, "Underlying stream cannot write."_nv);
-	}
-
-	if (m_CurrentPosition >= m_EndPosition)
-	{
-		nat_Throw(natErrException, NatErr_OutOfRange, "Reached end of stream."_nv);
-	}
-
-	adjustPosition();
-	return m_InternalStream->WriteByte(byte);
-}
-
-nLen natSubStream::WriteBytes(ncData pData, nLen Length)
-{
-	if (!m_InternalStream->CanWrite())
-	{
-		nat_Throw(natErrException, NatErr_NotSupport, "Underlying stream cannot write."_nv);
-	}
-
-	const auto realLength = std::min(Length, m_EndPosition - m_CurrentPosition);
-	adjustPosition();
-	return m_InternalStream->WriteBytes(pData, realLength);
-}
-
-std::future<nLen> natSubStream::WriteBytesAsync(ncData pData, nLen Length)
-{
-	if (!m_InternalStream->CanWrite())
-	{
-		nat_Throw(natErrException, NatErr_NotSupport, "Underlying stream cannot write."_nv);
-	}
-
-	const auto realLength = std::min(Length, m_EndPosition - m_CurrentPosition);
-	adjustPosition();
-	return m_InternalStream->WriteBytesAsync(pData, realLength);
-}
-
-void natSubStream::Flush()
-{
-	m_InternalStream->Flush();
-}
-
-void natSubStream::adjustPosition() const
-{
-	assert(m_CurrentPosition >= m_StartPosition && m_CurrentPosition <= m_EndPosition);
-	
-	if (m_CurrentPosition == m_InternalStream->GetPosition())
-	{
-		return;
-	}
-
-	if (m_CurrentPosition <= static_cast<nLen>(std::numeric_limits<nLong>::max()))
-	{
-		m_InternalStream->SetPosition(NatSeek::Beg, m_CurrentPosition);
-	}
-	else
-	{
-		m_InternalStream->SetPosition(NatSeek::End, -static_cast<nLong>(std::numeric_limits<nLen>::max() - m_CurrentPosition));
-	}
-}
-
-void natSubStream::checkPosition() const
-{
-	if (m_CurrentPosition < m_StartPosition || m_CurrentPosition > m_EndPosition)
-	{
-		nat_Throw(natErrException, NatErr_OutOfRange, "m_CurrentPosition is out of range."_nv);
-	}
-
-	const auto position = m_InternalStream->GetPosition();
-
-	if (m_CurrentPosition != position)
-	{
-		nat_Throw(natErrException, NatErr_IllegalState, "m_CurrentPosition does not equal to real position in m_InternalStream."_nv);
-	}
 }
 
 natFileStream::~natFileStream()
@@ -1073,6 +1073,51 @@ natStdStream::natStdStream(StdStreamType stdStreamType)
 
 natStdStream::~natStdStream()
 {
+}
+
+nBool natStdStream::CanWrite() const
+{
+	return m_StdStreamType != StdIn;
+}
+
+nBool natStdStream::CanRead() const
+{
+	return m_StdStreamType == StdIn;
+}
+
+nBool natStdStream::CanResize() const
+{
+	return false;
+}
+
+nBool natStdStream::CanSeek() const
+{
+	return false;
+}
+
+nBool natStdStream::IsEndOfStream() const
+{
+	return false;
+}
+
+nLen natStdStream::GetSize() const
+{
+	return 0;
+}
+
+void natStdStream::SetSize(nLen)
+{
+	nat_Throw(natErrException, NatErr_NotSupport, "This stream cannot set size."_nv);
+}
+
+nLen natStdStream::GetPosition() const
+{
+	return 0;
+}
+
+void natStdStream::SetPosition(NatSeek, nLong)
+{
+	nat_Throw(natErrException, NatErr_NotSupport, "This stream cannot set position."_nv);
 }
 
 nByte natStdStream::ReadByte()

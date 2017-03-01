@@ -18,7 +18,8 @@ namespace NatsuLib
 			CopySetter = 2,
 			MoveSetter = 4,
 
-			All = Getter | CopySetter | MoveSetter,
+			AllSetter = CopySetter | MoveSetter,
+			All = Getter | AllSetter,
 		};
 
 		explicit Property(GetterDelegate getter = {}, CopySetterDelegate copySetter = {}, MoveSetterDelegate moveSetter = {})

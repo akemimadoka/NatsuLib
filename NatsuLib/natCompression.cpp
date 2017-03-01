@@ -4,6 +4,10 @@
 
 using namespace NatsuLib;
 
+// 在写入时被odr-used了，所以需要提供定义
+constexpr nuInt natZipArchive::Mask32Bit;
+constexpr nuShort natZipArchive::Mask16Bit;
+
 natZipArchive::ZipEntry::~ZipEntry()
 {
 }
@@ -702,7 +706,9 @@ nBool natZipArchive::Zip64ExtraField::ReadFromExtraField(ExtraField const& extra
 
 void natZipArchive::Zip64ExtraField::Write(natBinaryWriter* writer)
 {
-	writer->WritePod(Tag);
+	constexpr auto tag = Tag;
+
+	writer->WritePod(tag);
 	writer->WritePod(Size);
 	if (UncompressedSize)
 	{
@@ -832,6 +838,8 @@ nBool natZipArchive::CentralDirectoryFileHeader::Read(natBinaryReader* reader, n
 
 void natZipArchive::CentralDirectoryFileHeader::Write(natBinaryWriter* writer, StringType encoding)
 {
+	constexpr auto signature = Signature;
+
 	const auto stream = writer->GetUnderlyingStream();
 
 	const auto filenameBytes = RuntimeEncoding<nString::UsingStringType>::Decode(Filename, encoding);
@@ -875,7 +883,7 @@ void natZipArchive::CentralDirectoryFileHeader::Write(natBinaryWriter* writer, S
 		zip64ExtraField.LocalHeaderOffset = RelativeOffsetOfLocalHeader;
 	}
 
-	writer->WritePod(Signature);
+	writer->WritePod(signature);
 	writer->WritePod(VersionMadeBySpecification);
 	writer->WritePod(VersionMadeByCompatibility);
 	writer->WritePod(VersionNeededToExtract);
@@ -951,6 +959,7 @@ nBool natZipArchive::LocalFileHeader::Write(natBinaryWriter* writer, CentralDire
 
 	decltype(auto) fileHeader = header;
 	const auto stream = writer->GetUnderlyingStream();
+	constexpr auto signature = Signature;
 
 	const auto filenameBytes = RuntimeEncoding<nString::UsingStringType>::Decode(fileHeader.Filename, encoding);
 	if (filenameBytes.size() > std::numeric_limits<nuShort>::max())
@@ -975,7 +984,7 @@ nBool natZipArchive::LocalFileHeader::Write(natBinaryWriter* writer, CentralDire
 		zip64ExtraField.UncompressedSize = fileHeader.UncompressedSize;
 	}
 
-	writer->WritePod(Signature);
+	writer->WritePod(signature);
 	writer->WritePod(fileHeader.VersionNeededToExtract);
 	writer->WritePod(fileHeader.GeneralPurposeBitFlag);
 	writer->WritePod(fileHeader.CompressionMethod);
@@ -1073,13 +1082,15 @@ void natZipArchive::ZipEndOfCentralDirectory::Read(natBinaryReader* reader, Stri
 
 void natZipArchive::ZipEndOfCentralDirectory::Write(natBinaryWriter* writer, nuLong numberOfEntries, nuLong startOfCentralDirectory, nuLong sizeOfCentralDirectory, nStrView archiveComment, StringType encoding)
 {
+	constexpr auto signature = Signature;
+
 	const auto numberOfEntriesTruncated = numberOfEntries > std::numeric_limits<nuShort>::max() ? Mask16Bit : static_cast<nuShort>(numberOfEntries);
 	const auto startOfCentralDirectoryTruncated = startOfCentralDirectory > std::numeric_limits<nuInt>::max() ? Mask32Bit : static_cast<nuInt>(startOfCentralDirectory);
 	const auto sizeOfCentralDirectoryTruncated = sizeOfCentralDirectory > std::numeric_limits<nuInt>::max() ? Mask32Bit : static_cast<nuInt>(sizeOfCentralDirectory);
 
-	writer->WritePod(Signature);
-	writer->WritePod(nuShort(0));
-	writer->WritePod(nuShort(0));
+	writer->WritePod(signature);
+	writer->WritePod(nuShort{});
+	writer->WritePod(nuShort{});
 	writer->WritePod(numberOfEntriesTruncated);
 	writer->WritePod(numberOfEntriesTruncated);
 	writer->WritePod(sizeOfCentralDirectoryTruncated);
@@ -1126,7 +1137,9 @@ void natZipArchive::Zip64EndOfCentralDirectoryLocator::Read(natBinaryReader* rea
 
 void natZipArchive::Zip64EndOfCentralDirectoryLocator::Write(natBinaryWriter* writer, nuLong zip64EOCDRecordStart)
 {
-	writer->WritePod(Signature);
+	constexpr auto signature = Signature;
+
+	writer->WritePod(signature);
 	writer->WritePod(0u); // number of disk with start of zip64 eocd
 	writer->WritePod(zip64EOCDRecordStart);
 	writer->WritePod(1u); // total number of disks
@@ -1152,8 +1165,11 @@ void natZipArchive::Zip64EndOfCentralDirectory::Read(natBinaryReader* reader)
 
 void natZipArchive::Zip64EndOfCentralDirectory::Write(natBinaryWriter* writer, nuLong numberOfEntries, nuLong startOfCentralDirectory, nuLong sizeOfCentralDirectory)
 {
-	writer->WritePod(Signature);
-	writer->WritePod(SizeWithoutExtraData);
+	constexpr auto signature = Signature;
+	constexpr auto sizeWithoutExtraData = SizeWithoutExtraData;
+
+	writer->WritePod(signature);
+	writer->WritePod(sizeWithoutExtraData);
 	writer->WritePod(static_cast<nuShort>(ZipVersionNeeded::Zip64));
 	writer->WritePod(static_cast<nuShort>(ZipVersionNeeded::Zip64));
 	writer->WritePod(0u);
