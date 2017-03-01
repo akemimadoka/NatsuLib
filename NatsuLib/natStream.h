@@ -236,10 +236,10 @@ namespace NatsuLib
 #endif
 
 #ifdef _WIN32
-		natFileStream(nStrView filename, nBool bReadable, nBool bWritable, nBool isAsync = false);
+		natFileStream(nStrView filename, nBool bReadable, nBool bWritable, nBool isAsync = false, nBool truncate = false);
 		natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable, nBool transferOwner = false, nBool isAsync = false);
 #else
-		natFileStream(nStrView filename, nBool bReadable, nBool bWritable);
+		natFileStream(nStrView filename, nBool bReadable, nBool bWritable, nBool truncate = false);
 #endif
 
 		~natFileStream();
@@ -278,8 +278,7 @@ namespace NatsuLib
 		const nBool m_ShouldDispose;
 		const nBool m_IsAsync;
 #else
-		std::fstream m_File;
-		nLen m_Size, m_CurrentPos;
+		mutable std::fstream m_File;
 #endif
 		
 		nString m_Filename;

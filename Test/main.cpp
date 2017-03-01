@@ -182,8 +182,11 @@ int main()
 				stream.GetRefCount();
 			}
 			{
-				const auto fileStream = make_ref<natFileStream>("2.zip"_nv, true, true);
-				fileStream->SetSize(0);
+#ifdef _WIN32
+				const auto fileStream = make_ref<natFileStream>("2.zip"_nv, true, true, false, true);
+#else
+				const auto fileStream = make_ref<natFileStream>("2.zip"_nv, true, true, true);
+#endif
 				{
 					natZipArchive zip{ fileStream, natZipArchive::ZipArchiveMode::Create };
 					const auto entry = zip.CreateEntry("1.txt"_nv);

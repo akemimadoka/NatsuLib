@@ -68,42 +68,42 @@ Uri& Uri::operator=(Uri&& other) noexcept
 	return *this;
 }
 
-nStrView Uri::GetScheme() const
+nStrView Uri::GetScheme() const noexcept
 {
 	return m_UriInfo.Scheme;
 }
 
-nStrView Uri::GetUser() const
+nStrView Uri::GetUser() const noexcept
 {
 	return m_UriInfo.User;
 }
 
-nStrView Uri::GetPassword() const
+nStrView Uri::GetPassword() const noexcept
 {
 	return m_UriInfo.Password;
 }
 
-nStrView Uri::GetHost() const
+nStrView Uri::GetHost() const noexcept
 {
 	return m_UriInfo.Host;
 }
 
-Optional<nuShort> Uri::GetPort() const
+Optional<nuShort> Uri::GetPort() const noexcept
 {
 	return m_UriInfo.Port;
 }
 
-nStrView Uri::GetPath() const
+nStrView Uri::GetPath() const noexcept
 {
 	return m_UriInfo.Path;
 }
 
-nStrView Uri::GetQuery() const
+nStrView Uri::GetQuery() const noexcept
 {
 	return m_UriInfo.Query;
 }
 
-nStrView Uri::GetFragment() const
+nStrView Uri::GetFragment() const noexcept
 {
 	return m_UriInfo.Fragment;
 }

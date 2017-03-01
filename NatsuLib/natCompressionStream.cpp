@@ -128,8 +128,8 @@ namespace NatsuLib
 	}
 }
 
-natDeflateStream::natDeflateStream(natRefPointer<natStream> stream)
-	: m_InternalStream{ std::move(stream) }, m_Buffer{}, m_Impl{ std::make_unique<detail_::DeflateStreamImpl>(detail_::DeflateStreamImpl::DefaultWindowBitsWithoutHeader) }, m_WroteData{ false }
+natDeflateStream::natDeflateStream(natRefPointer<natStream> stream, nBool useHeader)
+	: m_InternalStream{ std::move(stream) }, m_Buffer{}, m_Impl{ std::make_unique<detail_::DeflateStreamImpl>(useHeader ? detail_::DeflateStreamImpl::DefaultWindowBitsWithHeader : detail_::DeflateStreamImpl::DefaultWindowBitsWithoutHeader) }, m_WroteData{ false }
 {
 	if (!m_InternalStream->CanRead())
 	{
@@ -137,7 +137,7 @@ natDeflateStream::natDeflateStream(natRefPointer<natStream> stream)
 	}
 }
 
-natDeflateStream::natDeflateStream(natRefPointer<natStream> stream, CompressionLevel compressionLevel)
+natDeflateStream::natDeflateStream(natRefPointer<natStream> stream, CompressionLevel compressionLevel, nBool useHeader)
 	: m_InternalStream{ std::move(stream) }, m_Buffer{}, m_WroteData{ false }
 {
 	if (!m_InternalStream)
@@ -150,20 +150,25 @@ natDeflateStream::natDeflateStream(natRefPointer<natStream> stream, CompressionL
 		nat_Throw(natErrException, NatErr_InvalidArg, "stream should be writable."_nv);
 	}
 	
+	int compressionLevelNum;
 	switch (compressionLevel)
 	{
 	case CompressionLevel::Optimal:
-		m_Impl = std::make_unique<detail_::DeflateStreamImpl>(Z_BEST_COMPRESSION, Z_DEFLATED, detail_::DeflateStreamImpl::DefaultWindowBitsWithoutHeader, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY);
+		compressionLevelNum = Z_BEST_COMPRESSION;
 		break;
 	case CompressionLevel::Fastest:
-		m_Impl = std::make_unique<detail_::DeflateStreamImpl>(Z_BEST_SPEED, Z_DEFLATED, detail_::DeflateStreamImpl::DefaultWindowBitsWithoutHeader, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY);
+		compressionLevelNum = Z_BEST_SPEED;
 		break;
 	case CompressionLevel::NoCompression:
-		m_Impl = std::make_unique<detail_::DeflateStreamImpl>(Z_NO_COMPRESSION, Z_DEFLATED, detail_::DeflateStreamImpl::DefaultWindowBitsWithoutHeader, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY);
+		compressionLevelNum = Z_NO_COMPRESSION;
 		break;
 	default:
 		assert(!"Invalid compressionLevel.");
 	}
+
+	const auto windowBits = useHeader ? detail_::DeflateStreamImpl::DefaultWindowBitsWithHeader : detail_::DeflateStreamImpl::DefaultWindowBitsWithoutHeader;
+
+	m_Impl = std::make_unique<detail_::DeflateStreamImpl>(compressionLevelNum, Z_DEFLATED, windowBits, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY);
 
 	m_Impl->SetOutput(m_Buffer, sizeof m_Buffer);
 }

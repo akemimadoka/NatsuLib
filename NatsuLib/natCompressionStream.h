@@ -25,8 +25,8 @@ namespace NatsuLib
 			NoCompression = 2
 		};
 
-		explicit natDeflateStream(natRefPointer<natStream> stream);
-		natDeflateStream(natRefPointer<natStream> stream, CompressionLevel compressionLevel);
+		explicit natDeflateStream(natRefPointer<natStream> stream, nBool useHeader = false);
+		natDeflateStream(natRefPointer<natStream> stream, CompressionLevel compressionLevel, nBool useHeader = false);
 		~natDeflateStream();
 
 		natRefPointer<natStream> GetUnderlyingStream() const noexcept;

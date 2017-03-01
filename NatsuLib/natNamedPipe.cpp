@@ -31,11 +31,10 @@ natNamedPipeServerStream::natNamedPipeServerStream(nStrView Pipename, PipeDirect
 
 	m_hPipe = CreateNamedPipe(
 #ifdef UNICODE
-		WideString{ Pipename }.data()
+		WideString{ Pipename }.data(),
 #else
-		AnsiString{ Pipename }.data()
+		AnsiString{ Pipename }.data(),
 #endif
-		,
 		dir | (m_bAsync ? FILE_FLAG_OVERLAPPED : FILE_FLAG_WRITE_THROUGH),
 		(TransmissionMode == PipeMode::Byte ? PIPE_TYPE_BYTE : PIPE_TYPE_MESSAGE) |
 		(m_bReadable ? (ReadMode == PipeMode::Byte ? PIPE_READMODE_BYTE : PIPE_READMODE_MESSAGE) : 0) |
@@ -372,11 +371,11 @@ void natNamedPipeClientStream::Wait(nuInt timeOut)
 
 	if (!WaitNamedPipe(
 #ifdef UNICODE
-		WideString{ m_PipeName }.data()
+		WideString{ m_PipeName }.data(),
 #else
-		AnsiString{ m_PipeName }.data()
+		AnsiString{ m_PipeName }.data(),
 #endif
-			, timeOut == Infinity ? NMPWAIT_WAIT_FOREVER : timeOut))
+			timeOut == Infinity ? NMPWAIT_WAIT_FOREVER : timeOut))
 	{
 		nat_Throw(natWinException, "WaitNamedPipe failed."_nv);
 	}
@@ -384,4 +383,6 @@ void natNamedPipeClientStream::Wait(nuInt timeOut)
 	m_InternalStream = make_ref<natFileStream>(m_PipeName.GetView(), m_bReadable, m_bWritable);
 }
 
+#else
+// TODO
 #endif

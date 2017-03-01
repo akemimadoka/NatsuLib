@@ -25,14 +25,14 @@ namespace NatsuLib
 		Uri& operator=(Uri const& other);
 		Uri& operator=(Uri&& other) noexcept;
 
-		nStrView GetScheme() const;
-		nStrView GetUser() const;
-		nStrView GetPassword() const;
-		nStrView GetHost() const;
-		Optional<nuShort> GetPort() const;
-		nStrView GetPath() const;
-		nStrView GetQuery() const;
-		nStrView GetFragment() const;
+		nStrView GetScheme() const noexcept;
+		nStrView GetUser() const noexcept;
+		nStrView GetPassword() const noexcept;
+		nStrView GetHost() const noexcept;
+		Optional<nuShort> GetPort() const noexcept;
+		nStrView GetPath() const noexcept;
+		nStrView GetQuery() const noexcept;
+		nStrView GetFragment() const noexcept;
 
 		nStrView GetUnderlyingString() const noexcept;
 
