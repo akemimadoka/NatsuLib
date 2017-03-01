@@ -4,6 +4,20 @@
 
 namespace NatsuLib
 {
+	enum class AutoPropertyFlags : nuInt
+	{
+		None = 0,
+
+		Getter = 1,
+		CopySetter = 2,
+		MoveSetter = 4,
+
+		AllSetter = CopySetter | MoveSetter,
+		All = Getter | AllSetter,
+	};
+
+	MAKE_ENUM_CLASS_BITMASK_TYPE(AutoPropertyFlags);
+
 	template <typename T>
 	class Property final
 	{
@@ -12,38 +26,28 @@ namespace NatsuLib
 		typedef Delegate<void(T const&)> CopySetterDelegate;
 		typedef Delegate<void(T &&)> MoveSetterDelegate;
 
-		enum AutoPropertyFlags
-		{
-			Getter = 1,
-			CopySetter = 2,
-			MoveSetter = 4,
-
-			AllSetter = CopySetter | MoveSetter,
-			All = Getter | AllSetter,
-		};
-
 		explicit Property(GetterDelegate getter = {}, CopySetterDelegate copySetter = {}, MoveSetterDelegate moveSetter = {})
 			: m_Getter{ std::move(getter) }, m_CopySetter{ std::move(copySetter) }, m_MoveSetter{ std::move(moveSetter) }
 		{
 		}
 
-		explicit Property(T& var, nInt autoPropertyFlags = Getter | CopySetter | MoveSetter)
+		explicit Property(T& var, AutoPropertyFlags autoPropertyFlags = AutoPropertyFlags::Getter | AutoPropertyFlags::CopySetter | AutoPropertyFlags::MoveSetter)
 		{
-			if (!!(autoPropertyFlags & Getter))
+			if ((autoPropertyFlags & AutoPropertyFlags::Getter) != AutoPropertyFlags::None)
 			{
 				m_Getter = [&var]
 				{
 					return var;
 				};
 			}
-			if (!!(autoPropertyFlags & CopySetter))
+			if ((autoPropertyFlags & AutoPropertyFlags::CopySetter) != AutoPropertyFlags::None)
 			{
 				m_CopySetter = [&var](T const& value)
 				{
 					var = value;
 				};
 			}
-			if (!!(autoPropertyFlags & MoveSetter))
+			if ((autoPropertyFlags & AutoPropertyFlags::MoveSetter) != AutoPropertyFlags::None)
 			{
 				m_MoveSetter = [&var](T && value)
 				{

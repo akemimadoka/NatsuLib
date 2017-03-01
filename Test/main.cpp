@@ -215,7 +215,7 @@ int main()
 				int m_Value{};
 
 			public:
-				Property<int> value{ m_Value, Property<int>::All };
+				Property<int> value{ m_Value, AutoPropertyFlags::All };
 			};
 
 			Integer a;
