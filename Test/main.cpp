@@ -220,8 +220,10 @@ int main()
 
 			Integer a;
 			a.value = 5;
-			logger.LogMsg("%b"_nv, a < 3);
-			logger.LogMsg("%b"_nv, a > -1);
+			logger.LogMsg("a < 3:%b"_nv, a < 3);
+			logger.LogMsg("7 > a:%b"_nv, 7 > a);
+			logger.LogMsg("-3 > a:%b"_nv, -3 <= a);
+			logger.LogMsg("5 > a:%b"_nv, 5 >= a);
 		}
 	}
 #ifdef _WIN32
