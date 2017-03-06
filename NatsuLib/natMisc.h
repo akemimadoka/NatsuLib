@@ -799,6 +799,58 @@ namespace NatsuLib
 	protected:
 		~nonmovable() = default;
 	};
+
+	template <typename T>
+	class Lazy
+	{
+	public:
+		Lazy()
+		{
+		}
+
+		explicit Lazy(std::function<T()> function)
+			: m_Function{ std::move(function) }
+		{
+		}
+
+		void ExplicitGenerateValue()
+		{
+			if (!m_Value)
+			{
+				if (m_Function)
+				{
+					m_Value.emplace(m_Function());
+				}
+				else
+				{
+					m_Value.emplace();
+				}
+			}
+		}
+
+		nBool HasGenerated() const noexcept
+		{
+			return m_Value;
+		}
+
+		T& GetValue()
+		{
+			ExplicitGenerateValue();
+
+			return m_Value.value();
+		}
+
+		T const& GetValue() const
+		{
+			// const的Lazy不能生成值，但是如果值已经生成可以获取
+			// 如果值未准备好会抛出异常
+			return m_Value.value();
+		}
+
+	private:
+		std::function<T()> m_Function;
+		Optional<T> m_Value;
+	};
 }
 
 namespace std

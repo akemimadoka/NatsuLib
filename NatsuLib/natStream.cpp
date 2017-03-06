@@ -690,6 +690,7 @@ natStdStream::natStdStream(StdStreamType stdStreamType)
 		m_StdHandle = GetStdHandle(STD_ERROR_HANDLE);
 		break;
 	default:
+		assert(!"Invalid StdStreamType.");
 		nat_Throw(natException, "Invalid StdStreamType."_nv);
 	}
 
@@ -714,6 +715,11 @@ nBool natStdStream::UseFileApi() const noexcept
 
 natStdStream::~natStdStream()
 {
+}
+
+natStdStream::NativeHandle natStdStream::GetNativeHandle() const noexcept
+{
+	return m_StdHandle;
 }
 
 nBool natStdStream::CanWrite() const
@@ -1085,6 +1091,11 @@ natStdStream::natStdStream(StdStreamType stdStreamType)
 
 natStdStream::~natStdStream()
 {
+}
+
+natStdStream::NativeHandle natStdStream::GetNativeHandle() const noexcept
+{
+	return m_StdHandle;
 }
 
 nBool natStdStream::CanWrite() const

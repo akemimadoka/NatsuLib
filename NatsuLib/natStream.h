@@ -343,6 +343,8 @@ namespace NatsuLib
 		explicit natStdStream(StdStreamType stdStreamType);
 		~natStdStream();
 
+		NativeHandle GetNativeHandle() const noexcept;
+
 		nBool CanWrite() const override;
 		nBool CanRead() const override;
 		nBool CanResize() const override;

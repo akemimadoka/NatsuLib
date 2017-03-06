@@ -43,6 +43,12 @@ int main()
 	natConsole console;
 	logger.UseDefaultAction(console);
 
+#ifdef _WIN32
+	console.WriteLine(console.GetTitle());
+	console.SetTitle("NatsuLib test"_nv);
+	console.SetColor(natConsole::ConsoleColorTarget::Foreground, natConsole::ConsoleColor::Green);
+#endif
+
 	try
 	{
 #ifdef _WIN32
@@ -53,6 +59,7 @@ int main()
 #endif
 
 		constexpr auto test = HasMemberNamedfoo<Incrementable>::value;
+		static_cast<void>(test);
 
 		int t = 5;
 		increment(t);
@@ -183,7 +190,8 @@ int main()
 			}
 			{
 #ifdef _WIN32
-				const auto fileStream = make_ref<natFileStream>("2.zip"_nv, true, true, false, true);
+				const auto fileStream = make_ref<natFileStream>("2.zip"_nv, true, true);
+				fileStream->SetSize(0);
 #else
 				const auto fileStream = make_ref<natFileStream>("2.zip"_nv, true, true, true);
 #endif
@@ -225,8 +233,8 @@ int main()
 			a.value = 5;
 			logger.LogMsg("a < 3:%b"_nv, a < 3);
 			logger.LogMsg("7 > a:%b"_nv, 7 > a);
-			logger.LogMsg("-3 > a:%b"_nv, -3 <= a);
-			logger.LogMsg("5 > a:%b"_nv, 5 >= a);
+			logger.LogMsg("-3 <= a:%b"_nv, -3 <= a);
+			logger.LogMsg("5 >= a:%b"_nv, 5 >= a);
 		}
 	}
 #ifdef _WIN32

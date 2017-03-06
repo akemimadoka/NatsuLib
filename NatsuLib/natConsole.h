@@ -1,6 +1,7 @@
 #pragma once
 #include "natConfig.h"
 #include "natStreamHelper.h"
+#include "natMisc.h"
 
 namespace NatsuLib
 {
@@ -14,7 +15,40 @@ namespace NatsuLib
 			StringType::Utf8;
 #endif
 
+		enum class ConsoleColor
+		{
+			Black = 0,
+			DarkBlue = 1,
+			DarkGreen = 2,
+			DarkCyan = 3,
+			DarkRed = 4,
+			DarkMagenta = 5,
+			DarkYellow = 6,
+			Gray = 7,
+			DarkGray = 8,
+			Blue = 9,
+			Green = 10,
+			Cyan = 11,
+			Red = 12,
+			Magenta = 13,
+			Yellow = 14,
+			White = 15
+		};
+
+		enum class ConsoleColorTarget
+		{
+			Background,
+			Foreground
+		};
+
 		natConsole();
+
+		nString GetTitle() const;
+		void SetTitle(nStrView title);
+
+		ConsoleColor GetColor(ConsoleColorTarget target) const;
+		void SetColor(ConsoleColorTarget target, ConsoleColor color);
+		void ResetColor();
 
 		template <StringType stringType>
 		void Write(StringView<stringType> const& str)
@@ -84,5 +118,9 @@ namespace NatsuLib
 		natStreamReader<Encoding> m_StdInReader;
 		natStreamWriter<Encoding> m_StdOutWriter;
 		natStreamWriter<Encoding> m_StdErrWriter;
+
+#ifdef _WIN32
+		Optional<WORD> m_DefaultColor;
+#endif
 	};
 }

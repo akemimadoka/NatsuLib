@@ -54,7 +54,7 @@ namespace NatsuLib
 		};
 
 		///	@brief	预置日志类型
-		enum LogType
+		enum LogType : nuInt
 		{
 			Msg,	///< @brief	消息
 			Err,	///< @brief	错误

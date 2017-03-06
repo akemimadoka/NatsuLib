@@ -13,7 +13,14 @@ natThread::natThread(nBool Pause)
 	m_Pause.get_future().get();
 	std::promise<ResultType> Result;
 	m_Result = Result.get_future();
-	Result.set_value(ThreadJob());
+	try
+	{
+		Result.set_value(ThreadJob());
+	}
+	catch (...)
+	{
+		Result.set_exception(std::current_exception());
+	}
 })
 {
 	if (!Pause)

@@ -177,7 +177,7 @@ namespace NatsuLib
 	///	@brief	引用计数实现
 	///	@note	使用模板防止菱形继承
 	////////////////////////////////////////////////////////////////////////////////
-	template <typename T, typename Deleter = std::default_delete<T>>
+	template <typename T = natRefObj, typename Deleter = std::default_delete<T>>
 	class natRefObjImpl
 		: public detail_::RefCountBase<T>
 	{

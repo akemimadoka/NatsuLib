@@ -243,4 +243,6 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+
 /Test/2.zip
+/Doc

@@ -60,7 +60,7 @@ namespace NatsuLib
 		{
 		}
 
-		operator T()
+		operator T() const
 		{
 			if (!m_Getter)
 			{

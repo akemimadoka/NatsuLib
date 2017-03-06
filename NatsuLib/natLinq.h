@@ -13,45 +13,10 @@
 #ifdef _MSC_VER
 #	pragma push_macro("max")
 #	pragma push_macro("min")
-#	undef max
-#	undef min
 #endif
 
-namespace std
-{
-	template <typename Func>
-	struct hash<function<Func>>
-	{
-		size_t operator()(function<Func> const& func) const
-		{
-			return hash<decay_t<Func>>()(func.template target<Func>());
-		}
-	};
-}
-
-template <typename Func>
-bool operator==(std::function<Func> const& left, std::function<Func> const& right)
-{
-	return left.template target<Func>() == right.template target<Func>();
-}
-
-template <typename Func>
-bool operator!=(std::function<Func> const& left, std::function<Func> const& right)
-{
-	return !(left == right);
-}
-
-template <typename Func1, typename Func2>
-bool operator==(std::function<Func1> const&, std::function<Func2> const&)
-{
-	return false;
-}
-
-template <typename Func1, typename Func2>
-bool operator!=(std::function<Func1> const&, std::function<Func2> const&)
-{
-	return true;
-}
+#undef max
+#undef min
 
 namespace NatsuLib
 {
@@ -1251,11 +1216,11 @@ namespace NatsuLib
 	class Linq final
 		: public LinqEnumerable<detail_::CommonIterator<T>>
 	{
-		typedef LinqEnumerable<detail_::CommonIterator<T>> _Base;
+		typedef LinqEnumerable<detail_::CommonIterator<T>> Base;
 	public:
 		template <typename Iter_t>
 		Linq(LinqEnumerable<Iter_t> const& linqEnumerable)
-			: _Base(detail_::CommonIterator<T>(linqEnumerable.begin()),
+			: Base(detail_::CommonIterator<T>(linqEnumerable.begin()),
 				detail_::CommonIterator<T>(linqEnumerable.end()))
 		{
 		}
