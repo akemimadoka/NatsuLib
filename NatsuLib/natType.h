@@ -7,6 +7,7 @@
 #include "natConfig.h"
 #include <cstdint>
 #include <type_traits>
+
 #define NVIMPL(text) text##_nv
 #define NV(text) NVIMPL(text)
 

@@ -12,6 +12,8 @@ namespace NatsuLib
 		// 实现提示：无线程安全保证
 		struct DeflateStreamImpl
 		{
+			static_assert(std::is_same_v<Bytef, nByte>, "DeflateStreamImpl assumed Bytef and nByte are same type.");
+
 			enum
 			{
 				DefaultWindowBitsWithHeader = 15,

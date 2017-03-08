@@ -572,10 +572,10 @@ namespace NatsuLib
 			TakeIterator(Iter_t const& iterator, Iter_t const& end, difference_type count)
 				: m_Iterator(iterator), m_End(end)
 			{
-				if (std::distance(m_Iterator, m_End) < count)
+				/*if (std::distance(m_Iterator, m_End) < count)
 				{
-					nat_Throw(natException, "Out of range."_nv);
-				}
+					nat_Throw(OutOfRange, "Out of range."_nv);
+				}*/
 
 				m_Target = std::next(m_Iterator, count);
 			}
@@ -777,7 +777,7 @@ namespace NatsuLib
 	class Linq;
 
 	template <typename Container>
-	Linq<decltype(*std::begin(std::declval<Container>()))> from_values(Container && container);
+	Linq<decltype(*std::begin(std::declval<Container>()))> from_values(Container container);
 
 	template <typename T>
 	Linq<T> from_empty();
@@ -1234,14 +1234,7 @@ namespace NatsuLib
 	}
 
 	template <typename Container>
-	auto from_values(Container const& container)
-	{
-		auto pContainer = std::make_shared<Container>(container);
-		return from_pointertocontainer(pContainer);
-	}
-
-	template <typename Container>
-	Linq<decltype(*std::begin(std::declval<Container>()))> from_values(Container && container)
+	Linq<decltype(*std::begin(std::declval<Container>()))> from_values(Container container)
 	{
 		auto pContainer = std::make_shared<Container>(std::move(container));
 		return from_pointertocontainer(pContainer);

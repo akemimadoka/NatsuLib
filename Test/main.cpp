@@ -47,6 +47,7 @@ int main()
 	console.WriteLine(console.GetTitle());
 	console.SetTitle("NatsuLib test"_nv);
 	console.SetColor(natConsole::ConsoleColorTarget::Foreground, natConsole::ConsoleColor::Green);
+	console.SetColor(natConsole::ConsoleColorTarget::Background, natConsole::ConsoleColor::Blue);
 #endif
 
 	try
@@ -75,9 +76,13 @@ int main()
 			});
 		}
 
-		{
+		/*{
 			logger.LogMsg("Input: "_nv);
 			logger.LogMsg("Your input: {0}"_nv, console.ReadLine());
+		}*/
+
+		{
+			logger.LogMsg(Environment::GetEnvironmentVar("PATH"_nv));
 		}
 		
 		{

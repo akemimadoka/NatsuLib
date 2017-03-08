@@ -16,5 +16,8 @@ namespace NatsuLib
 		};
 
 		Endianness GetEndianness();
+
+		nString GetEnvironmentVar(nStrView name);
+		void SetEnvironmentVar(nStrView name, nStrView value);
 	}
 }

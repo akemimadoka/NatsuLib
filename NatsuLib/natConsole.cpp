@@ -164,7 +164,7 @@ void natConsole::ResetColor()
 	{
 		// 默认颜色未被缓存或者未被修改过
 		return;
-}
+	}
 
 	const auto bufferInfo = detail_::GetBufferInfo();
 
