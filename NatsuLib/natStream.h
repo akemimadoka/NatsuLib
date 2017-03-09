@@ -110,7 +110,7 @@ namespace NatsuLib
 		virtual std::future<nLen> WriteBytesAsync(ncData pData, nLen Length);
 
 		///	@brief		将流中的内容复制到另一流
-		///	@param[in]	other	要复制到的流	
+		///	@param[in]	other	要复制到的流
 		///	@return		总实际读取长度
 		///	@note		读取长度不意味着成功写入到另一流的长度
 		virtual nLen CopyTo(natRefPointer<natStream> const& other);
@@ -233,6 +233,8 @@ namespace NatsuLib
 	public:
 #ifdef _WIN32
 		typedef HANDLE UnsafeHandle;
+#else
+		typedef int UnsafeHandle;
 #endif
 
 #ifdef _WIN32
@@ -240,6 +242,7 @@ namespace NatsuLib
 		natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable, nBool transferOwner = false, nBool isAsync = false);
 #else
 		natFileStream(nStrView filename, nBool bReadable, nBool bWritable, nBool truncate = false);
+		natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable, nBool transferOwner = false);
 #endif
 
 		~natFileStream();
@@ -265,22 +268,24 @@ namespace NatsuLib
 		void Flush() override;
 
 		nStrView GetFilename() const noexcept;
+		UnsafeHandle GetUnsafeHandle() const noexcept;
 
 #ifdef _WIN32
-		UnsafeHandle GetUnsafeHandle() const noexcept;
 		natRefPointer<natMemoryStream> MapToMemoryStream();
 #endif
 
 	private:
+        UnsafeHandle m_hFile;
+        const nBool m_ShouldDispose;
+
 #ifdef _WIN32
-		UnsafeHandle m_hFile, m_hMappedFile;
+		UnsafeHandle m_hMappedFile;
 		natRefPointer<natMemoryStream> m_pMappedFile;
-		const nBool m_ShouldDispose;
 		const nBool m_IsAsync;
 #else
-		mutable std::fstream m_File;
+		nBool m_IsEndOfFile;
 #endif
-		
+
 		nString m_Filename;
 		nBool m_bReadable, m_bWritable;
 	};

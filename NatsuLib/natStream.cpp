@@ -4,6 +4,11 @@
 #include <algorithm>
 #include <cstring>
 
+#ifndef _WIN32
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
 using namespace NatsuLib;
 
 natStream::~natStream()
@@ -773,7 +778,7 @@ nByte natStdStream::ReadByte()
 	{
 		return m_InternalStream->ReadByte();
 	}
-	
+
 	nByte byte;
 	if (ReadBytes(&byte, 1) == 1)
 	{
@@ -789,7 +794,7 @@ nLen natStdStream::ReadBytes(nData pData, nLen Length)
 	{
 		return m_InternalStream->ReadBytes(pData, Length);
 	}
-	
+
 	// Workaround: 辣鸡WinAPI
 	if (!CanRead())
 	{
@@ -811,7 +816,7 @@ std::future<nLen> natStdStream::ReadBytesAsync(nData pData, nLen Length)
 	{
 		return m_InternalStream->ReadBytesAsync(pData, Length);
 	}
-	
+
 	return std::async(std::launch::async, [=]
 	{
 		return ReadBytes(pData, Length);
@@ -824,7 +829,7 @@ void natStdStream::WriteByte(nByte byte)
 	{
 		m_InternalStream->WriteByte(byte);
 	}
-	
+
 	if (WriteBytes(&byte, 1) != 1)
 	{
 		nat_Throw(natWinException, "Cannot write byte."_nv);
@@ -837,7 +842,7 @@ nLen natStdStream::WriteBytes(ncData pData, nLen Length)
 	{
 		return m_InternalStream->WriteBytes(pData, Length);
 	}
-	
+
 	// Workaround: 辣鸡WinAPI
 	if (!CanWrite())
 	{
@@ -873,7 +878,7 @@ void natStdStream::Flush()
 		m_InternalStream->Flush();
 		return;
 	}
-	
+
 	if (CanRead())
 	{
 		FlushConsoleInputBuffer(m_StdHandle);
@@ -881,27 +886,41 @@ void natStdStream::Flush()
 }
 #else
 natFileStream::natFileStream(nStrView filename, nBool bReadable, nBool bWritable, nBool truncate)
-	: m_Filename(filename), m_bReadable(bReadable), m_bWritable(bWritable)
+	: m_hFile{}, m_ShouldDispose{ true }, m_IsEndOfFile{},m_Filename(filename), m_bReadable(bReadable), m_bWritable(bWritable)
 {
-	std::ios_base::openmode openmode{};
-	if (bReadable)
+	int mode = 0;
+	if (bReadable && bWritable)
 	{
-		openmode |= std::ios_base::in;
+		mode = O_RDWR;
 	}
-	if (bWritable)
+	else if (bReadable)
 	{
-		openmode |= std::ios_base::out;
+		mode = O_RDONLY;
 	}
-	if (truncate)
+	else
 	{
-		openmode |= std::ios_base::trunc;
+		mode = O_WRONLY | O_CREAT;
 	}
 
-	m_File.open(filename.data(), openmode);
-	if (!m_File.is_open())
+	if (truncate)
 	{
-		nat_Throw(natErrException, NatErr_InternalErr, "Cannot open file \"{0}\"."_nv, filename);
+		mode |= O_TRUNC;
 	}
+
+	m_hFile = open(filename.data(), mode, S_IRWXU | S_IRWXG | S_IRWXO);
+	if (!m_hFile)
+	{
+        nat_Throw(natErrException, NatErr_InternalErr, "Cannot open file \"{0}\" (errno = {1})."_nv, filename, errno);
+	}
+}
+
+natFileStream::natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable, nBool transferOwner)
+    : m_hFile{ hFile }, m_ShouldDispose{ transferOwner }, m_IsEndOfFile{}, m_bReadable(bReadable), m_bWritable(bWritable)
+{
+    if (hFile < 0)
+    {
+        nat_Throw(natErrException, NatErr_InvalidArg, "hFile should be a valid file descriptor."_nv);
+    }
 }
 
 nBool natFileStream::CanWrite() const
@@ -926,18 +945,18 @@ nBool natFileStream::CanSeek() const
 
 nBool natFileStream::IsEndOfStream() const
 {
-	return m_File.eof();
+	return m_IsEndOfFile;
 }
 
 nLen natFileStream::GetSize() const
 {
-	const auto current = m_File.tellg();
-	m_File.seekg(0);
-	const auto begin = m_File.tellg();
-	m_File.seekg(0, std::ios_base::end);
-	const auto result = static_cast<nLen>(m_File.tellg() - begin);
-	m_File.seekg(current);
-	return result;
+    const auto currentPos = lseek(m_hFile, 0, SEEK_CUR);
+    lseek(m_hFile, 0, SEEK_SET);
+    const auto beginPos = lseek(m_hFile, 0, SEEK_CUR);
+	lseek(m_hFile, 0, SEEK_END);
+    const auto totalSize = lseek(m_hFile, 0, SEEK_CUR) - beginPos;
+    lseek(m_hFile, currentPos, SEEK_SET);
+    return static_cast<nLen>(totalSize);
 }
 
 void natFileStream::SetSize(nLen Size)
@@ -947,53 +966,42 @@ void natFileStream::SetSize(nLen Size)
 		nat_Throw(natErrException, NatErr_IllegalState, "Stream is not writable."_nv);
 	}
 
-	const auto currentSize = GetSize();
-
-	if (Size < currentSize)
+	if (ftruncate(m_hFile, static_cast<off_t>(Size)))
 	{
-		nat_Throw(natErrException, NatErr_InvalidArg, "Cannot truncate file (Current size is {0}, requested setting to {1})."_nv, currentSize, Size);
+        nat_Throw(natErrException, NatErr_InternalErr, "ftruncate failed (errno = {0})."_nv, errno);
 	}
-
-	if (Size == currentSize)
-	{
-		return;
-	}
-
-	auto current = m_File.tellp();
-	m_File.seekp(Size);
-	m_File.seekp(current);
 }
 
 nLen natFileStream::GetPosition() const
 {
-	return static_cast<nLen>(m_File.tellg());
+	return static_cast<nLen>(lseek(m_hFile, 0, SEEK_CUR));
 }
 
 void natFileStream::SetPosition(NatSeek Origin, nLong Offset)
 {
-	std::ios_base::seekdir tOrigin;
+	int tOrigin;
 	switch (Origin)
 	{
 	case NatSeek::Beg:
-		tOrigin = std::ios_base::beg;
+		tOrigin = SEEK_SET;
 		break;
 	case NatSeek::Cur:
-		tOrigin = std::ios_base::cur;
+		tOrigin = SEEK_CUR;
 		break;
 	case NatSeek::End:
-		tOrigin = std::ios_base::end;
+		tOrigin = SEEK_END;
 		break;
 	default:
+        assert(!"Origin is not a valid NatSeek.");
 		nat_Throw(natErrException, NatErr_InvalidArg, "Origin is not a valid NatSeek."_nv);
 	}
 
-	m_File.seekp(Offset, tOrigin);
+    lseek(m_hFile, static_cast<off_t>(Offset), tOrigin);
 }
 
 nByte natFileStream::ReadByte()
 {
-	// 可能有bug？
-	return static_cast<nByte>(m_File.get());
+	return natStream::ReadByte();
 }
 
 nLen natFileStream::ReadBytes(nData pData, nLen Length)
@@ -1013,18 +1021,20 @@ nLen natFileStream::ReadBytes(nData pData, nLen Length)
 		nat_Throw(natErrException, NatErr_InvalidArg, "pData cannot be nullptr."_nv);
 	}
 
-	auto size = m_File.readsome(reinterpret_cast<char*>(pData), static_cast<std::streamsize>(Length));
-	if (m_File.fail())
-	{
-		nat_Throw(natErrException, NatErr_InternalErr, "Reading file failed after readed {0} bytes."_nv, size);
-	}
+    const auto ret = read(m_hFile, pData, static_cast<size_t>(Length));
+    if (ret < 0)
+    {
+        nat_Throw(natErrException, NatErr_InternalErr, "read failed (errno = {0})."_nv, errno);
+    }
 
-	return size;
+    m_IsEndOfFile = !ret;
+
+	return static_cast<nLen>(ret);
 }
 
 void natFileStream::WriteByte(nByte byte)
 {
-	m_File.put(static_cast<char>(byte));
+	natStream::WriteByte(byte);
 }
 
 nLen natFileStream::WriteBytes(ncData pData, nLen Length)
@@ -1044,21 +1054,18 @@ nLen natFileStream::WriteBytes(ncData pData, nLen Length)
 		nat_Throw(natErrException, NatErr_InvalidArg, "pData cannot be nullptr."_nv);
 	}
 
-	const auto previousPosition = m_File.tellp();
-	m_File.write(reinterpret_cast<const char*>(pData), static_cast<std::streamsize>(Length));
-	const auto size = m_File.tellp() - previousPosition;
+    const auto ret = write(m_hFile, pData, static_cast<size_t>(Length));
+    // ret may be 0 and this may mean an error occured, but we ignore this situation
+    if (ret < 0)
+    {
+        nat_Throw(natErrException, NatErr_InternalErr, "write failed (errno = {0})."_nv, errno);
+    }
 
-	if (m_File.fail())
-	{
-		nat_Throw(natErrException, NatErr_InternalErr, "Writing file failed after wrote {0} bytes."_nv, size);
-	}
-
-	return size;
+	return static_cast<nLen>(ret);
 }
 
 void natFileStream::Flush()
 {
-	m_File.flush();
 }
 
 nStrView natFileStream::GetFilename() const noexcept
@@ -1066,8 +1073,17 @@ nStrView natFileStream::GetFilename() const noexcept
 	return m_Filename;
 }
 
+natFileStream::UnsafeHandle natFileStream::GetUnsafeHandle() const noexcept
+{
+	return m_hFile;
+}
+
 natFileStream::~natFileStream()
 {
+    if (m_ShouldDispose)
+    {
+        close(m_hFile);
+    }
 }
 
 natStdStream::natStdStream(StdStreamType stdStreamType)
@@ -1460,7 +1476,7 @@ void natMemoryStream::Reserve(nLen newCapacity)
 	{
 		memmove(pNewStorage, m_pData, m_Size);
 	}
-	
+
 	swap(m_pData, pNewStorage);
 }
 
@@ -1490,7 +1506,7 @@ natMemoryStream& natMemoryStream::operator=(natMemoryStream const& other)
 	{
 		memmove(m_pData, other.m_pData, other.m_Size);
 	}
-	
+
 	m_Size = other.m_Size;
 	m_CurPos = other.m_CurPos;
 	m_bReadable = other.m_bReadable;
@@ -1533,7 +1549,7 @@ void natMemoryStream::allocateAndInvalidateOldData(nLen newCapacity)
 	}
 
 	auto pNewStorage = new nByte[newCapacity];
-	swap(m_pData, pNewStorage); // 假设swap总是noexcept的 
+	swap(m_pData, pNewStorage); // 假设swap总是noexcept的
 	delete[] pNewStorage;
 }
 

@@ -206,7 +206,6 @@ int main()
 					const auto stream = entry->Open();
 					stream->WriteBytes(reinterpret_cast<ncData>("2333"), 4);
 				}
-				// 非Win平台下暂时不支持截断文件
 #ifdef _WIN32
 				fileStream->SetPosition(NatSeek::Beg, 0);
 				{
