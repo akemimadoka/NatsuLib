@@ -951,7 +951,7 @@ void natFileStream::SetSize(nLen Size)
 
 	if (Size < currentSize)
 	{
-		nat_Throw(natErrException, NatErr_InvalidArg, "Cannot truncate file."_nv);
+		nat_Throw(natErrException, NatErr_InvalidArg, "Cannot truncate file (Current size is {0}, requested setting to {1})."_nv, currentSize, Size);
 	}
 
 	if (Size == currentSize)

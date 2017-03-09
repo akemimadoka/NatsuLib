@@ -47,7 +47,7 @@ int main()
 	console.WriteLine(console.GetTitle());
 	console.SetTitle("NatsuLib test"_nv);
 	console.SetColor(natConsole::ConsoleColorTarget::Foreground, natConsole::ConsoleColor::Green);
-	console.SetColor(natConsole::ConsoleColorTarget::Background, natConsole::ConsoleColor::Blue);
+	//console.SetColor(natConsole::ConsoleColorTarget::Background, natConsole::ConsoleColor::Magenta);
 #endif
 
 	try
@@ -206,6 +206,8 @@ int main()
 					const auto stream = entry->Open();
 					stream->WriteBytes(reinterpret_cast<ncData>("2333"), 4);
 				}
+				// 非Win平台下暂时不支持截断文件
+#ifdef _WIN32
 				fileStream->SetPosition(NatSeek::Beg, 0);
 				{
 					natZipArchive zip{ fileStream, natZipArchive::ZipArchiveMode::Update };
@@ -215,6 +217,7 @@ int main()
 					stream->WriteBytes(reinterpret_cast<ncData>("1234"), 4);
 					//zip.GetEntry("1.txt"_nv)->Delete();
 				}
+#endif
 			}
 		}
 

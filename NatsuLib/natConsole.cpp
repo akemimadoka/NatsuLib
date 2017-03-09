@@ -41,7 +41,7 @@ namespace NatsuLib
 				rawFlag <<= 4;
 			}
 
-			assert(rawFlag <= 0x80);
+			assert(rawFlag <= 0xFF);
 			return rawFlag;
 		}
 

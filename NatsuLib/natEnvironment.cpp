@@ -4,6 +4,8 @@
 
 #ifdef _WIN32
 #include <Windows.h>
+#else
+#include <cstdlib>
 #endif
 
 using namespace NatsuLib;
@@ -59,10 +61,10 @@ nString Environment::GetEnvironmentVar(nStrView name)
 	{
 		nat_Throw(natWinException, "GetEnvironmentVariable failed."_nv);
 	}
-
+	
 	return retBuffer;
 #else
-	nat_Throw(NotImplementedException);
+	return std::getenv(name.data());
 #endif
 }
 
@@ -75,12 +77,12 @@ void Environment::SetEnvironmentVar(nStrView name, nStrView value)
 	AnsiString
 #endif
 		nameBuffer{ name }, valueBuffer{ value };
-
+	
 	if (!SetEnvironmentVariable(nameBuffer.data(), valueBuffer.data()))
 	{
 		nat_Throw(natWinException, "SetEnvironmentVariable failed."_nv);
 	}
 #else
-	nat_Throw(NotImplementedException);
+	setenv(name.data(), value.data(), 1);
 #endif
 }

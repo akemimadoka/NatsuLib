@@ -513,7 +513,7 @@ namespace NatsuLib
 	template <typename T, typename ...Arg>
 	NATINLINE natRefPointer<T> make_ref(Arg &&... args)
 	{
-		T* pRefObj = new T(std::forward<Arg>(args)...);
+		auto pRefObj = new T(std::forward<Arg>(args)...);
 		natRefPointer<T> Ret(pRefObj);
 		SafeRelease(pRefObj);
 		return std::move(Ret);
