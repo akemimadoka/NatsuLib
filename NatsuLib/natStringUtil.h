@@ -36,7 +36,7 @@ namespace NatsuLib
 				template <typename T, typename F>
 				[[noreturn]] static void visit(T&&, size_t, F)
 				{
-					nat_Throw(natException, "Out of range."_nv);
+					nat_Throw(OutOfRange, "Out of range."_nv);
 				}
 			};
 
@@ -402,7 +402,7 @@ namespace NatsuLib
 #ifdef _WIN32
 			return { AnsiStringView{ ss.str().c_str() } };
 #else
-			return { ss.str().c_str() };
+			return { U8StringView{ ss.str().c_str() } };
 #endif
 		}
 

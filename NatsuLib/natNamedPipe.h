@@ -31,7 +31,7 @@ namespace NatsuLib
 	};
 
 	class natNamedPipeServerStream
-		: public natRefObjImpl<natStream>
+		: public natRefObjImpl<natNamedPipeServerStream, natStream>
 	{
 	public:
 #ifdef _WIN32
@@ -85,7 +85,7 @@ namespace NatsuLib
 	};
 
 	class natNamedPipeClientStream
-		: public natRefObjImpl<natStream>
+		: public natRefObjImpl<natNamedPipeClientStream, natStream>
 	{
 	public:
 		enum TimeOut : nuInt

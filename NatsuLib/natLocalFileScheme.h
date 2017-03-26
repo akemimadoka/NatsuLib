@@ -4,7 +4,7 @@
 namespace NatsuLib
 {
 	class LocalFileScheme final
-		: public natRefObjImpl<IScheme>
+		: public natRefObjImpl<LocalFileScheme, IScheme>
 	{
 	public:
 		nStrView GetSchemeName() const noexcept override;
@@ -12,7 +12,7 @@ namespace NatsuLib
 	};
 
 	class LocalFileRequest final
-		: public natRefObjImpl<IRequest>
+		: public natRefObjImpl<LocalFileRequest, IRequest>
 	{
 	public:
 		explicit LocalFileRequest(Uri const& uri);
@@ -40,7 +40,7 @@ namespace NatsuLib
 	};
 
 	class LocalFileResponse final
-		: public natRefObjImpl<IResponse>
+		: public natRefObjImpl<LocalFileResponse, IResponse>
 	{
 	public:
 		explicit LocalFileResponse(natRefPointer<natFileStream> stream);

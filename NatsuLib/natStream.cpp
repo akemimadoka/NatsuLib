@@ -1266,7 +1266,7 @@ natMemoryStream::natMemoryStream(nLen Length, nBool bReadable, nBool bWritable, 
 }
 
 natMemoryStream::natMemoryStream(natMemoryStream const& other)
-	: natRefObjImpl<natStream>(), m_pData(), m_Size(), m_Capacity(), m_CurPos(), m_bReadable(), m_bWritable(), m_AutoResize()
+	: m_pData(), m_Size(), m_Capacity(), m_CurPos(), m_bReadable(), m_bWritable(), m_AutoResize()
 {
 	*this = other;
 }

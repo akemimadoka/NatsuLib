@@ -150,7 +150,7 @@ int main()
 		}
 
 		{
-			struct RefTest : natRefObjImpl<natRefObj>
+			struct RefTest : natRefObjImpl<RefTest, natRefObj>
 			{
 				RefTest()
 				{
@@ -222,7 +222,7 @@ int main()
 
 		{
 			struct Integer
-				: natRefObjImpl<RelationalOperator::IComparable<int>>
+				: natRefObjImpl<Integer, RelationalOperator::IComparable<int>>
 			{
 				nInt CompareTo(int const& other) const override
 				{

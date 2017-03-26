@@ -10,7 +10,7 @@ namespace NatsuLib
 	}
 
 	class natDeflateStream
-		: public natRefObjImpl<natStream>, public nonmovable
+		: public natRefObjImpl<natDeflateStream, natStream>, public nonmovable
 	{
 		enum : size_t
 		{
@@ -54,7 +54,7 @@ namespace NatsuLib
 	};
 
 	class natCrc32Stream
-		: public natRefObjImpl<natStream>
+		: public natRefObjImpl<natCrc32Stream, natStream>
 	{
 	public:
 		explicit natCrc32Stream(natRefPointer<natStream> stream);
