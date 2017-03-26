@@ -11,7 +11,7 @@ namespace NatsuLib
 {
 	template <StringType encoding>
 	class natStreamReader final
-		: public natRefObjImpl<TextReader<encoding>>
+		: public natRefObjImpl<natStreamReader<encoding>, TextReader<encoding>>
 	{
 	public:
 		typedef typename StringEncodingTrait<encoding>::CharType CharType;
@@ -126,7 +126,7 @@ namespace NatsuLib
 
 	template <StringType encoding>
 	class natStreamWriter final
-		: public natRefObjImpl<TextWriter<encoding>>
+		: public natRefObjImpl<natStreamWriter<encoding>, TextWriter<encoding>>
 	{
 	public:
 		explicit natStreamWriter(natStream* pStream) noexcept

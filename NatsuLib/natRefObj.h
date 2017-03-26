@@ -177,23 +177,45 @@ namespace NatsuLib
 	///	@brief	引用计数实现
 	///	@note	使用模板防止菱形继承
 	////////////////////////////////////////////////////////////////////////////////
-	template <typename T = natRefObj, typename Deleter = std::default_delete<T>>
+	template <typename T, typename B = natRefObj>
 	class natRefObjImpl
-		: public detail_::RefCountBase<T>
+		: public detail_::RefCountBase<B>
 	{
-		static_assert(std::is_base_of<natRefObj, T>::value, "T should inherit from natRefObj.");
+		static_assert(std::is_base_of<natRefObj, B>::value, "B should inherit from natRefObj.");
 
 		template <typename T_>
 		friend class natWeakRefPointer;
 
-		typedef detail_::RefCountBase<T> Base;
+		typedef detail_::RefCountBase<B> Base;
+
+		template <typename T_, typename ...Arg>
+		friend NATINLINE natRefPointer<T_> make_ref(Arg &&... args);
+
+		struct DefaultDeleter
+		{
+			void operator()(T* ptr) const noexcept
+			{
+				delete ptr;
+			}
+		};
+
+	protected:
+		void* operator new(size_t size)
+		{
+			return ::operator new(size);
+		}
+
+		void operator delete(void* ptr)
+		{
+			::operator delete(ptr);
+		}
 
 	public:
-		typedef Deleter SelfDeleter;
+		typedef std::function<void(T*)> SelfDeleter;
 		typedef detail_::WeakRefView<natRefObjImpl> WeakRefView;
 
-		constexpr natRefObjImpl() noexcept
-			: m_View{ nullptr }
+		constexpr natRefObjImpl(SelfDeleter deleter = {}) noexcept
+			: m_View{ nullptr }, m_Deleter{ std::move(deleter) }
 		{
 #ifdef TraceRefObj
 			OutputDebugString(natUtil::FormatString("Type %s created at (%p)\n"_nv, nStringView{ typeid(*this).name() }, this).c_str());
@@ -230,11 +252,17 @@ namespace NatsuLib
 		nBool Release() const volatile override
 		{
 			const auto result = Base::Release();
-			if (result)
+			const SelfDeleter& deleter = const_cast<const SelfDeleter&>(m_Deleter);
+			if (result && deleter)
 			{
-				SelfDeleter{}(const_cast<natRefObjImpl*>(this));
+				deleter(static_cast<T*>(const_cast<natRefObjImpl*>(this)));
 			}
 			return result;
+		}
+
+		void SetDeleter(SelfDeleter deleter = DefaultDeleter{})
+		{
+			m_Deleter = std::move(deleter);
 		}
 
 		template <typename U>
@@ -329,6 +357,7 @@ namespace NatsuLib
 		}
 
 		mutable std::atomic<WeakRefView*> m_View;
+		SelfDeleter m_Deleter;
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -458,30 +487,35 @@ namespace NatsuLib
 			return *this;
 		}
 
-		T* operator->() const
+		T* operator->() const noexcept
 		{
 			assert(m_pPointer && "m_pPointer is nullptr.");
 			return m_pPointer;
 		}
 
-		T& operator*() const
+		T& operator*() const noexcept
 		{
 			assert(m_pPointer && "m_pPointer is nullptr.");
 			return *m_pPointer;
 		}
 
-		T** operator&()
+		T** operator&() noexcept
 		{
 			Reset(nullptr);
 			return &m_pPointer;
 		}
 
-		operator T*() const
+		explicit operator nBool() const noexcept
 		{
 			return m_pPointer;
 		}
 
-		T* Get() const
+		operator T*() const noexcept
+		{
+			return m_pPointer;
+		}
+
+		T* Get() const noexcept
 		{
 			return m_pPointer;
 		}
@@ -513,9 +547,10 @@ namespace NatsuLib
 	template <typename T, typename ...Arg>
 	NATINLINE natRefPointer<T> make_ref(Arg &&... args)
 	{
-		auto pRefObj = new T(std::forward<Arg>(args)...);
+		const auto pRefObj = new T(std::forward<Arg>(args)...);
+		pRefObj->SetDeleter();
 		natRefPointer<T> Ret(pRefObj);
-		SafeRelease(pRefObj);
+		pRefObj->Release();
 		return std::move(Ret);
 	}
 
@@ -710,6 +745,11 @@ namespace NatsuLib
 		nBool operator>=(natWeakRefPointer<U> const& other) const noexcept
 		{
 			return m_View >= other.m_View;
+		}
+
+		explicit operator nBool() const noexcept
+		{
+			return m_View;
 		}
 
 		// Workaround

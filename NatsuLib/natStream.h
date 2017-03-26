@@ -124,7 +124,7 @@ namespace NatsuLib
 	///	@brief	NatsuLib内存流实现
 	////////////////////////////////////////////////////////////////////////////////
 	class natMemoryStream
-		: public natRefObjImpl<natStream>
+		: public natRefObjImpl<natMemoryStream, natStream>
 	{
 	public:
 		natMemoryStream(ncData pData, nLen Length, nBool bReadable, nBool bWritable, nBool autoResize);
@@ -180,7 +180,7 @@ namespace NatsuLib
 	};
 
 	class natExternMemoryStream
-		: public natRefObjImpl<natStream>
+		: public natRefObjImpl<natExternMemoryStream, natStream>
 	{
 	public:
 		template <size_t N>
@@ -228,7 +228,7 @@ namespace NatsuLib
 	///	@brief	NatsuLib文件流实现
 	////////////////////////////////////////////////////////////////////////////////
 	class natFileStream
-		: public natRefObjImpl<natStream>, public nonmovable
+		: public natRefObjImpl<natFileStream, natStream>, public nonmovable
 	{
 	public:
 #ifdef _WIN32
@@ -291,7 +291,7 @@ namespace NatsuLib
 	};
 
 	class natSubStream
-		: public natRefObjImpl<natStream>
+		: public natRefObjImpl<natSubStream, natStream>
 	{
 	public:
 		natSubStream(natRefPointer<natStream> stream, nLen startPosition, nLen endPosition);
@@ -327,7 +327,7 @@ namespace NatsuLib
 	};
 
 	class natStdStream
-		: public natRefObjImpl<natStream>, public nonmovable
+		: public natRefObjImpl<natStdStream, natStream>, public nonmovable
 	{
 	public:
 		enum StdStreamType

@@ -20,7 +20,7 @@ namespace NatsuLib
 	///	@note	不会进行缓存，如果提供的流不符合条件请自行进行缓存
 	////////////////////////////////////////////////////////////////////////////////
 	class natZipArchive
-		: public natRefObjImpl<natRefObj>
+		: public natRefObjImpl<natZipArchive, natRefObj>
 	{
 	public:
 		class ZipEntry;
@@ -226,7 +226,7 @@ namespace NatsuLib
 		///	@brief	Zip压缩文档入口
 		////////////////////////////////////////////////////////////////////////////////
 		class ZipEntry
-			: public natRefObjImpl<natRefObj>
+			: public natRefObjImpl<ZipEntry, natRefObj>
 		{
 			friend class natZipArchive;
 		public:
@@ -285,7 +285,7 @@ namespace NatsuLib
 			void writeLocalFileHeaderAndData();
 
 			class ZipEntryWriteStream final
-				: public natRefObjImpl<natStream>
+				: public natRefObjImpl<ZipEntryWriteStream, natStream>
 			{
 			public:
 				ZipEntryWriteStream(ZipEntry& entry, natRefPointer<natCrc32Stream> crc32Stream, std::function<void()> finishCallback = {});
@@ -315,7 +315,7 @@ namespace NatsuLib
 			};
 
 			class DisposeCallbackStream final
-				: public natRefObjImpl<natStream>
+				: public natRefObjImpl<DisposeCallbackStream, natStream>
 			{
 			public:
 				explicit DisposeCallbackStream(natRefPointer<natStream> internalStream, std::function<void()> disposeCallback = {});

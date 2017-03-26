@@ -509,6 +509,7 @@ natZipArchive::~natZipArchive()
 natRefPointer<natZipArchive::ZipEntry> natZipArchive::CreateEntry(nStrView entryName)
 {
 	auto entry = new ZipEntry(this, entryName);
+	entry->SetDeleter();
 	const natRefPointer<ZipEntry> pEntry{ entry };
 	SafeRelease(entry);
 	m_EntriesMap.emplace(pEntry->m_CentralDirectoryFileHeader.Filename, pEntry);
@@ -1209,6 +1210,7 @@ void natZipArchive::readCentralDirectory()
 	while (header.Read(m_Reader, saveExtraFieldsAndComments, m_Encoding))
 	{
 		auto entry = new ZipEntry(this, header);
+		entry->SetDeleter();
 		auto pEntry = natRefPointer<ZipEntry>{ entry };
 		SafeRelease(entry);
 		addEntry(std::move(pEntry));

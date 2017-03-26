@@ -30,7 +30,7 @@ namespace NatsuLib
 	///	@warning	不适用于多个成员的结构体
 	////////////////////////////////////////////////////////////////////////////////
 	class natBinaryReader
-		: public natRefObjImpl<natRefObj>
+		: public natRefObjImpl<natBinaryReader, natRefObj>
 	{
 	public:
 		explicit natBinaryReader(natRefPointer<natStream> stream, Environment::Endianness endianness = Environment::GetEndianness()) noexcept;
@@ -81,7 +81,7 @@ namespace NatsuLib
 	///	@warning	不适用于多个成员的结构体
 	////////////////////////////////////////////////////////////////////////////////
 	class natBinaryWriter
-		: public natRefObjImpl<natRefObj>
+		: public natRefObjImpl<natBinaryWriter, natRefObj>
 	{
 	public:
 		explicit natBinaryWriter(natRefPointer<natStream> stream, Environment::Endianness endianness = Environment::GetEndianness()) noexcept;
