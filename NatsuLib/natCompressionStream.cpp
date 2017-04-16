@@ -2,6 +2,7 @@
 #include "natCompressionStream.h"
 #include <zlib.h>
 #include <zutil.h>
+#include <random>
 
 using namespace NatsuLib;
 
@@ -131,7 +132,7 @@ namespace NatsuLib
 }
 
 natDeflateStream::natDeflateStream(natRefPointer<natStream> stream, nBool useHeader)
-	: m_InternalStream{ std::move(stream) }, m_Buffer{}, m_Impl{ std::make_unique<detail_::DeflateStreamImpl>(useHeader ? detail_::DeflateStreamImpl::DefaultWindowBitsWithHeader : detail_::DeflateStreamImpl::DefaultWindowBitsWithoutHeader) }, m_WroteData{ false }
+	: natRefObjImpl{ std::move(stream) }, m_Buffer{}, m_Impl{ std::make_unique<detail_::DeflateStreamImpl>(useHeader ? detail_::DeflateStreamImpl::DefaultWindowBitsWithHeader : detail_::DeflateStreamImpl::DefaultWindowBitsWithoutHeader) }, m_WroteData{ false }
 {
 	if (!m_InternalStream->CanRead())
 	{
@@ -140,7 +141,7 @@ natDeflateStream::natDeflateStream(natRefPointer<natStream> stream, nBool useHea
 }
 
 natDeflateStream::natDeflateStream(natRefPointer<natStream> stream, CompressionLevel compressionLevel, nBool useHeader)
-	: m_InternalStream{ std::move(stream) }, m_Buffer{}, m_WroteData{ false }
+	: natRefObjImpl{ std::move(stream) }, m_Buffer{}, m_WroteData{ false }
 {
 	if (!m_InternalStream)
 	{
@@ -179,11 +180,6 @@ natDeflateStream::~natDeflateStream()
 {
 }
 
-natRefPointer<natStream> natDeflateStream::GetUnderlyingStream() const noexcept
-{
-	return m_InternalStream;
-}
-
 nBool natDeflateStream::CanWrite() const
 {
 	return m_Impl->Compress && m_InternalStream->CanWrite();
@@ -204,11 +200,6 @@ nBool natDeflateStream::CanSeek() const
 	return false;
 }
 
-nBool natDeflateStream::IsEndOfStream() const
-{
-	return m_InternalStream->IsEndOfStream();
-}
-
 nLen natDeflateStream::GetSize() const
 {
 	nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support GetSize."_nv);
@@ -221,7 +212,9 @@ void natDeflateStream::SetSize(nLen)
 
 nLen natDeflateStream::GetPosition() const
 {
-	nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support GetPosition."_nv);
+	// nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support GetPosition."_nv);
+	// 为了能不硬编码获得内部位置只好这么做了，之后再想办法写得优雅（？）点
+	return m_InternalStream->GetPosition();
 }
 
 void natDeflateStream::SetPosition(NatSeek, nLong)
@@ -242,7 +235,7 @@ nLen natDeflateStream::ReadBytes(nData pData, nLen Length)
 	while (true)
 	{
 		// 输出之前可能未输出的内容
-		m_Impl->SetOutput(pRead, dataRemain);
+		m_Impl->SetOutput(pRead, static_cast<size_t>(dataRemain));
 		const auto ret = m_Impl->DoNext();	// 实现提示：忽略此处可能的部分错误
 		if (ret == Z_DATA_ERROR)
 		{
@@ -276,7 +269,7 @@ nLen natDeflateStream::ReadBytes(nData pData, nLen Length)
 		assert(readBytes <= sizeof m_Buffer);
 
 		// 实现提示：检查了输入已经全部处理完毕了吗？
-		m_Impl->SetInput(m_Buffer, readBytes);
+		m_Impl->SetInput(m_Buffer, static_cast<size_t>(readBytes));
 	}
 
 	return Length - dataRemain;
@@ -290,7 +283,7 @@ nLen natDeflateStream::WriteBytes(ncData pData, nLen Length)
 	}
 
 	auto writtenBytes = writeAll();
-	m_Impl->SetInput(pData, Length);
+	m_Impl->SetInput(pData, static_cast<size_t>(Length));
 	writtenBytes += writeAll();
 	m_WroteData = true;
 	return writtenBytes;
@@ -355,7 +348,7 @@ nLen natDeflateStream::writeAll()
 }
 
 natCrc32Stream::natCrc32Stream(natRefPointer<natStream> stream)
-	: m_InternalStream{ std::move(stream) }, m_Crc32{}, m_CurrentPosition{}
+	: natRefObjImpl{ std::move(stream) }, m_Crc32{}, m_CurrentPosition{}
 {
 	if (!m_InternalStream)
 	{
@@ -369,11 +362,6 @@ natCrc32Stream::natCrc32Stream(natRefPointer<natStream> stream)
 
 natCrc32Stream::~natCrc32Stream()
 {
-}
-
-natRefPointer<natStream> natCrc32Stream::GetUnderlyingStream() const noexcept
-{
-	return m_InternalStream;
 }
 
 nuInt natCrc32Stream::GetCrc32() const noexcept
@@ -399,11 +387,6 @@ nBool natCrc32Stream::CanResize() const
 nBool natCrc32Stream::CanSeek() const
 {
 	return false;
-}
-
-nBool natCrc32Stream::IsEndOfStream() const
-{
-	return m_InternalStream->IsEndOfStream();
 }
 
 nLen natCrc32Stream::GetSize() const
@@ -445,7 +428,3 @@ nLen natCrc32Stream::WriteBytes(ncData pData, nLen Length)
 	return writtenBytes;
 }
 
-void natCrc32Stream::Flush()
-{
-	m_InternalStream->Flush();
-}

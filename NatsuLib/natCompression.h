@@ -11,10 +11,13 @@
 #include "natMisc.h"
 #include "natLinq.h"
 #include "natCompressionStream.h"
+#include "natCryptography.h"
 
 namespace NatsuLib
 {
-	
+	DeclareException(EntryEncryptedException, natException, "This entry is encrypted."_nv);
+	DeclareException(EntryDecryptFailedException, natException, "Cannot decrypt entry with provided password."_nv);
+
 	////////////////////////////////////////////////////////////////////////////////
 	///	@brief	Zip压缩文档
 	///	@note	不会进行缓存，如果提供的流不符合条件请自行进行缓存
@@ -238,20 +241,48 @@ namespace NatsuLib
 			///	@brief	打开入口并返回流
 			natRefPointer<natStream> Open();
 
+			void SetPassword();
+			void SetPassword(ncData password, size_t passwordLength);
+			void SetPassword(nStrView passwordStr);
+
 		private:
 			enum class CompressionMethod : nuShort
 			{
-				Stored = 0x0,
-				Deflate = 0x8,
-				Deflate64 = 0x9,
-				BZip2 = 0xC,
-				LZMA = 0xE
+				Stored							= 0x0000,
+				Shrunk							= 0x0001,
+				ReducedWithCompressionFactor1	= 0x0002,
+				ReducedWithCompressionFactor2	= 0x0003,
+				ReducedWithCompressionFactor3	= 0x0004,
+				ReducedWithCompressionFactor4	= 0x0005,
+				Imploded						= 0x0006,
+				/* 保留 */
+				Deflate							= 0x0008,
+				Deflate64						= 0x0009,
+				PKWareDCLImploded				= 0x000A,
+				/* 保留 */
+				BZip2							= 0x000C,
+				/* 保留 */
+				LZMA							= 0x000E,
+				/* 保留 */
+				IBMTERSE						= 0x0012,
+				IBMLZ77z						= 0x0013,
+				PPMd							= 0x0062,
 			};
 
 			enum class BitFlag : nuShort
 			{
-				DataDescriptor = 0x8,
-				UnicodeFileName = 0x800
+				Encrypted				= 0x0001,
+				CompressionOption1		= 0x0002,
+				CompressionOption2		= 0x0004,
+				DataDescriptor			= 0x0008,
+				EnhancedDeflation		= 0x0010,
+				CompressedPatchedData	= 0x0020,
+				StrongEncryption		= 0x0040,
+				/* 未使用 */
+				UnicodeFileName			= 0x0800,
+				/* 保留 */
+				MaskHeaderValues		= 0x2000,
+				/* 保留 */
 			};
 
 			natZipArchive* m_Archive;
@@ -263,10 +294,14 @@ namespace NatsuLib
 
 			Optional<std::deque<ExtraField>> m_LocalHeaderFields;
 
+			Optional<std::vector<nByte>> m_Password;
+
 			// 缓存写入的数据
 			natRefPointer<natStream> m_UncompressedData;
 			// 在更新模式且入口未由于写入而加载时缓存原文件内容，在写入模式无作用
 			Optional<std::vector<nByte>> m_CachedCompressedData;
+
+			natRefPointer<natCryptoStream> m_CryptoStream;
 
 			ZipEntry(natZipArchive* archive, nStrView const& entryName);
 			ZipEntry(natZipArchive* archive, CentralDirectoryFileHeader const& centralDirectoryFileHeader);
@@ -277,6 +312,7 @@ namespace NatsuLib
 
 			nLen getOffsetOfCompressedData();
 
+			// 获得未压缩数据，仅在更新模式使用
 			natRefPointer<natStream> const& getUncompressedData();
 
 			natRefPointer<natStream> createCompressor(natRefPointer<natStream> stream);
@@ -284,12 +320,20 @@ namespace NatsuLib
 			void loadExtraFieldAndCompressedData();
 			void writeLocalFileHeaderAndData();
 
+			// 假设此时已经设置了m_CentralDirectoryFileHeader的Crc32为正确的值
+			void writeSecurityMetadata();
+
+			// 先计算Crc32，再压缩，最后加密
+			// 解密时反过来（当然不需要计算Crc32）
 			class ZipEntryWriteStream final
 				: public natRefObjImpl<ZipEntryWriteStream, natStream>
 			{
 			public:
-				ZipEntryWriteStream(ZipEntry& entry, natRefPointer<natCrc32Stream> crc32Stream, std::function<void()> finishCallback = {});
+				// finishCallback 接受一个nLen类型的参数，含义是最初写入的位置
+				ZipEntryWriteStream(ZipEntry& entry, natRefPointer<natCrc32Stream> crc32Stream, std::function<void(ZipEntryWriteStream&)> finishCallback = {});
 				~ZipEntryWriteStream();
+
+				nLen GetInitialPosition() const noexcept;
 
 				nBool CanWrite() const override;
 				nBool CanRead() const override;
@@ -309,7 +353,7 @@ namespace NatsuLib
 				natRefPointer<natCrc32Stream> m_InternalStream;
 				nLen m_InitialPosition;
 				nBool m_WroteData, m_UseZip64;
-				std::function<void()> m_FinishCallback;
+				std::function<void(ZipEntryWriteStream&)> m_FinishCallback;
 
 				void finish();
 			};

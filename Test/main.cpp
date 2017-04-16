@@ -203,10 +203,11 @@ int main()
 				{
 					natZipArchive zip{ fileStream, natZipArchive::ZipArchiveMode::Create };
 					const auto entry = zip.CreateEntry("1.txt"_nv);
+					entry->SetPassword("2333"_nv);
 					const auto stream = entry->Open();
 					stream->WriteBytes(reinterpret_cast<ncData>("2333"), 4);
 				}
-#ifdef _WIN32
+#ifdef No
 				fileStream->SetPosition(NatSeek::Beg, 0);
 				{
 					natZipArchive zip{ fileStream, natZipArchive::ZipArchiveMode::Update };

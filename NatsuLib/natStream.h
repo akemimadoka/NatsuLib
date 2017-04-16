@@ -120,6 +120,43 @@ namespace NatsuLib
 		virtual void Flush() = 0;
 	};
 
+	class natWrappedStream
+		: public natRefObjImpl<natWrappedStream, natStream>
+	{
+	public:
+		explicit natWrappedStream(natRefPointer<natStream> stream);
+		~natWrappedStream();
+
+		virtual natRefPointer<natStream> GetUnderlyingStream() const noexcept;
+
+		///	@brief	连续获得内部的流，如果流不是natWrappedStream则返回它
+		///	@note	如果你的natWrappedStream可能在除构造以外的情况下修改内部类，则存在形成环的可能，此时本方法可能会进入死循环
+		natRefPointer<natStream> GetUltimateUnderlyingStream() const noexcept;
+
+		nBool CanWrite() const override;
+		nBool CanRead() const override;
+		nBool CanResize() const override;
+		nBool CanSeek() const override;
+		nBool IsEndOfStream() const override;
+		nLen GetSize() const override;
+		void SetSize(nLen Size) override;
+		nLen GetPosition() const override;
+		void SetPosition(NatSeek Origin, nLong Offset) override;
+		nByte ReadByte() override;
+		nLen ReadBytes(nData pData, nLen Length) override;
+		void ForceReadBytes(nData pData, nLen Length) override;
+		std::future<nLen> ReadBytesAsync(nData pData, nLen Length) override;
+		void WriteByte(nByte byte) override;
+		nLen WriteBytes(ncData pData, nLen Length) override;
+		void ForceWriteBytes(ncData pData, nLen Length) override;
+		std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) override;
+		nLen CopyTo(natRefPointer<natStream> const& other) override;
+		void Flush() override;
+
+	protected:
+		natRefPointer<natStream> m_InternalStream;
+	};
+
 	////////////////////////////////////////////////////////////////////////////////
 	///	@brief	NatsuLib内存流实现
 	////////////////////////////////////////////////////////////////////////////////
@@ -146,7 +183,7 @@ namespace NatsuLib
 		nLen GetSize() const override;
 
 		///	@brief	设置流的大小
-		///	@note	无法通过设置较小的大小来截断数据，流只能增长容量而无法缩小
+		///	@note	无法通过设置较小的大小来截断数据，通过SetSize只能增长容量而无法缩小
 		void SetSize(nLen Size) override;
 
 		nLen GetPosition() const override;
@@ -164,6 +201,8 @@ namespace NatsuLib
 
 		void Reserve(nLen newCapacity);
 		nLen GetCapacity() const noexcept;
+
+		void ClearAndResetSize(nLen capacity);
 
 	private:
 		mutable natCriticalSection m_CriSection;
@@ -291,16 +330,12 @@ namespace NatsuLib
 	};
 
 	class natSubStream
-		: public natRefObjImpl<natSubStream, natStream>
+		: public natRefObjImpl<natSubStream, natWrappedStream>
 	{
 	public:
 		natSubStream(natRefPointer<natStream> stream, nLen startPosition, nLen endPosition);
 		~natSubStream();
 
-		natRefPointer<natStream> GetUnderlyingStream() const noexcept;
-
-		nBool CanWrite() const override;
-		nBool CanRead() const override;
 		nBool CanResize() const override;
 		nBool CanSeek() const override;
 		nBool IsEndOfStream() const override;
@@ -314,10 +349,8 @@ namespace NatsuLib
 		void WriteByte(nByte byte) override;
 		nLen WriteBytes(ncData pData, nLen Length) override;
 		std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) override;
-		void Flush() override;
 
 	private:
-		const natRefPointer<natStream> m_InternalStream;
 		const nLen m_StartPosition;
 		const nLen m_EndPosition;
 		nLen m_CurrentPosition;

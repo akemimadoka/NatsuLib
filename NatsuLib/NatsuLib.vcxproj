@@ -184,6 +184,7 @@
     <ClInclude Include="natConcepts.h" />
     <ClInclude Include="natConfig.h" />
     <ClInclude Include="natConsole.h" />
+    <ClInclude Include="natCryptography.h" />
     <ClInclude Include="natDelegate.h" />
     <ClInclude Include="natEncoding.h" />
     <ClInclude Include="natEnvironment.h" />
@@ -224,6 +225,7 @@
     <ClCompile Include="natCompression.cpp" />
     <ClCompile Include="natCompressionStream.cpp" />
     <ClCompile Include="natConsole.cpp" />
+    <ClCompile Include="natCryptography.cpp" />
     <ClCompile Include="natEnvironment.cpp" />
     <ClCompile Include="natEvent.cpp" />
     <ClCompile Include="natException.cpp" />

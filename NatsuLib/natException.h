@@ -77,6 +77,9 @@ namespace NatsuLib
 		natStackWalker const& GetStackWalker() const noexcept;
 #endif
 
+		[[noreturn]] void Throw() const;
+		[[noreturn]] void ThrowWithNested() const;
+
 		ncStr what() const noexcept override;
 
 	protected:
@@ -245,7 +248,7 @@ public:\
 }
 
 #define nat_Throw(ExceptionClass, ...) do { throw ExceptionClass{ nStrView{ __FUNCTION__ }, nStrView{ __FILE__ }, static_cast<nuInt>(__LINE__), __VA_ARGS__ }; } while (false)
-#define nat_ThrowWithNested(ExceptionClass, ...) do { throw ExceptionClass{ std::current_exception(), nStrView{ __FUNCTION__ }, nStrView{ __FILE__ }, static_cast<nuInt>(__LINE__), __VA_ARGS__ }; } while (false)
+#define nat_ThrowWithNested(ExceptionClass, ...) do { std::throw_with_nested(ExceptionClass{ std::current_exception(), nStrView{ __FUNCTION__ }, nStrView{ __FILE__ }, static_cast<nuInt>(__LINE__), __VA_ARGS__ }); } while (false)
 #define nat_ThrowIfFailed(Expression, ...) do { nResult result; if (NATFAIL(result = (Expression))) nat_Throw(natErrException, static_cast<NatErr>(result), __VA_ARGS__); } while (false)
 
 #include "natStringUtil.h"

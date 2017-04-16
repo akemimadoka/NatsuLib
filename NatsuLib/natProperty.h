@@ -31,6 +31,14 @@ namespace NatsuLib
 		{
 		}
 
+		explicit Property(const T& var)
+			: Property([&var]
+			{
+				return var;
+			})
+		{
+		}
+
 		explicit Property(T& var, AutoPropertyFlags autoPropertyFlags = AutoPropertyFlags::Getter | AutoPropertyFlags::CopySetter | AutoPropertyFlags::MoveSetter)
 		{
 			if ((autoPropertyFlags & AutoPropertyFlags::Getter) != AutoPropertyFlags::None)
@@ -96,7 +104,7 @@ namespace NatsuLib
 	};
 
 	template <typename T>
-	Property<T> make_property(T& var, nInt autoPropertyFlags)
+	Property<T> make_property(T& var, AutoPropertyFlags autoPropertyFlags)
 	{
 		return { var, autoPropertyFlags };
 	}

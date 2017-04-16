@@ -47,8 +47,9 @@ namespace NatsuLib
 			}
 		};
 
+		// decltype(static_cast<Dst>(std::declval<Src>())) 似乎在MSVC上存在问题？暂时使用替代方案
 		template <typename Dst, typename Src>
-		struct static_cast_or_dynamic_cast_helper<Dst, Src, decltype(static_cast<Dst>(std::declval<Src>()))>
+		struct static_cast_or_dynamic_cast_helper<Dst, Src, std::enable_if_t<std::is_same<Src, Dst>::value || !std::is_base_of<Src, Dst>::value>>
 		{
 			static constexpr Dst Do(Src& src) noexcept
 			{
@@ -62,9 +63,9 @@ namespace NatsuLib
 			return static_cast_or_dynamic_cast_helper<Dst, Src>::Do(src);
 		}
 
-		template <typename Base = natRefObj>
+		template <typename BaseClass = natRefObj>
 		class RefCountBase
-			: public Base
+			: public BaseClass
 		{
 		public:
 			nBool IsUnique() const volatile noexcept
@@ -104,8 +105,9 @@ namespace NatsuLib
 			}
 
 		protected:
-			constexpr RefCountBase() noexcept
-				: m_RefCount(1)
+			template <typename... Args>
+			constexpr RefCountBase(Args&&... args) noexcept
+				: BaseClass(std::forward<Args>(args)...), m_RefCount(1)
 			{
 			}
 			constexpr RefCountBase(RefCountBase const&) noexcept
@@ -171,7 +173,17 @@ namespace NatsuLib
 			mutable std::mutex m_Mutex;
 			std::add_pointer_t<Owner> m_Owner;
 		};
+
+		struct SpecifySelfDeleter_t
+		{
+			constexpr SpecifySelfDeleter_t() = default;
+		};
+
+		constexpr SpecifySelfDeleter_t SpecifySelfDeleter{};
 	}
+
+	using detail_::SpecifySelfDeleter_t;
+	using detail_::SpecifySelfDeleter;
 
 	////////////////////////////////////////////////////////////////////////////////
 	///	@brief	引用计数实现
@@ -188,8 +200,8 @@ namespace NatsuLib
 
 		typedef detail_::RefCountBase<B> Base;
 
-		template <typename T_, typename ...Arg>
-		friend NATINLINE natRefPointer<T_> make_ref(Arg &&... args);
+		template <typename T_, typename... Args>
+		friend NATINLINE std::enable_if_t<std::is_constructible<T_, Args...>::value, natRefPointer<T_>> make_ref(Args &&... args);
 
 		struct DefaultDeleter
 		{
@@ -200,6 +212,8 @@ namespace NatsuLib
 		};
 
 	protected:
+		typedef natRefObjImpl RefObjImpl;
+
 		void* operator new(size_t size)
 		{
 			return ::operator new(size);
@@ -214,13 +228,21 @@ namespace NatsuLib
 		typedef std::function<void(T*)> SelfDeleter;
 		typedef detail_::WeakRefView<natRefObjImpl> WeakRefView;
 
-		constexpr natRefObjImpl(SelfDeleter deleter = {}) noexcept
-			: m_View{ nullptr }, m_Deleter{ std::move(deleter) }
+		template <typename... Args>
+		constexpr natRefObjImpl(Args&&... args)
+			: natRefObjImpl(SpecifySelfDeleter, {}, std::forward<Args>(args)...)
+		{
+		}
+
+		template <typename... Args>
+		constexpr natRefObjImpl(SpecifySelfDeleter_t, SelfDeleter deleter, Args&&... args) noexcept
+			: Base(std::forward<Args>(args)...), m_View{ nullptr }, m_Deleter{ std::move(deleter) }
 		{
 #ifdef TraceRefObj
 			OutputDebugString(natUtil::FormatString("Type %s created at (%p)\n"_nv, nStringView{ typeid(*this).name() }, this).c_str());
 #endif
 		}
+
 		constexpr natRefObjImpl(natRefObjImpl const&) noexcept
 			: m_View{ nullptr }
 		{
@@ -472,12 +494,14 @@ namespace NatsuLib
 
 		natRefPointer& operator=(natRefPointer const& other)&
 		{
-			return Reset(other.m_pPointer);
+			Reset(other.m_pPointer);
+			return *this;
 		}
 
 		natRefPointer& operator=(natRefPointer && other)& noexcept
 		{
-			std::swap(m_pPointer, other.m_pPointer);
+			using std::swap;
+			swap(m_pPointer, other.m_pPointer);
 			return *this;
 		}
 
@@ -544,10 +568,10 @@ namespace NatsuLib
 		T* m_pPointer;
 	};
 
-	template <typename T, typename ...Arg>
-	NATINLINE natRefPointer<T> make_ref(Arg &&... args)
+	template <typename T, typename... Args>
+	NATINLINE std::enable_if_t<std::is_constructible<T, Args...>::value, natRefPointer<T>> make_ref(Args &&... args)
 	{
-		const auto pRefObj = new T(std::forward<Arg>(args)...);
+		const auto pRefObj = new T(std::forward<Args>(args)...);
 		pRefObj->SetDeleter();
 		natRefPointer<T> Ret(pRefObj);
 		pRefObj->Release();
@@ -824,17 +848,6 @@ namespace NatsuLib
 	template <typename P>
 	natRefPointer<T>::operator natRefPointer<P>() const
 	{
-		if (!m_pPointer)
-		{
-			return {};
-		}
-
-		const auto pTarget = detail_::static_cast_or_dynamic_cast<P*>(m_pPointer);
-		if (pTarget)
-		{
-			return natRefPointer<P> { pTarget };
-		}
-
-		nat_Throw(natException, "Type P cannot be converted to T."_nv);
+		return natRefPointer<P> { m_pPointer ? detail_::static_cast_or_dynamic_cast<P*>(m_pPointer) : nullptr };
 	}
 }

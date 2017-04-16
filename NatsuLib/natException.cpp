@@ -50,6 +50,16 @@ natStackWalker const& natException::GetStackWalker() const noexcept
 }
 #endif
 
+void natException::Throw() const
+{
+	throw *this;
+}
+
+void natException::ThrowWithNested() const
+{
+	std::throw_with_nested(*this);
+}
+
 ncStr natException::what() const noexcept
 {
 	return m_Description.data();

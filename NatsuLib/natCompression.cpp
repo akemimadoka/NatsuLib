@@ -1,10 +1,11 @@
 #include "stdafx.h"
 #include "natCompression.h"
 #include "natEncoding.h"
+#include "natCryptography.h"
 
 using namespace NatsuLib;
 
-// 在写入时被odr-used了，所以需要提供定义
+// 在写入时被odr-use了，所以需要提供定义
 constexpr nuInt natZipArchive::Mask32Bit;
 constexpr nuShort natZipArchive::Mask16Bit;
 
@@ -54,6 +55,28 @@ natRefPointer<natStream> natZipArchive::ZipEntry::Open()
 	}
 }
 
+void natZipArchive::ZipEntry::SetPassword()
+{
+	m_Password.reset();
+}
+
+void natZipArchive::ZipEntry::SetPassword(ncData password, size_t passwordLength)
+{
+	if (m_Password)
+	{
+		m_Password.value().assign(password, password + passwordLength);
+	}
+	else
+	{
+		m_Password.emplace(password, password + passwordLength);
+	}
+}
+
+void natZipArchive::ZipEntry::SetPassword(nStrView passwordStr)
+{
+	SetPassword(reinterpret_cast<ncData>(passwordStr.data()), passwordStr.size());
+}
+
 natZipArchive::ZipEntry::ZipEntry(natZipArchive* archive, CentralDirectoryFileHeader const& centralDirectoryFileHeader)
 	: m_Archive{ archive }, m_OriginallyInArchive{ true }, m_CentralDirectoryFileHeader(centralDirectoryFileHeader), m_EverOpenedForWrite{ false }, m_CurrentOpeningForWrite{ false }
 {
@@ -63,19 +86,53 @@ natRefPointer<natStream> natZipArchive::ZipEntry::openForRead()
 {
 	const auto offset = getOffsetOfCompressedData();
 	auto compressedStream = make_ref<natSubStream>(m_Archive->m_Stream, offset, offset + m_CentralDirectoryFileHeader.CompressedSize);
+	natRefPointer<natStream> uncompressor = compressedStream;
+
 	switch (static_cast<CompressionMethod>(m_CentralDirectoryFileHeader.CompressionMethod))
 	{
 	case CompressionMethod::Deflate:
-		return make_ref<natDeflateStream>(std::move(compressedStream));
+		uncompressor = make_ref<natDeflateStream>(uncompressor);
+		break;
+	case CompressionMethod::Stored:
+		break;
 	case CompressionMethod::Deflate64:
 	case CompressionMethod::BZip2:
 	case CompressionMethod::LZMA:
-		nat_Throw(NotImplementedException, "This compress method has not implemented yet (value is {0})."_nv, m_CentralDirectoryFileHeader.CompressionMethod);
-	case CompressionMethod::Stored:
+	case CompressionMethod::Shrunk:
+	case CompressionMethod::ReducedWithCompressionFactor1:
+	case CompressionMethod::ReducedWithCompressionFactor2:
+	case CompressionMethod::ReducedWithCompressionFactor3:
+	case CompressionMethod::ReducedWithCompressionFactor4:
+	case CompressionMethod::Imploded:
+	case CompressionMethod::PKWareDCLImploded:
+	case CompressionMethod::IBMTERSE:
+	case CompressionMethod::IBMLZ77z:
+	case CompressionMethod::PPMd:
 	default:
-		assert(static_cast<CompressionMethod>(m_CentralDirectoryFileHeader.CompressionMethod) == CompressionMethod::Stored && "Invalid CompressionMethod.");
-		return std::move(compressedStream);
+		nat_Throw(NotImplementedException, "This compress method has not implemented yet (value is {0})."_nv, m_CentralDirectoryFileHeader.CompressionMethod);
 	}
+
+	if (m_CentralDirectoryFileHeader.GeneralPurposeBitFlag & static_cast<nuShort>(BitFlag::Encrypted))
+	{
+		if (!m_Password)
+		{
+			nat_Throw(EntryEncryptedException, "This entry is encrypted and no password provided."_nv);
+		}
+
+		const auto& password = m_Password.value();
+		// 当前仅支持PKZipWeak加解密算法
+		auto cryptoProcessor = make_ref<PKzipWeakAlgorithm>()->CreateDecryptor();
+		auto pkZipWeakProcessor = static_cast<natRefPointer<PKzipWeakProcessor>>(cryptoProcessor);
+		pkZipWeakProcessor->InitHeaderFrom(compressedStream);
+		pkZipWeakProcessor->InitCipher(password.data(), password.size());
+		if (!pkZipWeakProcessor->CheckHeaderWithCrc32(m_CentralDirectoryFileHeader.Crc32))
+		{
+			nat_Throw(EntryDecryptFailedException);
+		}
+		uncompressor = m_CryptoStream = make_ref<natCryptoStream>(compressedStream, cryptoProcessor, natCryptoStream::CryptoStreamMode::Read);
+	}
+
+	return uncompressor;
 }
 
 natRefPointer<natStream> natZipArchive::ZipEntry::openForCreate()
@@ -88,7 +145,13 @@ natRefPointer<natStream> natZipArchive::ZipEntry::openForCreate()
 	m_EverOpenedForWrite = true;
 	m_CentralDirectoryFileHeader.CompressionMethod = static_cast<nuShort>(CompressionMethod::Deflate);
 
-	return make_ref<ZipEntryWriteStream>(*this, createCompressor(m_Archive->m_Stream));
+	return make_ref<ZipEntryWriteStream>(*this, createCompressor(m_Archive->m_Stream), [this] (ZipEntryWriteStream& stream)
+	{
+		const auto pos = m_Archive->m_Stream->GetPosition();
+		m_Archive->m_Stream->SetPosition(NatSeek::Beg, static_cast<nLong>(stream.GetInitialPosition()));
+		writeSecurityMetadata();
+		m_Archive->m_Stream->SetPosition(NatSeek::Beg, pos);
+	});
 }
 
 natRefPointer<natStream> natZipArchive::ZipEntry::openForUpdate()
@@ -146,7 +209,20 @@ natRefPointer<natStream> const& natZipArchive::ZipEntry::getUncompressedData()
 natRefPointer<natStream> natZipArchive::ZipEntry::createCompressor(natRefPointer<natStream> stream)
 {
 	assert(stream && "stream should not be nullptr.");
-	return make_ref<natCrc32Stream>(make_ref<natDeflateStream>(std::move(stream), natDeflateStream::CompressionLevel::Optimal));
+	auto compressor = std::move(stream);
+
+	if (m_Password)
+	{
+		const auto& password = m_Password.value();
+		// 当前仅支持PKZipWeak加解密算法
+		auto cryptoProcessor = make_ref<PKzipWeakAlgorithm>()->CreateEncryptor();
+		auto pkZipWeakProcessor = static_cast<natRefPointer<PKzipWeakProcessor>>(cryptoProcessor);
+		pkZipWeakProcessor->InitCipher(password.data(), password.size());
+		compressor = m_CryptoStream = make_ref<natCryptoStream>(std::move(compressor), cryptoProcessor, natCryptoStream::CryptoStreamMode::Write);
+		m_CentralDirectoryFileHeader.GeneralPurposeBitFlag |= static_cast<nuShort>(BitFlag::Encrypted);
+	}
+
+	return make_ref<natCrc32Stream>(make_ref<natDeflateStream>(std::move(compressor), natDeflateStream::CompressionLevel::Optimal));
 }
 
 void natZipArchive::ZipEntry::loadExtraFieldAndCompressedData()
@@ -197,6 +273,7 @@ void natZipArchive::ZipEntry::writeLocalFileHeaderAndData()
 		m_CentralDirectoryFileHeader.UncompressedSize = m_UncompressedData->GetSize();
 
 		const auto entryWriter = make_ref<ZipEntryWriteStream>(*this, createCompressor(stream));
+		writeSecurityMetadata();
 		m_UncompressedData->SetPosition(NatSeek::Beg, 0);
 		m_UncompressedData->CopyTo(entryWriter);
 		m_UncompressedData.Reset();
@@ -211,17 +288,34 @@ void natZipArchive::ZipEntry::writeLocalFileHeaderAndData()
 		LocalFileHeader::Write(writer, m_CentralDirectoryFileHeader, m_LocalHeaderFields, m_Archive->m_Encoding);
 		stream->WriteBytes(data.data(), data.size());
 	}
-	else
+	else if (m_Archive->m_Mode == ZipArchiveMode::Update || !m_EverOpenedForWrite)
 	{
-		if (m_Archive->m_Mode == ZipArchiveMode::Update || !m_EverOpenedForWrite)
-		{
-			LocalFileHeader::Write(writer, m_CentralDirectoryFileHeader, m_LocalHeaderFields, m_Archive->m_Encoding);
-			m_EverOpenedForWrite = true;
-		}
+		LocalFileHeader::Write(writer, m_CentralDirectoryFileHeader, m_LocalHeaderFields, m_Archive->m_Encoding);
+		m_EverOpenedForWrite = true;
 	}
 }
 
-natZipArchive::ZipEntry::ZipEntryWriteStream::ZipEntryWriteStream(ZipEntry& entry, natRefPointer<natCrc32Stream> crc32Stream, std::function<void()> finishCallback)
+void natZipArchive::ZipEntry::writeSecurityMetadata()
+{
+	if (m_CentralDirectoryFileHeader.GeneralPurposeBitFlag & static_cast<nuShort>(BitFlag::Encrypted))
+	{
+		const auto stream = m_Archive->m_Stream;
+		assert(m_CryptoStream && "m_CryptoStream should not be nullptr.");
+		m_CryptoStream->FlushFinalBlock();
+		// 当前仅支持PKZipWeak加解密算法
+		const auto pkZipWeakProcessor = static_cast<natRefPointer<PKzipWeakProcessor>>(m_CryptoStream->GetProcessor());
+
+		pkZipWeakProcessor->GenerateHeaderWithCrc32(m_CentralDirectoryFileHeader.Crc32);
+		nByte tmpHeader[PKzipWeakProcessor::HeaderSize];
+		if (!pkZipWeakProcessor->GetHeader(tmpHeader, sizeof tmpHeader))
+		{
+			nat_Throw(natErrException, NatErr_InternalErr, "Cannot get security header."_nv);
+		}
+		stream->WriteBytes(tmpHeader, sizeof tmpHeader);
+	}
+}
+
+natZipArchive::ZipEntry::ZipEntryWriteStream::ZipEntryWriteStream(ZipEntry& entry, natRefPointer<natCrc32Stream> crc32Stream, std::function<void(ZipEntryWriteStream&)> finishCallback)
 	: m_Entry{ entry }, m_InternalStream{ std::move(crc32Stream) }, m_InitialPosition{}, m_WroteData{}, m_UseZip64{}, m_FinishCallback{ move(finishCallback) }
 {
 	assert(m_InternalStream && "crc32Stream should not be nullptr.");
@@ -229,17 +323,12 @@ natZipArchive::ZipEntry::ZipEntryWriteStream::ZipEntryWriteStream(ZipEntry& entr
 
 natZipArchive::ZipEntry::ZipEntryWriteStream::~ZipEntryWriteStream()
 {
-	try
-	{
-		finish();
-	}
-	catch (...)
-	{
-		// 不应该发生
-		assert(!"Some unhandled exception caught!");
-		//throw; // 由于析构函数默认noexcept(true)，立即引发std::terminate
-		std::terminate(); // 还是直接std::terminate吧【
-	}
+	finish();
+}
+
+nLen natZipArchive::ZipEntry::ZipEntryWriteStream::GetInitialPosition() const noexcept
+{
+	return m_InitialPosition;
 }
 
 nBool natZipArchive::ZipEntry::ZipEntryWriteStream::CanWrite() const
@@ -303,7 +392,13 @@ nLen natZipArchive::ZipEntry::ZipEntryWriteStream::WriteBytes(ncData pData, nLen
 	{
 		m_Entry.m_CentralDirectoryFileHeader.RelativeOffsetOfLocalHeader = m_Entry.m_Archive->m_Stream->GetPosition();
 		m_UseZip64 = LocalFileHeader::Write(m_Entry.m_Archive->m_Writer, m_Entry.m_CentralDirectoryFileHeader, m_Entry.m_LocalHeaderFields, m_Entry.m_Archive->m_Encoding);
-		m_InitialPosition = static_cast<natRefPointer<natDeflateStream>>(m_InternalStream->GetUnderlyingStream())->GetUnderlyingStream()->GetPosition();
+		m_InitialPosition = m_InternalStream->GetUltimateUnderlyingStream()->GetPosition();
+		if (m_Entry.m_CentralDirectoryFileHeader.GeneralPurposeBitFlag & static_cast<nuShort>(BitFlag::Encrypted))
+		{
+			// 空出空间以用于之后写入元数据
+			nByte dummySecureMetadata[PKzipWeakProcessor::HeaderSize]{};
+			m_Entry.m_Archive->m_Stream->WriteBytes(dummySecureMetadata, sizeof dummySecureMetadata);
+		}
 		m_WroteData = true;
 	}
 
@@ -319,7 +414,7 @@ void natZipArchive::ZipEntry::ZipEntryWriteStream::finish()
 {
 	m_Entry.m_CentralDirectoryFileHeader.Crc32 = m_InternalStream->GetCrc32();
 	m_Entry.m_CentralDirectoryFileHeader.UncompressedSize = m_InternalStream->GetPosition();
-	m_Entry.m_CentralDirectoryFileHeader.CompressedSize = static_cast<natRefPointer<natDeflateStream>>(m_InternalStream->GetUnderlyingStream())->GetUnderlyingStream()->GetPosition() - m_InitialPosition;
+	m_Entry.m_CentralDirectoryFileHeader.CompressedSize = m_InternalStream->GetUltimateUnderlyingStream()->GetPosition() - m_InitialPosition;
 
 	if (m_WroteData)
 	{
@@ -334,7 +429,7 @@ void natZipArchive::ZipEntry::ZipEntryWriteStream::finish()
 
 	if (m_FinishCallback)
 	{
-		m_FinishCallback();
+		m_FinishCallback(*this);
 	}
 }
 

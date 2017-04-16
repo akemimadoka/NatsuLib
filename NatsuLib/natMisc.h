@@ -42,10 +42,10 @@ namespace NatsuLib
 			return std::invoke(std::forward<F>(f), std::get<I>(std::forward<Tuple>(t))...);
 		}
 
-		struct nullopt_t {};
+		struct nullopt_t { constexpr nullopt_t() = default; };
 		constexpr nullopt_t nullopt{};
 
-		struct defaultconstruct_t {};
+		struct defaultconstruct_t { constexpr defaultconstruct_t() = default; };
 		constexpr defaultconstruct_t defaultconstruct{};
 
 		[[noreturn]] void NotConstructed();

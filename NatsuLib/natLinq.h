@@ -381,11 +381,11 @@ namespace NatsuLib
 		{
 			typedef EmptyIterator<T> Self_t;
 		public:
-			typedef void iterator_category;
-			typedef void value_type;
-			typedef void difference_type;
-			typedef void reference;
-			typedef void pointer;
+			typedef std::forward_iterator_tag iterator_category;
+			typedef std::remove_reference_t<T> value_type;
+			typedef std::ptrdiff_t difference_type;
+			typedef std::add_lvalue_reference_t<value_type> reference;
+			typedef std::add_pointer_t<value_type> pointer;
 
 			Self_t& operator++() &
 			{

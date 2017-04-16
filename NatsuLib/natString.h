@@ -1412,7 +1412,7 @@ std::basic_istream<CharType>& operator>>(std::basic_istream<CharType>& is, Natsu
 {
 	std::basic_string<CharType> tmpStr;
 	is >> tmpStr;
-	str.Assign(tmpStr.c_str());
+	str.Assign(NatsuLib::StringView<NatsuLib::detail_::SelectStringType<CharType>::SelectedStringType>{ tmpStr.c_str() });
 	return is;
 }
 

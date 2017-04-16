@@ -5,13 +5,13 @@
 #pragma once
 
 #include "natConfig.h"
+#include "natDelegate.h"
+#include "natUtil.h"
+#include "natMultiThread.h"
 
 #include <map>
 #include <unordered_map>
 #include <typeindex>
-
-#include "natDelegate.h"
-#include "natUtil.h"
 
 namespace NatsuLib
 {
@@ -57,6 +57,7 @@ namespace NatsuLib
 		template <typename EventClass>
 		std::enable_if_t<std::is_base_of<natEventBase, EventClass>::value, void> RegisterEvent()
 		{
+			natRefScopeGuard<natCriticalSection> guard{ m_Section };
 			bool Succeeded;
 			tie(std::ignore, Succeeded) = m_EventListenerMap.try_emplace(typeid(EventClass));
 
@@ -69,6 +70,7 @@ namespace NatsuLib
 		template <typename EventClass>
 		ListenerIDType RegisterEventListener(EventListenerDelegate const& listener, PriorityType priority = Priority::Normal)
 		{
+			natRefScopeGuard<natCriticalSection> guard{ m_Section };
 			auto iter = m_EventListenerMap.find(typeid(EventClass));
 			if (iter == m_EventListenerMap.end())
 			{
@@ -84,6 +86,7 @@ namespace NatsuLib
 		template <typename EventClass>
 		void UnregisterEventListener(PriorityType priority, ListenerIDType ListenerID)
 		{
+			natRefScopeGuard<natCriticalSection> guard{ m_Section };
 			auto iter = m_EventListenerMap.find(typeid(EventClass));
 			if (iter == m_EventListenerMap.end())
 			{
@@ -100,6 +103,7 @@ namespace NatsuLib
 		template <typename EventClass>
 		nBool Post(EventClass& event)
 		{
+			natRefScopeGuard<natCriticalSection> guard{ m_Section };
 			auto iter = m_EventListenerMap.find(typeid(EventClass));
 			if (iter == m_EventListenerMap.end())
 			{
@@ -118,6 +122,7 @@ namespace NatsuLib
 		}
 
 	private:
+		natCriticalSection m_Section;
 		std::unordered_map<std::type_index, std::map<PriorityType, std::map<ListenerIDType, EventListenerDelegate>>> m_EventListenerMap;
 	};
 }

@@ -100,8 +100,135 @@ nLen natStream::CopyTo(natRefPointer<natStream> const& other)
 	return totalReadBytes;
 }
 
+natWrappedStream::natWrappedStream(natRefPointer<natStream> stream)
+	: m_InternalStream{ std::move(stream) }
+{
+}
+
+natWrappedStream::~natWrappedStream()
+{
+}
+
+natRefPointer<natStream> natWrappedStream::GetUnderlyingStream() const noexcept
+{
+	return m_InternalStream;
+}
+
+natRefPointer<natStream> natWrappedStream::GetUltimateUnderlyingStream() const noexcept
+{
+	auto pStream = m_InternalStream;
+	
+	while (true)
+	{
+		auto wrappedStream = static_cast<natRefPointer<natWrappedStream>>(pStream);
+		if (wrappedStream && wrappedStream != this)
+		{
+			pStream = wrappedStream->m_InternalStream;
+		}
+		else
+		{
+			return pStream;
+		}
+	}
+}
+
+nBool natWrappedStream::CanWrite() const
+{
+	return m_InternalStream->CanWrite();
+}
+
+nBool natWrappedStream::CanRead() const
+{
+	return m_InternalStream->CanRead();
+}
+
+nBool natWrappedStream::CanResize() const
+{
+	return m_InternalStream->CanResize();
+}
+
+nBool natWrappedStream::CanSeek() const
+{
+	return m_InternalStream->CanSeek();
+}
+
+nBool natWrappedStream::IsEndOfStream() const
+{
+	return m_InternalStream->IsEndOfStream();
+}
+
+nLen natWrappedStream::GetSize() const
+{
+	return m_InternalStream->GetSize();
+}
+
+void natWrappedStream::SetSize(nLen Size)
+{
+	m_InternalStream->SetSize(Size);
+}
+
+nLen natWrappedStream::GetPosition() const
+{
+	return m_InternalStream->GetPosition();
+}
+
+void natWrappedStream::SetPosition(NatSeek Origin, nLong Offset)
+{
+	m_InternalStream->SetPosition(Origin, Offset);
+}
+
+nByte natWrappedStream::ReadByte()
+{
+	return m_InternalStream->ReadByte();
+}
+
+nLen natWrappedStream::ReadBytes(nData pData, nLen Length)
+{
+	return m_InternalStream->ReadBytes(pData, Length);
+}
+
+void natWrappedStream::ForceReadBytes(nData pData, nLen Length)
+{
+	return m_InternalStream->ForceReadBytes(pData, Length);
+}
+
+std::future<nLen> natWrappedStream::ReadBytesAsync(nData pData, nLen Length)
+{
+	return m_InternalStream->ReadBytesAsync(pData, Length);
+}
+
+void natWrappedStream::WriteByte(nByte byte)
+{
+	m_InternalStream->WriteByte(byte);
+}
+
+nLen natWrappedStream::WriteBytes(ncData pData, nLen Length)
+{
+	return m_InternalStream->WriteBytes(pData, Length);
+}
+
+void natWrappedStream::ForceWriteBytes(ncData pData, nLen Length)
+{
+	m_InternalStream->ForceWriteBytes(pData, Length);
+}
+
+std::future<nLen> natWrappedStream::WriteBytesAsync(ncData pData, nLen Length)
+{
+	return m_InternalStream->WriteBytesAsync(pData, Length);
+}
+
+nLen natWrappedStream::CopyTo(natRefPointer<natStream> const& other)
+{
+	return m_InternalStream->CopyTo(other);
+}
+
+void natWrappedStream::Flush()
+{
+	m_InternalStream->Flush();
+}
+
 natSubStream::natSubStream(natRefPointer<natStream> stream, nLen startPosition, nLen endPosition)
-	: m_InternalStream{ std::move(stream) }, m_StartPosition{ startPosition }, m_EndPosition{ endPosition }, m_CurrentPosition{ startPosition }
+	: natRefObjImpl{ std::move(stream) }, m_StartPosition{ startPosition }, m_EndPosition{ endPosition }, m_CurrentPosition{ startPosition }
 {
 	if (!m_InternalStream->CanSeek())
 	{
@@ -120,21 +247,6 @@ natSubStream::natSubStream(natRefPointer<natStream> stream, nLen startPosition, 
 
 natSubStream::~natSubStream()
 {
-}
-
-natRefPointer<natStream> natSubStream::GetUnderlyingStream() const noexcept
-{
-	return m_InternalStream;
-}
-
-nBool natSubStream::CanWrite() const
-{
-	return m_InternalStream->CanWrite();
-}
-
-nBool natSubStream::CanRead() const
-{
-	return m_InternalStream->CanRead();
 }
 
 nBool natSubStream::CanResize() const
@@ -273,11 +385,6 @@ std::future<nLen> natSubStream::WriteBytesAsync(ncData pData, nLen Length)
 	const auto realLength = std::min(Length, m_EndPosition - m_CurrentPosition);
 	adjustPosition();
 	return m_InternalStream->WriteBytesAsync(pData, realLength);
-}
-
-void natSubStream::Flush()
-{
-	m_InternalStream->Flush();
 }
 
 void natSubStream::adjustPosition() const
@@ -1256,7 +1363,7 @@ natMemoryStream::natMemoryStream(ncData pData, nLen Length, nBool bReadable, nBo
 	m_Size = Length;
 	if (pData)
 	{
-		memmove(m_pData, pData, Length);
+		memmove(m_pData, pData, static_cast<size_t>(Length));
 	}
 }
 
@@ -1266,13 +1373,13 @@ natMemoryStream::natMemoryStream(nLen Length, nBool bReadable, nBool bWritable, 
 }
 
 natMemoryStream::natMemoryStream(natMemoryStream const& other)
-	: m_pData(), m_Size(), m_Capacity(), m_CurPos(), m_bReadable(), m_bWritable(), m_AutoResize()
+	: natRefObjImpl{}, m_pData(), m_Size(), m_Capacity(), m_CurPos(), m_bReadable(), m_bWritable(), m_AutoResize()
 {
 	*this = other;
 }
 
 natMemoryStream::natMemoryStream(natMemoryStream&& other) noexcept
-	: m_pData(), m_Size(), m_Capacity(), m_CurPos(), m_bReadable(), m_bWritable(), m_AutoResize()
+	: natRefObjImpl{}, m_pData(), m_Size(), m_Capacity(), m_CurPos(), m_bReadable(), m_bWritable(), m_AutoResize()
 {
 	*this = std::move(other);
 }
@@ -1419,7 +1526,7 @@ nLen natMemoryStream::WriteBytes(ncData pData, nLen Length)
 	{
 		if (m_AutoResize)
 		{
-			Reserve(detail_::Grow(Length));
+			Reserve(static_cast<nLen>(detail_::Grow(Length)));
 			tWriteBytes = Length;
 		}
 		else
@@ -1466,7 +1573,7 @@ void natMemoryStream::Reserve(nLen newCapacity)
 		return;
 	}
 
-	auto pNewStorage = new nByte[newCapacity];
+	auto pNewStorage = new nByte[static_cast<size_t>(newCapacity)];
 	const auto deleter = make_scope([&pNewStorage]
 	{
 		delete[] pNewStorage;
@@ -1474,7 +1581,7 @@ void natMemoryStream::Reserve(nLen newCapacity)
 
 	if (m_Size > 0 && m_pData)
 	{
-		memmove(pNewStorage, m_pData, m_Size);
+		memmove(pNewStorage, m_pData, static_cast<size_t>(m_Size));
 	}
 
 	swap(m_pData, pNewStorage);
@@ -1483,6 +1590,11 @@ void natMemoryStream::Reserve(nLen newCapacity)
 nLen natMemoryStream::GetCapacity() const noexcept
 {
 	return m_Capacity;
+}
+
+void natMemoryStream::ClearAndResetSize(nLen capacity)
+{
+	allocateAndInvalidateOldData(capacity);
 }
 
 natMemoryStream::~natMemoryStream()
@@ -1500,11 +1612,14 @@ natMemoryStream& natMemoryStream::operator=(natMemoryStream const& other)
 	natRefScopeGuard<natCriticalSection> otherguard(m_CriSection);
 	natRefScopeGuard<natCriticalSection> selfguard(other.m_CriSection);
 
-	allocateAndInvalidateOldData(other.m_Size);
-
+	if (other.m_Size > m_Capacity)
+	{
+		allocateAndInvalidateOldData(other.m_Size);
+	}
+	
 	if (other.m_pData)
 	{
-		memmove(m_pData, other.m_pData, other.m_Size);
+		memmove(m_pData, other.m_pData, static_cast<size_t>(other.m_Size));
 	}
 
 	m_Size = other.m_Size;
@@ -1543,13 +1658,15 @@ void natMemoryStream::allocateAndInvalidateOldData(nLen newCapacity)
 {
 	using std::swap;
 
-	if (newCapacity <= m_Capacity)
+	/*if (newCapacity <= m_Capacity)
 	{
 		return;
-	}
+	}*/
 
-	auto pNewStorage = new nByte[newCapacity];
+	auto pNewStorage = new nByte[static_cast<size_t>(newCapacity)];
 	swap(m_pData, pNewStorage); // 假设swap总是noexcept的
+	m_Size = m_CurPos = 0;
+	m_Capacity = newCapacity;
 	delete[] pNewStorage;
 }
 
@@ -1663,7 +1780,7 @@ nLen natExternMemoryStream::ReadBytes(nData pData, nLen Length)
 	}
 
 	const auto readBytes = std::min(Length, m_Size - m_CurrentPos);
-	memmove(pData, m_ExternData, readBytes);
+	memmove(pData, m_ExternData, static_cast<size_t>(readBytes));
 	m_CurrentPos += readBytes;
 	return readBytes;
 }
@@ -1694,7 +1811,7 @@ nLen natExternMemoryStream::WriteBytes(ncData pData, nLen Length)
 	}
 
 	const auto writtenBytes = std::min(Length, m_Size - m_CurrentPos);
-	memmove(m_ExternData + m_CurrentPos, pData, writtenBytes);
+	memmove(m_ExternData + m_CurrentPos, pData, static_cast<size_t>(writtenBytes));
 	m_CurrentPos += writtenBytes;
 	return writtenBytes;
 }
