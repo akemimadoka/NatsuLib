@@ -58,37 +58,27 @@ namespace NatsuLib
 			return t;
 		}
 
-		enum
+		// 不检查缓存大小，直接生成，调用者需保证调用时buf的大小不小于PKzipWeakProcessor::HeaderSize
+		void UncheckedCryptHead(nData buf, nuInt* pKeys, const nuInt* crc32Table, nuInt crcForCrypting) noexcept
 		{
-			RandHeadLen = PKzipWeakProcessor::HeaderSize,
-		};
-
-		nBool CryptHead(ncData password, size_t passwordLength, nData buf, size_t bufSize, nuInt* pKeys, const nuInt* crc32Table, nuInt crcForCrypting) noexcept
-		{
-			if (bufSize < RandHeadLen)
-			{
-				return false;
-			}
-
 			std::random_device randomDevice;
-			nByte header[RandHeadLen - 1];
-
-			InitKeys(password, passwordLength, pKeys, crc32Table);
-
-			std::generate_n(std::begin(header), std::size(header), [&]()
+			std::generate_n(buf, PKzipWeakProcessor::HeaderSize - 1, [&]()
 			{
 				return static_cast<nByte>(EncodeOne(pKeys, crc32Table, static_cast<nuInt>(randomDevice() & 0xff)));
 			});
 
-			InitKeys(password, passwordLength, pKeys, crc32Table);
+			buf[PKzipWeakProcessor::HeaderSize - 1] = static_cast<nByte>(EncodeOne(pKeys, crc32Table, (crcForCrypting >> 24) & 0xff));
+		}
 
-			for (size_t i = 0; i < std::size(header); ++i)
+		nBool CryptHead(ncData password, size_t passwordLength, nData buf, size_t bufSize, nuInt* pKeys, const nuInt* crc32Table, nuInt crcForCrypting) noexcept
+		{
+			if (bufSize < PKzipWeakProcessor::HeaderSize)
 			{
-				buf[i] = static_cast<nByte>(EncodeOne(pKeys, crc32Table, header[i]));
+				return false;
 			}
 
-			//buf[RandHeadLen - 2] = static_cast<nByte>(EncodeOne(pKeys, crc32Table, (crcForCrypting >> 16) & 0xff));
-			buf[RandHeadLen - 1] = static_cast<nByte>(EncodeOne(pKeys, crc32Table, (crcForCrypting >> 24) & 0xff));
+			InitKeys(password, passwordLength, pKeys, crc32Table);
+			UncheckedCryptHead(buf, pKeys, crc32Table, crcForCrypting);
 
 			return true;
 		}
@@ -122,6 +112,11 @@ void PKzipWeakProcessor::InitHeaderFrom(ncData buffer, nLen bufferLength)
 {
 	assert(!m_IsCrypt && "No need to initialize header in crypt mode.");
 
+	if (!m_Keys)
+	{
+		nat_Throw(natErrException, NatErr_InternalErr, "Keys not initialized."_nv);
+	}
+
 	if (!m_Header)
 	{
 		m_Header.emplace();
@@ -129,11 +124,17 @@ void PKzipWeakProcessor::InitHeaderFrom(ncData buffer, nLen bufferLength)
 
 	auto& header = m_Header.value();
 	std::memmove(header.data(), buffer, bufferLength);
+	decryptHeader();
 }
 
 void PKzipWeakProcessor::InitHeaderFrom(natRefPointer<natStream> const& stream)
 {
 	assert(!m_IsCrypt && "No need to initialize header in crypt mode.");
+
+	if (!m_Keys)
+	{
+		nat_Throw(natErrException, NatErr_InternalErr, "Keys not initialized."_nv);
+	}
 
 	if (!m_Header)
 	{
@@ -142,11 +143,12 @@ void PKzipWeakProcessor::InitHeaderFrom(natRefPointer<natStream> const& stream)
 
 	auto& header = m_Header.value();
 	stream->ReadBytes(header.data(), sizeof header);
+	decryptHeader();
 }
 
 nBool PKzipWeakProcessor::GetHeader(nData buffer, nLen bufferLength)
 {
-	if (!m_IsCrypt || m_Keys || !m_Header || bufferLength < HeaderSize)
+	if (!m_IsCrypt || !m_Header || bufferLength < HeaderSize)
 	{
 		return false;
 	}
@@ -192,16 +194,7 @@ void PKzipWeakProcessor::GenerateHeaderWithCrc32(nuInt crc32)
 	auto& header = m_Header.value();
 	auto& keys = m_Keys.value();
 
-	std::random_device randomDevice;
-
-	std::generate_n(std::begin(header), std::size(header) - 1, [&]()
-	{
-		return static_cast<nByte>(detail_::EncodeOne(keys.data(), crc32Table, static_cast<nuInt>(randomDevice() & 0xff)));
-	});
-
-	header[HeaderSize - 1] = static_cast<nByte>(detail_::EncodeOne(keys.data(), crc32Table, (crc32 >> 24) & 0xff));
-
-	m_Keys.reset();
+	detail_::UncheckedCryptHead(header.data(), keys.data(), crc32Table, crc32);
 }
 
 CryptoType PKzipWeakProcessor::GetCryptoType() const noexcept
@@ -241,13 +234,7 @@ std::pair<nLen, nLen> PKzipWeakProcessor::Process(ncData inputData, nLen inputDa
 		nat_Throw(OutOfRange, "outputData is too small."_nv);
 	}
 
-	auto keys = m_Keys.value().data();
-
-	for (nLen i = 0; i < inputDataLength; ++i)
-	{
-		outputData[i] = static_cast<nByte>((m_IsCrypt ? detail_::EncodeOne : detail_::DecodeOne)(keys, get_crc_table(), inputData[i]));
-	}
-
+	uncheckedProcess(inputData, inputDataLength, outputData);
 	return { inputDataLength, inputDataLength };
 }
 
@@ -255,7 +242,26 @@ std::pair<nLen, std::vector<nByte>> PKzipWeakProcessor::ProcessFinal(ncData inpu
 {
 	std::vector<nByte> outputBuffer(inputDataLength);
 	const auto ret = Process(inputData, inputDataLength, outputBuffer.data(), outputBuffer.size());
+	m_Keys.reset();
 	return { ret.first, move(outputBuffer) };
+}
+
+void PKzipWeakProcessor::uncheckedProcess(ncData inputData, nLen inputDataLength, nData outputData)
+{
+	assert(m_Keys);
+	auto keys = m_Keys.value().data();
+
+	for (nLen i = 0; i < inputDataLength; ++i)
+	{
+		outputData[i] = static_cast<nByte>((m_IsCrypt ? detail_::EncodeOne : detail_::DecodeOne)(keys, get_crc_table(), inputData[i]));
+	}
+}
+
+void PKzipWeakProcessor::decryptHeader()
+{
+	assert(m_Header);
+	const auto header = m_Header.value().data();
+	uncheckedProcess(header, HeaderSize, header);
 }
 
 natRefPointer<ICryptoProcessor> PKzipWeakAlgorithm::CreateEncryptor()

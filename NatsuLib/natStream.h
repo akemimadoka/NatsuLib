@@ -120,6 +120,12 @@ namespace NatsuLib
 		virtual void Flush() = 0;
 	};
 
+	////////////////////////////////////////////////////////////////////////////////
+	///	@brief	包装流
+	///	@note	包装流具有一个内部流，默认所有操作直接转发到内部流\n
+	///			可通过继承此类完成对数据的特殊处理\n
+	///			注意析构时本类的析构函数会先执行，之后才会析构内部流
+	////////////////////////////////////////////////////////////////////////////////
 	class natWrappedStream
 		: public natRefObjImpl<natWrappedStream, natStream>
 	{
@@ -127,10 +133,27 @@ namespace NatsuLib
 		explicit natWrappedStream(natRefPointer<natStream> stream);
 		~natWrappedStream();
 
+		///	@brief	获得内部流
 		virtual natRefPointer<natStream> GetUnderlyingStream() const noexcept;
 
+		///	@brief	连续枚举内部流，直到内部流不是natWrappedStream或者enumerator返回true为止
+		///	@param	enumerator	枚举函数，返回true会立即停止枚举
+		///	@note	存在形成环的可能，此时本方法可能会进入死循环
+		///	@return	枚举是否由于enumerator返回true而中止
+		nBool EnumUnderlyingStream(std::function<bool(natWrappedStream&)> const& enumerator) const;
+
+		///	@brief	连续获得内部流，如果内部流的类型是T则返回它，如果无法获得这个类型的内部流则返回nullptr
+		///	@tparam	T	要获得的内部流的类型
+		template <typename T>
+		std::enable_if_t<std::is_base_of<natStream, T>::value, natRefPointer<T>> GetUnderlyingStreamAs() const noexcept
+		{
+			return GetUnderlyingStreamAs(typeid(T));
+		}
+
+		///	@see GetUnderlyingStreamAs{T}
+		natRefPointer<natStream> GetUnderlyingStreamAs(std::type_info const& typeinfo) const noexcept;
+
 		///	@brief	连续获得内部的流，如果流不是natWrappedStream则返回它
-		///	@note	如果你的natWrappedStream可能在除构造以外的情况下修改内部类，则存在形成环的可能，此时本方法可能会进入死循环
 		natRefPointer<natStream> GetUltimateUnderlyingStream() const noexcept;
 
 		nBool CanWrite() const override;

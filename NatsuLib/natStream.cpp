@@ -114,22 +114,58 @@ natRefPointer<natStream> natWrappedStream::GetUnderlyingStream() const noexcept
 	return m_InternalStream;
 }
 
-natRefPointer<natStream> natWrappedStream::GetUltimateUnderlyingStream() const noexcept
+nBool natWrappedStream::EnumUnderlyingStream(std::function<bool(natWrappedStream&)> const& enumerator) const
 {
 	auto pStream = m_InternalStream;
-	
+
 	while (true)
 	{
-		auto wrappedStream = static_cast<natRefPointer<natWrappedStream>>(pStream);
+		const auto wrappedStream = static_cast<natRefPointer<natWrappedStream>>(pStream);
 		if (wrappedStream && wrappedStream != this)
 		{
+			if (enumerator(*wrappedStream))
+			{
+				return true;
+			}
 			pStream = wrappedStream->m_InternalStream;
 		}
 		else
 		{
-			return pStream;
+			return false;
 		}
 	}
+}
+
+natRefPointer<natStream> natWrappedStream::GetUnderlyingStreamAs(std::type_info const& typeinfo) const noexcept
+{
+	natRefPointer<natWrappedStream> pStream;
+
+	const auto result = EnumUnderlyingStream([&pStream, &typeinfo](natWrappedStream& stream) noexcept
+	{
+		pStream.Reset(&stream);
+		return typeid(stream) == typeinfo;
+	});
+
+	if (result)
+	{
+		return pStream;
+	}
+
+	const auto underlyingStream = pStream->GetUnderlyingStream();
+	return typeid(*underlyingStream) == typeinfo ? underlyingStream : nullptr;
+}
+
+natRefPointer<natStream> natWrappedStream::GetUltimateUnderlyingStream() const noexcept
+{
+	natWrappedStream* wrappedStream{ const_cast<natWrappedStream*>(this) };
+
+	EnumUnderlyingStream([&wrappedStream] (natWrappedStream& stream) noexcept
+	{
+		wrappedStream = &stream;
+		return false;
+	});
+
+	return wrappedStream->GetUnderlyingStream();
 }
 
 nBool natWrappedStream::CanWrite() const
@@ -332,7 +368,9 @@ nLen natSubStream::ReadBytes(nData pData, nLen Length)
 
 	const auto realLength = std::min(Length, m_EndPosition - m_CurrentPosition);
 	adjustPosition();
-	return m_InternalStream->ReadBytes(pData, realLength);
+	const auto ret = m_InternalStream->ReadBytes(pData, realLength);
+	m_CurrentPosition += ret;
+	return ret;
 }
 
 std::future<nLen> natSubStream::ReadBytesAsync(nData pData, nLen Length)
@@ -372,7 +410,11 @@ nLen natSubStream::WriteBytes(ncData pData, nLen Length)
 
 	const auto realLength = std::min(Length, m_EndPosition - m_CurrentPosition);
 	adjustPosition();
-	return m_InternalStream->WriteBytes(pData, realLength);
+
+	const auto ret = m_InternalStream->WriteBytes(pData, realLength);
+	m_CurrentPosition += ret;
+
+	return ret;
 }
 
 std::future<nLen> natSubStream::WriteBytesAsync(ncData pData, nLen Length)
@@ -1479,7 +1521,7 @@ nLen natMemoryStream::ReadBytes(nData pData, nLen Length)
 	natRefScopeGuard<natCriticalSection> guard(m_CriSection);
 
 	tReadBytes = std::min(Length, m_Size - m_CurPos);
-	memmove(pData + m_CurPos, m_pData, static_cast<size_t>(tReadBytes));
+	memmove(pData, m_pData + m_CurPos, static_cast<size_t>(tReadBytes));
 	m_CurPos += tReadBytes;
 
 	return tReadBytes;
@@ -1534,8 +1576,12 @@ nLen natMemoryStream::WriteBytes(ncData pData, nLen Length)
 			tWriteBytes = m_Capacity - m_CurPos;
 		}
 	}
+	else
+	{
+		tWriteBytes = Length;
+	}
 
-	memmove(m_pData, pData + m_CurPos, static_cast<size_t>(tWriteBytes));
+	std::memmove(m_pData + m_CurPos, pData, static_cast<size_t>(tWriteBytes));
 	m_CurPos += tWriteBytes;
 	m_Size = std::max(m_CurPos, m_Size);
 
@@ -1585,6 +1631,7 @@ void natMemoryStream::Reserve(nLen newCapacity)
 	}
 
 	swap(m_pData, pNewStorage);
+	m_Capacity = newCapacity;
 }
 
 nLen natMemoryStream::GetCapacity() const noexcept

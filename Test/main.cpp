@@ -207,7 +207,17 @@ int main()
 					const auto stream = entry->Open();
 					stream->WriteBytes(reinterpret_cast<ncData>("2333"), 4);
 				}
-#ifdef No
+				fileStream->SetPosition(NatSeek::Beg, 0);
+				{
+					natZipArchive zip{ fileStream, natZipArchive::ZipArchiveMode::Read };
+					const auto entry = zip.GetEntry("1.txt"_nv);
+					entry->SetPassword("2333"_nv);
+					const auto stream = entry->Open();
+					nByte buffer[128]{};
+					stream->ReadBytes(buffer, 128);
+					assert(memcmp(buffer, "2333", 4) == 0);
+				}
+#if defined(_WIN32) && 0
 				fileStream->SetPosition(NatSeek::Beg, 0);
 				{
 					natZipArchive zip{ fileStream, natZipArchive::ZipArchiveMode::Update };

@@ -321,16 +321,15 @@ namespace NatsuLib
 			void writeLocalFileHeaderAndData();
 
 			// 假设此时已经设置了m_CentralDirectoryFileHeader的Crc32为正确的值
-			void writeSecurityMetadata();
+			void writeSecurityMetadata(natRefPointer<natStream> const& stream);
 
 			// 先计算Crc32，再压缩，最后加密
 			// 解密时反过来（当然不需要计算Crc32）
 			class ZipEntryWriteStream final
-				: public natRefObjImpl<ZipEntryWriteStream, natStream>
+				: public natRefObjImpl<ZipEntryWriteStream, natWrappedStream>
 			{
 			public:
-				// finishCallback 接受一个nLen类型的参数，含义是最初写入的位置
-				ZipEntryWriteStream(ZipEntry& entry, natRefPointer<natCrc32Stream> crc32Stream, std::function<void(ZipEntryWriteStream&)> finishCallback = {});
+				ZipEntryWriteStream(ZipEntry& entry, natRefPointer<natStream> stream, std::function<void(ZipEntryWriteStream&)> finishCallback = {});
 				~ZipEntryWriteStream();
 
 				nLen GetInitialPosition() const noexcept;
@@ -350,7 +349,6 @@ namespace NatsuLib
 
 			private:
 				ZipEntry& m_Entry;
-				natRefPointer<natCrc32Stream> m_InternalStream;
 				nLen m_InitialPosition;
 				nBool m_WroteData, m_UseZip64;
 				std::function<void(ZipEntryWriteStream&)> m_FinishCallback;
@@ -359,35 +357,18 @@ namespace NatsuLib
 			};
 
 			class DisposeCallbackStream final
-				: public natRefObjImpl<DisposeCallbackStream, natStream>
+				: public natRefObjImpl<DisposeCallbackStream, natWrappedStream>
 			{
 			public:
-				explicit DisposeCallbackStream(natRefPointer<natStream> internalStream, std::function<void()> disposeCallback = {});
+				explicit DisposeCallbackStream(natRefPointer<natStream> internalStream, std::function<void(DisposeCallbackStream&)> disposeCallback = {});
 				~DisposeCallbackStream();
 
 				nBool HasDisposeCallback() const noexcept;
-				natRefPointer<natStream> GetUnderlyingStream() const noexcept;
-
-				nBool CanWrite() const override;
-				nBool CanRead() const override;
-				nBool CanResize() const override;
-				nBool CanSeek() const override;
-				nBool IsEndOfStream() const override;
-				nLen GetSize() const override;
-				void SetSize(nLen Size) override;
-				nLen GetPosition() const override;
-				void SetPosition(NatSeek Origin, nLong Offset) override;
-				nByte ReadByte() override;
-				nLen ReadBytes(nData pData, nLen Length) override;
-				std::future<nLen> ReadBytesAsync(nData pData, nLen Length) override;
-				void WriteByte(nByte byte) override;
-				nLen WriteBytes(ncData pData, nLen Length) override;
-				std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) override;
-				void Flush() override;
+				// 直接调用回调，之后不会再被调用
+				void CallDisposeCallback();
 
 			private:
-				natRefPointer<natStream> m_InternalStream;
-				std::function<void()> m_DisposeCallback;
+				std::function<void(DisposeCallbackStream&)> m_DisposeCallback;
 			};
 		};
 	};

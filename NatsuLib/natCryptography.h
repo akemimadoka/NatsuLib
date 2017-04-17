@@ -91,12 +91,13 @@ namespace NatsuLib
 		~PKzipWeakProcessor();
 
 		void InitCipher(ncData password, nLen passwordLength);
+		// 初始化头部之前需要初始化Keys
+		// 解密时在处理之前必须初始化头部
 		void InitHeaderFrom(ncData buffer, nLen bufferLength);
 		void InitHeaderFrom(natRefPointer<natStream> const& stream);
 		// 在处理已经结束后才可调用，会使Header失效
 		nBool GetHeader(nData buffer, nLen bufferLength);
 		nBool CheckHeaderWithCrc32(nuInt crc32) const;
-		// 在处理已经结束后才可调用，会使Keys失效
 		void GenerateHeaderWithCrc32(nuInt crc32);
 
 		CryptoType GetCryptoType() const noexcept override;
@@ -107,13 +108,16 @@ namespace NatsuLib
 
 		std::pair<nLen, nLen> Process(ncData inputData, nLen inputDataLength, nData outputData, nLen outputDataLength) override;
 
-		// 结束本次处理，同时加密Header，此后可以正常生成和获取Header
+		// 结束本次处理，使Keys失效
 		std::pair<nLen, std::vector<nByte>> ProcessFinal(ncData inputData, nLen inputDataLength) override;
 
 	private:
 		const nBool m_IsCrypt;
 		Optional<std::array<nuInt, 3>> m_Keys;
 		Optional<std::array<nByte, HeaderSize>> m_Header;
+
+		void uncheckedProcess(ncData inputData, nLen inputDataLength, nData outputData);
+		void decryptHeader();
 	};
 
 	class PKzipWeakAlgorithm final
