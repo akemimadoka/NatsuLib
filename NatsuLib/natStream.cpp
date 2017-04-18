@@ -114,7 +114,7 @@ natRefPointer<natStream> natWrappedStream::GetUnderlyingStream() const noexcept
 	return m_InternalStream;
 }
 
-nBool natWrappedStream::EnumUnderlyingStream(std::function<bool(natWrappedStream&)> const& enumerator) const
+nBool natWrappedStream::EnumUnderlyingStream(std::function<nBool(natWrappedStream&)> const& enumerator) const
 {
 	auto pStream = m_InternalStream;
 

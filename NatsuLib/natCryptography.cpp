@@ -20,14 +20,13 @@ namespace NatsuLib
 			return ((temp * (temp ^ 1)) >> 8) & 0xff;
 		}
 
-		constexpr void UpdateKeys(nuInt* pKeys, const nuInt* crc32Table, nuInt c) noexcept
+		constexpr NATINLINE void UpdateKeys(nuInt* pKeys, const nuInt* crc32Table, nuInt c) noexcept
 		{
 			pKeys[0] = Crc32One(crc32Table, pKeys[0], c);
-			pKeys[1] = pKeys[0] & 0xff;
+			pKeys[1] += pKeys[0] & 0xff;
 			pKeys[1] = pKeys[1] * 134775813u + 1;
 
-			const auto keyShift = pKeys[1] >> 24;
-			pKeys[2] = Crc32One(crc32Table, pKeys[1], keyShift);
+			pKeys[2] = Crc32One(crc32Table, pKeys[2], pKeys[1] >> 24);
 		}
 
 		constexpr void InitKeys(ncData password, size_t passwordLength, nuInt* pKeys, const nuInt* crc32Table) noexcept
@@ -62,11 +61,12 @@ namespace NatsuLib
 		void UncheckedCryptHead(nData buf, nuInt* pKeys, const nuInt* crc32Table, nuInt crcForCrypting) noexcept
 		{
 			std::random_device randomDevice;
-			std::generate_n(buf, PKzipWeakProcessor::HeaderSize - 1, [&]()
+			std::generate_n(buf, PKzipWeakProcessor::HeaderSize - 2, [&]()
 			{
 				return static_cast<nByte>(EncodeOne(pKeys, crc32Table, static_cast<nuInt>(randomDevice() & 0xff)));
 			});
 
+			buf[PKzipWeakProcessor::HeaderSize - 2] = static_cast<nByte>(EncodeOne(pKeys, crc32Table, (crcForCrypting >> 16) & 0xff));
 			buf[PKzipWeakProcessor::HeaderSize - 1] = static_cast<nByte>(EncodeOne(pKeys, crc32Table, (crcForCrypting >> 24) & 0xff));
 		}
 
@@ -175,7 +175,7 @@ nBool PKzipWeakProcessor::CheckHeaderWithCrc32(nuInt crc32) const
 	}
 
 	const auto& header = m_Header.value();
-	return header[HeaderSize - 1] == static_cast<nByte>((crc32 >> 24) & 0xff);
+	return header[HeaderSize - 2] == static_cast<nByte>((crc32 >> 16) & 0xff) && header[HeaderSize - 1] == static_cast<nByte>((crc32 >> 24) & 0xff);
 }
 
 void PKzipWeakProcessor::GenerateHeaderWithCrc32(nuInt crc32)

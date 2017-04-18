@@ -195,10 +195,10 @@ int main()
 			}
 			{
 #ifdef _WIN32
-				const auto fileStream = make_ref<natFileStream>("2.zip"_nv, true, true);
+				auto fileStream = make_ref<natFileStream>("2.zip"_nv, true, true);
 				fileStream->SetSize(0);
 #else
-				const auto fileStream = make_ref<natFileStream>("2.zip"_nv, true, true, true);
+				auto fileStream = make_ref<natFileStream>("2.zip"_nv, true, true, true);
 #endif
 				{
 					natZipArchive zip{ fileStream, natZipArchive::ZipArchiveMode::Create };
@@ -213,11 +213,28 @@ int main()
 					const auto entry = zip.GetEntry("1.txt"_nv);
 					entry->SetPassword("2333"_nv);
 					const auto stream = entry->Open();
+					switch (entry->GetDecryptStatus())
+					{
+					case natZipArchive::ZipEntry::DecryptStatus::Success:
+						logger.LogMsg("Decrypt succeed."_nv);
+						break;
+					case natZipArchive::ZipEntry::DecryptStatus::Crc32CheckFailed:
+						logger.LogWarn("Decrypt failed: Crc32 check failed, password may be unmatched."_nv);
+						break;
+					case natZipArchive::ZipEntry::DecryptStatus::NotDecryptYet:
+						logger.LogErr("Decrypt failed: Internal error."_nv);
+						break;
+					case natZipArchive::ZipEntry::DecryptStatus::NeedNotToDecrypt:
+						logger.LogMsg("Need not to decrypt."_nv);
+						break;
+					default:
+						assert(!"Invalid DecryptStatus");
+						break;
+					}
 					nByte buffer[128]{};
 					stream->ReadBytes(buffer, 128);
 					assert(memcmp(buffer, "2333", 4) == 0);
 				}
-#if defined(_WIN32) && 0
 				fileStream->SetPosition(NatSeek::Beg, 0);
 				{
 					natZipArchive zip{ fileStream, natZipArchive::ZipArchiveMode::Update };
@@ -227,7 +244,6 @@ int main()
 					stream->WriteBytes(reinterpret_cast<ncData>("1234"), 4);
 					//zip.GetEntry("1.txt"_nv)->Delete();
 				}
-#endif
 			}
 		}
 

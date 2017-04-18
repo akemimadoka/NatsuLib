@@ -235,6 +235,14 @@ namespace NatsuLib
 		public:
 			~ZipEntry();
 
+			enum class DecryptStatus
+			{
+				Success,
+				Crc32CheckFailed,
+				NotDecryptYet,
+				NeedNotToDecrypt,
+			};
+
 			///	@brief	删除入口
 			///	@note	只能在更新模式下删除入口，如果入口正在被写入删除将会失败
 			void Delete();
@@ -244,6 +252,8 @@ namespace NatsuLib
 			void SetPassword();
 			void SetPassword(ncData password, size_t passwordLength);
 			void SetPassword(nStrView passwordStr);
+
+			DecryptStatus GetDecryptStatus() const noexcept;
 
 		private:
 			enum class CompressionMethod : nuShort
@@ -295,6 +305,7 @@ namespace NatsuLib
 			Optional<std::deque<ExtraField>> m_LocalHeaderFields;
 
 			Optional<std::vector<nByte>> m_Password;
+			DecryptStatus m_DecryptStatus;
 
 			// 缓存写入的数据
 			natRefPointer<natStream> m_UncompressedData;

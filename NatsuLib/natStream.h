@@ -124,7 +124,7 @@ namespace NatsuLib
 	///	@brief	包装流
 	///	@note	包装流具有一个内部流，默认所有操作直接转发到内部流\n
 	///			可通过继承此类完成对数据的特殊处理\n
-	///			注意析构时本类的析构函数会先执行，之后才会析构内部流
+	///			注意析构时本类的析构函数会先执行，之后才会释放内部流
 	////////////////////////////////////////////////////////////////////////////////
 	class natWrappedStream
 		: public natRefObjImpl<natWrappedStream, natStream>
@@ -140,7 +140,7 @@ namespace NatsuLib
 		///	@param	enumerator	枚举函数，返回true会立即停止枚举
 		///	@note	存在形成环的可能，此时本方法可能会进入死循环
 		///	@return	枚举是否由于enumerator返回true而中止
-		nBool EnumUnderlyingStream(std::function<bool(natWrappedStream&)> const& enumerator) const;
+		nBool EnumUnderlyingStream(std::function<nBool(natWrappedStream&)> const& enumerator) const;
 
 		///	@brief	连续获得内部流，如果内部流的类型是T则返回它，如果无法获得这个类型的内部流则返回nullptr
 		///	@tparam	T	要获得的内部流的类型
@@ -150,7 +150,6 @@ namespace NatsuLib
 			return GetUnderlyingStreamAs(typeid(T));
 		}
 
-		///	@see GetUnderlyingStreamAs{T}
 		natRefPointer<natStream> GetUnderlyingStreamAs(std::type_info const& typeinfo) const noexcept;
 
 		///	@brief	连续获得内部的流，如果流不是natWrappedStream则返回它

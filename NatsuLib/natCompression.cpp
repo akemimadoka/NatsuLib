@@ -77,9 +77,18 @@ void natZipArchive::ZipEntry::SetPassword(nStrView passwordStr)
 	SetPassword(reinterpret_cast<ncData>(passwordStr.data()), passwordStr.size() * sizeof(nStrView::CharType));
 }
 
-natZipArchive::ZipEntry::ZipEntry(natZipArchive* archive, CentralDirectoryFileHeader const& centralDirectoryFileHeader)
-	: m_Archive{ archive }, m_OriginallyInArchive{ true }, m_CentralDirectoryFileHeader(centralDirectoryFileHeader), m_EverOpenedForWrite{ false }, m_CurrentOpeningForWrite{ false }
+natZipArchive::ZipEntry::DecryptStatus natZipArchive::ZipEntry::GetDecryptStatus() const noexcept
 {
+	return m_DecryptStatus;
+}
+
+natZipArchive::ZipEntry::ZipEntry(natZipArchive* archive, CentralDirectoryFileHeader const& centralDirectoryFileHeader)
+	: m_Archive{ archive }, m_OriginallyInArchive{ true }, m_CentralDirectoryFileHeader(centralDirectoryFileHeader), m_EverOpenedForWrite{ false }, m_CurrentOpeningForWrite{ false }, m_DecryptStatus{ DecryptStatus::NeedNotToDecrypt }
+{
+	if (m_CentralDirectoryFileHeader.GeneralPurposeBitFlag & static_cast<nuShort>(BitFlag::Encrypted))
+	{
+		m_DecryptStatus = DecryptStatus::NotDecryptYet;
+	}
 }
 
 natRefPointer<natStream> natZipArchive::ZipEntry::openForRead()
@@ -101,10 +110,7 @@ natRefPointer<natStream> natZipArchive::ZipEntry::openForRead()
 		auto pkZipWeakProcessor = static_cast<natRefPointer<PKzipWeakProcessor>>(cryptoProcessor);
 		pkZipWeakProcessor->InitCipher(password.data(), password.size());
 		pkZipWeakProcessor->InitHeaderFrom(compressedStream);
-		if (!pkZipWeakProcessor->CheckHeaderWithCrc32(m_CentralDirectoryFileHeader.Crc32))
-		{
-			nat_Throw(EntryDecryptFailedException);
-		}
+		m_DecryptStatus = pkZipWeakProcessor->CheckHeaderWithCrc32(m_CentralDirectoryFileHeader.Crc32) ? DecryptStatus::Success : DecryptStatus::Crc32CheckFailed;
 		uncompressor = m_CryptoStream = make_ref<natCryptoStream>(compressedStream, cryptoProcessor, natCryptoStream::CryptoStreamMode::Read);
 	}
 
@@ -497,7 +503,7 @@ void natZipArchive::ZipEntry::DisposeCallbackStream::CallDisposeCallback()
 }
 
 natZipArchive::ZipEntry::ZipEntry(natZipArchive* archive, nStrView const& entryName)
-	: m_Archive{ archive }, m_OriginallyInArchive{ false }, m_CentralDirectoryFileHeader{}, m_EverOpenedForWrite{ false }, m_CurrentOpeningForWrite{ false }
+	: m_Archive{ archive }, m_OriginallyInArchive{ false }, m_CentralDirectoryFileHeader{}, m_EverOpenedForWrite{ false }, m_CurrentOpeningForWrite{ false }, m_DecryptStatus{ DecryptStatus::NeedNotToDecrypt }
 {
 	m_CentralDirectoryFileHeader.Filename = entryName;
 	m_CentralDirectoryFileHeader.FilenameLength = static_cast<nuShort>(m_CentralDirectoryFileHeader.Filename.size() * sizeof(nString::CharType));
