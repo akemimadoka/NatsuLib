@@ -1040,7 +1040,7 @@ natFileStream::natFileStream(nStrView filename, nBool bReadable, nBool bWritable
 	int mode = 0;
 	if (bReadable && bWritable)
 	{
-		mode = O_RDWR;
+		mode = O_RDWR | O_CREAT;
 	}
 	else if (bReadable)
 	{
@@ -1059,17 +1059,17 @@ natFileStream::natFileStream(nStrView filename, nBool bReadable, nBool bWritable
 	m_hFile = open(filename.data(), mode, S_IRWXU | S_IRWXG | S_IRWXO);
 	if (!m_hFile)
 	{
-        nat_Throw(natErrException, NatErr_InternalErr, "Cannot open file \"{0}\" (errno = {1})."_nv, filename, errno);
+		nat_Throw(natErrException, NatErr_InternalErr, "Cannot open file \"{0}\" (errno = {1})."_nv, filename, errno);
 	}
 }
 
 natFileStream::natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable, nBool transferOwner)
-    : m_hFile{ hFile }, m_ShouldDispose{ transferOwner }, m_IsEndOfFile{}, m_bReadable(bReadable), m_bWritable(bWritable)
+	: m_hFile{ hFile }, m_ShouldDispose{ transferOwner }, m_IsEndOfFile{}, m_bReadable(bReadable), m_bWritable(bWritable)
 {
-    if (hFile < 0)
-    {
-        nat_Throw(natErrException, NatErr_InvalidArg, "hFile should be a valid file descriptor."_nv);
-    }
+	if (hFile < 0)
+	{
+		nat_Throw(natErrException, NatErr_InvalidArg, "hFile should be a valid file descriptor."_nv);
+	}
 }
 
 nBool natFileStream::CanWrite() const
@@ -1099,13 +1099,13 @@ nBool natFileStream::IsEndOfStream() const
 
 nLen natFileStream::GetSize() const
 {
-    const auto currentPos = lseek(m_hFile, 0, SEEK_CUR);
-    lseek(m_hFile, 0, SEEK_SET);
-    const auto beginPos = lseek(m_hFile, 0, SEEK_CUR);
+	const auto currentPos = lseek(m_hFile, 0, SEEK_CUR);
+	lseek(m_hFile, 0, SEEK_SET);
+	const auto beginPos = lseek(m_hFile, 0, SEEK_CUR);
 	lseek(m_hFile, 0, SEEK_END);
-    const auto totalSize = lseek(m_hFile, 0, SEEK_CUR) - beginPos;
-    lseek(m_hFile, currentPos, SEEK_SET);
-    return static_cast<nLen>(totalSize);
+	const auto totalSize = lseek(m_hFile, 0, SEEK_CUR) - beginPos;
+	lseek(m_hFile, currentPos, SEEK_SET);
+	return static_cast<nLen>(totalSize);
 }
 
 void natFileStream::SetSize(nLen Size)
@@ -1117,7 +1117,7 @@ void natFileStream::SetSize(nLen Size)
 
 	if (ftruncate(m_hFile, static_cast<off_t>(Size)))
 	{
-        nat_Throw(natErrException, NatErr_InternalErr, "ftruncate failed (errno = {0})."_nv, errno);
+		nat_Throw(natErrException, NatErr_InternalErr, "ftruncate failed (errno = {0})."_nv, errno);
 	}
 }
 
@@ -1141,11 +1141,11 @@ void natFileStream::SetPosition(NatSeek Origin, nLong Offset)
 		tOrigin = SEEK_END;
 		break;
 	default:
-        assert(!"Origin is not a valid NatSeek.");
+		assert(!"Origin is not a valid NatSeek.");
 		nat_Throw(natErrException, NatErr_InvalidArg, "Origin is not a valid NatSeek."_nv);
 	}
 
-    lseek(m_hFile, static_cast<off_t>(Offset), tOrigin);
+	lseek(m_hFile, static_cast<off_t>(Offset), tOrigin);
 }
 
 nByte natFileStream::ReadByte()
@@ -1170,13 +1170,13 @@ nLen natFileStream::ReadBytes(nData pData, nLen Length)
 		nat_Throw(natErrException, NatErr_InvalidArg, "pData cannot be nullptr."_nv);
 	}
 
-    const auto ret = read(m_hFile, pData, static_cast<size_t>(Length));
-    if (ret < 0)
-    {
-        nat_Throw(natErrException, NatErr_InternalErr, "read failed (errno = {0})."_nv, errno);
-    }
+	const auto ret = read(m_hFile, pData, static_cast<size_t>(Length));
+	if (ret < 0)
+	{
+		nat_Throw(natErrException, NatErr_InternalErr, "read failed (errno = {0})."_nv, errno);
+	}
 
-    m_IsEndOfFile = !ret;
+	m_IsEndOfFile = !ret;
 
 	return static_cast<nLen>(ret);
 }
@@ -1203,12 +1203,12 @@ nLen natFileStream::WriteBytes(ncData pData, nLen Length)
 		nat_Throw(natErrException, NatErr_InvalidArg, "pData cannot be nullptr."_nv);
 	}
 
-    const auto ret = write(m_hFile, pData, static_cast<size_t>(Length));
-    // ret may be 0 and this may mean an error occured, but we ignore this situation
-    if (ret < 0)
-    {
-        nat_Throw(natErrException, NatErr_InternalErr, "write failed (errno = {0})."_nv, errno);
-    }
+	const auto ret = write(m_hFile, pData, static_cast<size_t>(Length));
+	// ret may be 0 and this may mean an error occured, but we ignore this situation
+	if (ret < 0)
+	{
+		nat_Throw(natErrException, NatErr_InternalErr, "write failed (errno = {0})."_nv, errno);
+	}
 
 	return static_cast<nLen>(ret);
 }
@@ -1229,10 +1229,10 @@ natFileStream::UnsafeHandle natFileStream::GetUnsafeHandle() const noexcept
 
 natFileStream::~natFileStream()
 {
-    if (m_ShouldDispose)
-    {
-        close(m_hFile);
-    }
+	if (m_ShouldDispose)
+	{
+		close(m_hFile);
+	}
 }
 
 natStdStream::natStdStream(StdStreamType stdStreamType)
