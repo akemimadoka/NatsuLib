@@ -9,6 +9,10 @@ namespace NatsuLib
 		struct DeflateStreamImpl;
 	}
 
+	////////////////////////////////////////////////////////////////////////////////
+	///	@brief	压缩流
+	///	@remark	使用deflate算法对数据进行压缩
+	////////////////////////////////////////////////////////////////////////////////
 	class natDeflateStream
 		: public natRefObjImpl<natDeflateStream, natWrappedStream>, public nonmovable
 	{
@@ -49,6 +53,9 @@ namespace NatsuLib
 		nLen writeAll();
 	};
 
+	////////////////////////////////////////////////////////////////////////////////
+	///	@brief	Crc32流
+	////////////////////////////////////////////////////////////////////////////////
 	class natCrc32Stream
 		: public natRefObjImpl<natCrc32Stream, natWrappedStream>
 	{
@@ -56,6 +63,7 @@ namespace NatsuLib
 		explicit natCrc32Stream(natRefPointer<natStream> stream);
 		~natCrc32Stream();
 
+		///	@brief	获得已输入数据的Crc32
 		nuInt GetCrc32() const noexcept;
 
 		nBool CanWrite() const override;

@@ -180,7 +180,28 @@ namespace NatsuLib
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	NatsuLib内存流实现
+	///	@brief	释放回调流
+	///	@note	用于在释放时进行特殊处理的流，其他操作直接转发到内部流
+	////////////////////////////////////////////////////////////////////////////////
+	class DisposeCallbackStream final
+		: public natRefObjImpl<DisposeCallbackStream, natWrappedStream>
+	{
+	public:
+		explicit DisposeCallbackStream(natRefPointer<natStream> internalStream, std::function<void(DisposeCallbackStream&)> disposeCallback = {});
+		~DisposeCallbackStream();
+
+		///	@brief	是否有释放回调
+		nBool HasDisposeCallback() const noexcept;
+
+		///	@brief	直接调用回调，之后不会再被调用
+		void CallDisposeCallback();
+
+	private:
+		std::function<void(DisposeCallbackStream&)> m_DisposeCallback;
+	};
+
+	////////////////////////////////////////////////////////////////////////////////
+	///	@brief	内存流
 	////////////////////////////////////////////////////////////////////////////////
 	class natMemoryStream
 		: public natRefObjImpl<natMemoryStream, natStream>
@@ -240,6 +261,10 @@ namespace NatsuLib
 		void allocateAndInvalidateOldData(nLen newCapacity);
 	};
 
+	////////////////////////////////////////////////////////////////////////////////
+	///	@brief	外部内存流
+	///	@note	用于使用流的方式操作外部的内存
+	////////////////////////////////////////////////////////////////////////////////
 	class natExternMemoryStream
 		: public natRefObjImpl<natExternMemoryStream, natStream>
 	{
@@ -351,6 +376,10 @@ namespace NatsuLib
 		nBool m_bReadable, m_bWritable;
 	};
 
+	////////////////////////////////////////////////////////////////////////////////
+	///	@brief	子流
+	///	@remark	用于操作另一个流的一部分
+	////////////////////////////////////////////////////////////////////////////////
 	class natSubStream
 		: public natRefObjImpl<natSubStream, natWrappedStream>
 	{
@@ -381,6 +410,10 @@ namespace NatsuLib
 		void checkPosition() const;
 	};
 
+	////////////////////////////////////////////////////////////////////////////////
+	///	@brief	标准流
+	///	@remark	用于操作标准输入输出
+	////////////////////////////////////////////////////////////////////////////////
 	class natStdStream
 		: public natRefObjImpl<natStdStream, natStream>, public nonmovable
 	{

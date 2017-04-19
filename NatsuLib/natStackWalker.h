@@ -20,8 +20,8 @@
 
 #ifdef _MSC_VER
 #	pragma push_macro("max")
-#	undef max
 #endif
+#undef max
 
 namespace NatsuLib
 {
@@ -86,7 +86,7 @@ namespace NatsuLib
 
 	private:
 #ifdef _WIN32
-		static std::atomic_bool s_Initialized;
+		static std::atomic<nBool> s_Initialized;
 		std::vector<Symbol> m_StackSymbols;
 #else
 		std::vector<Symbol> m_StackSymbols;

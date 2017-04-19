@@ -134,6 +134,11 @@ namespace NatsuLib
 natDeflateStream::natDeflateStream(natRefPointer<natStream> stream, nBool useHeader)
 	: natRefObjImpl{ std::move(stream) }, m_Buffer{}, m_Impl{ std::make_unique<detail_::DeflateStreamImpl>(useHeader ? detail_::DeflateStreamImpl::DefaultWindowBitsWithHeader : detail_::DeflateStreamImpl::DefaultWindowBitsWithoutHeader) }, m_WroteData{ false }
 {
+	if (!m_InternalStream)
+	{
+		nat_Throw(natErrException, NatErr_InvalidArg, "stream should be a valid pointer."_nv);
+	}
+
 	if (!m_InternalStream->CanRead())
 	{
 		nat_Throw(natErrException, NatErr_InvalidArg, "stream should be readable."_nv);
@@ -172,7 +177,6 @@ natDeflateStream::natDeflateStream(natRefPointer<natStream> stream, CompressionL
 	const auto windowBits = useHeader ? detail_::DeflateStreamImpl::DefaultWindowBitsWithHeader : detail_::DeflateStreamImpl::DefaultWindowBitsWithoutHeader;
 
 	m_Impl = std::make_unique<detail_::DeflateStreamImpl>(compressionLevelNum, Z_DEFLATED, windowBits, DEF_MEM_LEVEL, Z_DEFAULT_STRATEGY);
-
 	m_Impl->SetOutput(m_Buffer, sizeof m_Buffer);
 }
 
@@ -212,9 +216,7 @@ void natDeflateStream::SetSize(nLen)
 
 nLen natDeflateStream::GetPosition() const
 {
-	// nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support GetPosition."_nv);
-	// 为了能不硬编码获得内部位置只好这么做了，之后再想办法写得优雅（？）点
-	return m_InternalStream->GetPosition();
+	nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support GetPosition."_nv);
 }
 
 void natDeflateStream::SetPosition(NatSeek, nLong)

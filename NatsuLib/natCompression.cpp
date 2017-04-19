@@ -151,15 +151,7 @@ natRefPointer<natStream> natZipArchive::ZipEntry::openForCreate()
 	m_EverOpenedForWrite = true;
 	m_CentralDirectoryFileHeader.CompressionMethod = static_cast<nuShort>(CompressionMethod::Deflate);
 
-	// lambda和writeLocalFileHeaderAndData的相同，耦合了
-	return make_ref<ZipEntryWriteStream>(*this, createCompressor(m_Archive->m_Stream), [this] (ZipEntryWriteStream& stream)
-	{
-		const auto disposeCallbackStream = stream.GetUnderlyingStreamAs<DisposeCallbackStream>();
-		if (disposeCallbackStream)
-		{
-			disposeCallbackStream->CallDisposeCallback();
-		}
-	});
+	return make_ref<ZipEntryWriteStream>(*this, createCompressor(m_Archive->m_Stream));
 }
 
 natRefPointer<natStream> natZipArchive::ZipEntry::openForUpdate()
@@ -309,14 +301,7 @@ void natZipArchive::ZipEntry::writeLocalFileHeaderAndData()
 	{
 		m_CentralDirectoryFileHeader.UncompressedSize = m_UncompressedData->GetSize();
 
-		const auto entryWriter = make_ref<ZipEntryWriteStream>(*this, createCompressor(stream), [this, stream](ZipEntryWriteStream& writeStream)
-		{
-			const auto disposeCallbackStream = writeStream.GetUnderlyingStreamAs<DisposeCallbackStream>();
-			if (disposeCallbackStream)
-			{
-				disposeCallbackStream->CallDisposeCallback();
-			}
-		});
+		const auto entryWriter = make_ref<ZipEntryWriteStream>(*this, createCompressor(stream));
 		m_UncompressedData->SetPosition(NatSeek::Beg, 0);
 		m_UncompressedData->CopyTo(entryWriter);
 		m_UncompressedData.Reset();
@@ -452,6 +437,7 @@ void natZipArchive::ZipEntry::ZipEntryWriteStream::finish()
 	m_Entry.m_CentralDirectoryFileHeader.UncompressedSize = crc32Stream->GetPosition();
 	m_Entry.m_CentralDirectoryFileHeader.CompressedSize = crc32Stream->GetUltimateUnderlyingStream()->GetPosition() - m_InitialPosition;
 
+	// 硬编码加入加密头的长度
 	if (m_Entry.m_CentralDirectoryFileHeader.GeneralPurposeBitFlag & static_cast<nuShort>(BitFlag::Encrypted))
 	{
 		m_Entry.m_CentralDirectoryFileHeader.CompressedSize += PKzipWeakProcessor::HeaderSize;
@@ -471,34 +457,6 @@ void natZipArchive::ZipEntry::ZipEntryWriteStream::finish()
 	if (m_FinishCallback)
 	{
 		m_FinishCallback(*this);
-	}
-}
-
-natZipArchive::ZipEntry::DisposeCallbackStream::DisposeCallbackStream(natRefPointer<natStream> internalStream, std::function<void(DisposeCallbackStream&)> disposeCallback)
-	: natRefObjImpl{ std::move(internalStream) }, m_DisposeCallback{ move(disposeCallback) }
-{
-	assert(m_InternalStream && "internalStream should not be nullptr.");
-}
-
-natZipArchive::ZipEntry::DisposeCallbackStream::~DisposeCallbackStream()
-{
-	if (m_DisposeCallback)
-	{
-		m_DisposeCallback(*this);
-	}
-}
-
-nBool natZipArchive::ZipEntry::DisposeCallbackStream::HasDisposeCallback() const noexcept
-{
-	return static_cast<nBool>(m_DisposeCallback);
-}
-
-void natZipArchive::ZipEntry::DisposeCallbackStream::CallDisposeCallback()
-{
-	if (m_DisposeCallback)
-	{
-		m_DisposeCallback(*this);
-		m_DisposeCallback = {};
 	}
 }
 

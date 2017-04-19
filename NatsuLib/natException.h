@@ -221,9 +221,29 @@ public:\
 	}\
 }
 
-	DeclareException(OutOfRange, natException, "Out of range."_nv);
 	DeclareException(MemoryAllocFail, natException, "Failed to allocate memory."_nv);
 	DeclareException(InvalidData, natException, "Data is invalid."_nv);
+
+	class OutOfRange
+		: public natErrException
+	{
+	public:
+		typedef natErrException BaseException;
+
+		OutOfRange(nStrView Src, nStrView File, nuInt Line);
+		OutOfRange(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line);
+
+		template <typename... Args>
+		OutOfRange(nStrView Src, nStrView File, nuInt Line, nStrView Desc, Args&&... args)
+			: BaseException(Src, File, Line, NatErr_OutOfRange, Desc, std::forward<Args>(args)...)
+		{
+		}
+		template <typename... Args>
+		OutOfRange(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line, nStrView Desc, Args&&... args)
+			: BaseException(nestedException, Src, File, Line, NatErr_OutOfRange, Desc, std::forward<Args>(args)...)
+		{
+		}
+	};
 
 	class NotImplementedException
 		: public natErrException
@@ -233,6 +253,7 @@ public:\
 
 		NotImplementedException(nStrView Src, nStrView File, nuInt Line);
 		NotImplementedException(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line);
+
 		template <typename... Args>
 		NotImplementedException(nStrView Src, nStrView File, nuInt Line, nStrView Desc, Args&&... args)
 			: BaseException(Src, File, Line, NatErr_NotImpl, Desc, std::forward<Args>(args)...)

@@ -366,21 +366,6 @@ namespace NatsuLib
 
 				void finish();
 			};
-
-			class DisposeCallbackStream final
-				: public natRefObjImpl<DisposeCallbackStream, natWrappedStream>
-			{
-			public:
-				explicit DisposeCallbackStream(natRefPointer<natStream> internalStream, std::function<void(DisposeCallbackStream&)> disposeCallback = {});
-				~DisposeCallbackStream();
-
-				nBool HasDisposeCallback() const noexcept;
-				// 直接调用回调，之后不会再被调用
-				void CallDisposeCallback();
-
-			private:
-				std::function<void(DisposeCallbackStream&)> m_DisposeCallback;
-			};
 		};
 	};
 }

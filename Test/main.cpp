@@ -53,7 +53,7 @@ int main()
 	try
 	{
 #ifdef _WIN32
-		logger.LogMsg("{1} {0}"_nv, L"测试中文"_wv, 123);
+		logger.LogMsg("{1} {0}"_nv, u8"测试中文"_nv, 123);
 		std::cout << "baka"_nv << std::endl;
 		std::wcout << "baka"_nv << std::endl;
 		logger.LogMsg("%s", "baka"_nv);

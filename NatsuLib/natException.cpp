@@ -84,7 +84,7 @@ nStrView natWinException::GetErrMsg() const noexcept
 		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, m_LastErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPTSTR>(&pBuf), 0, nullptr);
 		if (pBuf)
 		{
-			auto scopeExit = make_scope([pBuf]
+			const auto scopeExit = make_scope([pBuf]
 			{
 				LocalFree(pBuf);
 			});
@@ -113,6 +113,16 @@ NatErr natErrException::GetErrNo() const noexcept
 nStrView natErrException::GetErrMsg() const noexcept
 {
 	return GetErrDescription(m_Errno);
+}
+
+OutOfRange::OutOfRange(nStrView Src, nStrView File, nuInt Line)
+	: BaseException(Src, File, Line, NatErr_OutOfRange, "Out of range."_nv)
+{
+}
+
+OutOfRange::OutOfRange(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line)
+	: BaseException(nestedException, Src, File, Line, NatErr_OutOfRange, "Out of range."_nv)
+{
 }
 
 NotImplementedException::NotImplementedException(nStrView Src, nStrView File, nuInt Line)

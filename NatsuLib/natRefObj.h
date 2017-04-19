@@ -24,9 +24,18 @@ namespace NatsuLib
 	{
 		virtual ~natRefObj() = default;
 
+		///	@brief	获取当前的引用计数
 		virtual size_t GetRefCount() const volatile noexcept = 0;
+
+		///	@brief	尝试增加引用计数
+		///	@return	是否成功增加了引用计数
 		virtual nBool TryAddRef() const volatile = 0;
+
+		///	@brief	增加引用计数
 		virtual void AddRef() const volatile = 0;
+
+		///	@brief	减少引用计数
+		///	@return	引用计数是否已为0
 		virtual nBool Release() const volatile = 0;
 	};
 

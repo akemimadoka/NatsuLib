@@ -29,7 +29,7 @@ namespace NatsuLib
 			pKeys[2] = Crc32One(crc32Table, pKeys[2], pKeys[1] >> 24);
 		}
 
-		constexpr void InitKeys(ncData password, size_t passwordLength, nuInt* pKeys, const nuInt* crc32Table) noexcept
+		constexpr NATINLINE void InitKeys(ncData password, size_t passwordLength, nuInt* pKeys, const nuInt* crc32Table) noexcept
 		{
 			pKeys[0] = 305419896u;
 			pKeys[1] = 591751049u;
@@ -44,13 +44,13 @@ namespace NatsuLib
 			}
 		}
 
-		constexpr nuInt DecodeOne(nuInt* pKeys, const nuInt* crc32Table, nuInt c) noexcept
+		constexpr NATINLINE nuInt DecodeOne(nuInt* pKeys, const nuInt* crc32Table, nuInt c) noexcept
 		{
 			UpdateKeys(pKeys, crc32Table, c ^= DecryptByte(pKeys));
 			return c;
 		}
 
-		constexpr nuInt EncodeOne(nuInt* pKeys, const nuInt* crc32Table, nuInt c) noexcept
+		constexpr NATINLINE nuInt EncodeOne(nuInt* pKeys, const nuInt* crc32Table, nuInt c) noexcept
 		{
 			const auto t = DecryptByte(pKeys) ^ c;
 			UpdateKeys(pKeys, crc32Table, c);
@@ -346,9 +346,7 @@ void natCryptoStream::SetSize(nLen Size)
 
 nLen natCryptoStream::GetPosition() const
 {
-	// nat_Throw(natErrException, NatErr_NotSupport, "The type of this stream does not support this operation."_nv);
-	// 为了能不硬编码获得内部位置只好这么做了，之后再想办法写得优雅（？）点
-	return m_InternalStream->GetPosition();
+	nat_Throw(natErrException, NatErr_NotSupport, "The type of this stream does not support this operation."_nv);
 }
 
 void natCryptoStream::SetPosition(NatSeek, nLong)

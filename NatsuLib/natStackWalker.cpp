@@ -9,7 +9,7 @@
 using namespace NatsuLib;
 
 #ifdef _WIN32
-std::atomic_bool natStackWalker::s_Initialized{ false };
+std::atomic<nBool> natStackWalker::s_Initialized { false };
 
 namespace
 {
@@ -116,7 +116,7 @@ natStackWalker::Symbol const& natStackWalker::GetSymbol(size_t frame) const
 {
 	if (frame >= m_StackSymbols.size())
 	{
-		nat_Throw(natException, "Invalid frame."_nv);
+		nat_Throw(natErrException, NatErr_InvalidArg, "Invalid frame."_nv);
 	}
 
 	return m_StackSymbols[frame];
@@ -143,7 +143,7 @@ void natStackWalker::CaptureStack(size_t captureFrames, nStrView unknownSymbolIn
 	std::vector<AddressType> addresses(captureFrames);
 	const auto size = static_cast<size_t>(backtrace(addresses.data(), static_cast<int>(captureFrames)));
 	addresses.resize(size);
-	char** symbolInfo = backtrace_symbols(addresses.data(), static_cast<int>(size));
+	const auto symbolInfo = backtrace_symbols(addresses.data(), static_cast<int>(size));
 	const auto scope = make_scope([symbolInfo]
 	{
 		std::free(symbolInfo);
@@ -171,7 +171,7 @@ const natStackWalker::Symbol &natStackWalker::GetSymbol(size_t frame) const
 {
 	if (frame >= m_StackSymbols.size())
 	{
-		nat_Throw(natException, "Invalid frame."_nv);
+		nat_Throw(natErrException, NatErr_InvalidArg, "Invalid frame."_nv);
 	}
 
 	return m_StackSymbols[frame];

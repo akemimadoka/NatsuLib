@@ -157,7 +157,7 @@ natRefPointer<natStream> natWrappedStream::GetUnderlyingStreamAs(std::type_info 
 
 natRefPointer<natStream> natWrappedStream::GetUltimateUnderlyingStream() const noexcept
 {
-	natWrappedStream* wrappedStream{ const_cast<natWrappedStream*>(this) };
+	auto wrappedStream{ const_cast<natWrappedStream*>(this) };
 
 	EnumUnderlyingStream([&wrappedStream] (natWrappedStream& stream) noexcept
 	{
@@ -261,6 +261,34 @@ nLen natWrappedStream::CopyTo(natRefPointer<natStream> const& other)
 void natWrappedStream::Flush()
 {
 	m_InternalStream->Flush();
+}
+
+DisposeCallbackStream::DisposeCallbackStream(natRefPointer<natStream> internalStream, std::function<void(DisposeCallbackStream&)> disposeCallback)
+	: natRefObjImpl{ std::move(internalStream) }, m_DisposeCallback{ move(disposeCallback) }
+{
+	assert(m_InternalStream && "internalStream should not be nullptr.");
+}
+
+DisposeCallbackStream::~DisposeCallbackStream()
+{
+	if (m_DisposeCallback)
+	{
+		m_DisposeCallback(*this);
+	}
+}
+
+nBool DisposeCallbackStream::HasDisposeCallback() const noexcept
+{
+	return static_cast<nBool>(m_DisposeCallback);
+}
+
+void DisposeCallbackStream::CallDisposeCallback()
+{
+	if (m_DisposeCallback)
+	{
+		m_DisposeCallback(*this);
+		m_DisposeCallback = {};
+	}
 }
 
 natSubStream::natSubStream(natRefPointer<natStream> stream, nLen startPosition, nLen endPosition)

@@ -82,7 +82,7 @@ nString natUtil::GetResourceString(DWORD ResourceID, HINSTANCE hInstance)
 	}
 	catch (std::bad_alloc&)
 	{
-		nat_Throw(natException, "Allocate memory failed"_nv);
+		nat_Throw(MemoryAllocFail);
 	}
 
 #ifdef UNICODE
