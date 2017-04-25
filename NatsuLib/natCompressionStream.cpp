@@ -439,4 +439,3 @@ nLen natCrc32Stream::WriteBytes(ncData pData, nLen Length)
 
 	return writtenBytes;
 }
-

@@ -122,7 +122,7 @@ namespace NatsuLib
 
 	////////////////////////////////////////////////////////////////////////////////
 	///	@brief	包装流
-	///	@note	包装流具有一个内部流，默认所有操作直接转发到内部流\n
+	///	@note	包装流具有一个内部流，默认除了CopyTo以外的所有操作直接转发到内部流\n
 	///			可通过继承此类完成对数据的特殊处理\n
 	///			注意析构时本类的析构函数会先执行，之后才会释放内部流
 	////////////////////////////////////////////////////////////////////////////////
@@ -172,7 +172,6 @@ namespace NatsuLib
 		nLen WriteBytes(ncData pData, nLen Length) override;
 		void ForceWriteBytes(ncData pData, nLen Length) override;
 		std::future<nLen> WriteBytesAsync(ncData pData, nLen Length) override;
-		nLen CopyTo(natRefPointer<natStream> const& other) override;
 		void Flush() override;
 
 	protected:

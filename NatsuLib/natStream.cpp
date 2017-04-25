@@ -253,11 +253,6 @@ std::future<nLen> natWrappedStream::WriteBytesAsync(ncData pData, nLen Length)
 	return m_InternalStream->WriteBytesAsync(pData, Length);
 }
 
-nLen natWrappedStream::CopyTo(natRefPointer<natStream> const& other)
-{
-	return m_InternalStream->CopyTo(other);
-}
-
 void natWrappedStream::Flush()
 {
 	m_InternalStream->Flush();
@@ -493,7 +488,7 @@ void natSubStream::checkPosition() const
 
 #ifdef _WIN32
 natFileStream::natFileStream(nStrView filename, nBool bReadable, nBool bWritable, nBool isAsync, nBool truncate)
-	: m_hMappedFile(NULL), m_ShouldDispose(true), m_IsAsync(isAsync), m_Filename(filename), m_bReadable(bReadable), m_bWritable(bWritable)
+	: m_ShouldDispose(true), m_hMappedFile(NULL), m_IsAsync(isAsync), m_Filename(filename), m_bReadable(bReadable), m_bWritable(bWritable)
 {
 	if (truncate && (bReadable || !bWritable))
 	{
@@ -521,7 +516,7 @@ natFileStream::natFileStream(nStrView filename, nBool bReadable, nBool bWritable
 }
 
 natFileStream::natFileStream(UnsafeHandle hFile, nBool bReadable, nBool bWritable, nBool transferOwner, nBool isAsync)
-	: m_hFile(hFile), m_hMappedFile(NULL), m_ShouldDispose(transferOwner), m_IsAsync(isAsync), m_bReadable(bReadable), m_bWritable(bWritable)
+	: m_hFile(hFile), m_ShouldDispose(transferOwner), m_hMappedFile(NULL), m_IsAsync(isAsync), m_bReadable(bReadable), m_bWritable(bWritable)
 {
 	if (!m_hFile || m_hFile == INVALID_HANDLE_VALUE)
 	{
