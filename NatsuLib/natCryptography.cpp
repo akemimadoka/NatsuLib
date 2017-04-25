@@ -105,7 +105,7 @@ PKzipWeakProcessor::~PKzipWeakProcessor()
 void PKzipWeakProcessor::InitCipher(ncData password, nLen passwordLength)
 {
 	m_Keys.emplace();
-	detail_::InitKeys(password, passwordLength, m_Keys.value().data(), get_crc_table());
+	detail_::InitKeys(password, static_cast<size_t>(passwordLength), m_Keys.value().data(), get_crc_table());
 }
 
 void PKzipWeakProcessor::InitHeaderFrom(ncData buffer, nLen bufferLength)
@@ -123,7 +123,7 @@ void PKzipWeakProcessor::InitHeaderFrom(ncData buffer, nLen bufferLength)
 	}
 
 	auto& header = m_Header.value();
-	std::memmove(header.data(), buffer, bufferLength);
+	std::memmove(header.data(), buffer, static_cast<size_t>(bufferLength));
 	decryptHeader();
 }
 
@@ -240,7 +240,7 @@ std::pair<nLen, nLen> PKzipWeakProcessor::Process(ncData inputData, nLen inputDa
 
 std::pair<nLen, std::vector<nByte>> PKzipWeakProcessor::ProcessFinal(ncData inputData, nLen inputDataLength)
 {
-	std::vector<nByte> outputBuffer(inputDataLength);
+	std::vector<nByte> outputBuffer(static_cast<size_t>(inputDataLength));
 	const auto ret = Process(inputData, inputDataLength, outputBuffer.data(), outputBuffer.size());
 	m_Keys.reset();
 	return { ret.first, move(outputBuffer) };
@@ -277,7 +277,7 @@ natRefPointer<ICryptoProcessor> PKzipWeakAlgorithm::CreateDecryptor()
 natCryptoStream::natCryptoStream(natRefPointer<natStream> stream, natRefPointer<ICryptoProcessor> cryptoProcessor, CryptoStreamMode mode)
 	: natRefObjImpl{ std::move(stream) },
 	  m_Processor{ std::move(cryptoProcessor) },
-	  m_InputBlockSize{ m_Processor->GetInputBlockSize() }, m_OutputBlockSize{ m_Processor->GetOutputBlockSize() },
+	  m_InputBlockSize{ static_cast<size_t>(m_Processor->GetInputBlockSize()) }, m_OutputBlockSize{ static_cast<size_t>(m_Processor->GetOutputBlockSize()) },
 	  m_IsReadMode{ mode == CryptoStreamMode::Read },
 	  m_InputBufferSize{}, m_OutputBufferSize{},
 	  m_InputBuffer(m_InputBlockSize), m_OutputBuffer(m_OutputBlockSize),
@@ -361,7 +361,7 @@ nLen natCryptoStream::ReadBytes(nData pData, nLen Length)
 		nat_Throw(natErrException, NatErr_IllegalState, "This stream cannot be read."_nv);
 	}
 
-	auto bytesToRead = Length;
+	auto bytesToRead = static_cast<size_t>(Length);
 	auto pWrite = pData;
 
 	if (m_OutputBufferSize)
@@ -395,7 +395,7 @@ nLen natCryptoStream::ReadBytes(nData pData, nLen Length)
 		if (m_Processor->CanProcessMultiBlocks())
 		{
 			const auto blocksToProcess = bytesToRead / m_OutputBlockSize;
-			const auto inputSize = blocksToProcess * m_InputBlockSize;
+			const auto inputSize = static_cast<size_t>(blocksToProcess * m_InputBlockSize);
 
 			std::vector<nByte> tmpInputBuffer(inputSize);
 			std::memmove(tmpInputBuffer.data(), m_InputBuffer.data(), m_InputBufferSize);
@@ -406,7 +406,7 @@ nLen natCryptoStream::ReadBytes(nData pData, nLen Length)
 			if (amountRead <= m_InputBlockSize)
 			{
 				m_InputBuffer = move(tmpInputBuffer);
-				m_InputBufferSize = amountRead;
+				m_InputBufferSize = static_cast<size_t>(amountRead);
 				goto Normal;
 			}
 
@@ -415,14 +415,14 @@ nLen natCryptoStream::ReadBytes(nData pData, nLen Length)
 
 			if (ignoredBytes)
 			{
-				std::memmove(m_InputBuffer.data(), tmpInputBuffer.data() + totalInputSize, ignoredBytes);
-				m_InputBufferSize = ignoredBytes;
+				std::memmove(m_InputBuffer.data(), tmpInputBuffer.data() + totalInputSize, static_cast<size_t>(ignoredBytes));
+				m_InputBufferSize = static_cast<size_t>(ignoredBytes);
 			}
 
-			std::vector<nByte> tmpOutputBuffer(totalInputSize / m_InputBlockSize * m_OutputBlockSize);
+			std::vector<nByte> tmpOutputBuffer(static_cast<size_t>(totalInputSize / m_InputBlockSize * m_OutputBlockSize));
 			tie(std::ignore, outputBytes) = m_Processor->Process(tmpInputBuffer.data(), totalInputSize, tmpOutputBuffer.data(), tmpOutputBuffer.size());
-			std::memmove(pWrite, tmpOutputBuffer.data(), outputBytes);
-			bytesToRead -= outputBytes;
+			std::memmove(pWrite, tmpOutputBuffer.data(), static_cast<size_t>(outputBytes));
+			bytesToRead -= static_cast<size_t>(outputBytes);
 			pWrite += outputBytes;
 		}
 	}
@@ -437,20 +437,20 @@ Normal:
 			{
 				goto ProcessFinalBlock;
 			}
-			m_InputBufferSize += amountRead;
+			m_InputBufferSize += static_cast<size_t>(amountRead);
 		}
 		tie(std::ignore, outputBytes) = m_Processor->Process(m_InputBuffer.data(), m_InputBlockSize, m_OutputBuffer.data(), m_OutputBuffer.size());
 		m_InputBufferSize = 0;
 		if (bytesToRead >= outputBytes)
 		{
-			std::memmove(pWrite, m_OutputBuffer.data(), outputBytes);
-			bytesToRead -= outputBytes;
+			std::memmove(pWrite, m_OutputBuffer.data(), static_cast<size_t>(outputBytes));
+			bytesToRead -= static_cast<size_t>(outputBytes);
 			pWrite += outputBytes;
 		}
 		else
 		{
-			std::memmove(pWrite, m_OutputBuffer.data(), bytesToRead);
-			m_OutputBufferSize -= outputBytes - bytesToRead;
+			std::memmove(pWrite, m_OutputBuffer.data(), static_cast<size_t>(bytesToRead));
+			m_OutputBufferSize -= static_cast<size_t>(outputBytes - bytesToRead);
 			std::memmove(m_OutputBuffer.data(), m_OutputBuffer.data() + bytesToRead, m_OutputBufferSize);
 			return Length;
 		}
@@ -464,8 +464,8 @@ ProcessFinalBlock:
 
 	if (bytesToRead < m_OutputBufferSize)
 	{
-		std::memmove(pWrite, m_OutputBuffer.data(), bytesToRead);
-		m_OutputBufferSize -= bytesToRead;
+		std::memmove(pWrite, m_OutputBuffer.data(), static_cast<size_t>(bytesToRead));
+		m_OutputBufferSize -= static_cast<size_t>(bytesToRead);
 		std::memmove(m_OutputBuffer.data(), m_OutputBuffer.data() + bytesToRead, m_OutputBufferSize);
 		return Length;
 	}
@@ -499,8 +499,8 @@ nLen natCryptoStream::WriteBytes(ncData pData, nLen Length)
 		}
 		else
 		{
-			std::memmove(m_InputBuffer.data() + m_InputBufferSize, pRead, bytesToWrite);
-			m_InputBufferSize += bytesToWrite;
+			std::memmove(m_InputBuffer.data() + m_InputBufferSize, pRead, static_cast<size_t>(bytesToWrite));
+			m_InputBufferSize += static_cast<size_t>(bytesToWrite);
 			return bytesToWrite;
 		}
 	}
@@ -531,7 +531,7 @@ nLen natCryptoStream::WriteBytes(ncData pData, nLen Length)
 				const auto blocksToProcess = bytesToWrite / m_InputBlockSize;
 				const auto inputSize = blocksToProcess * m_InputBlockSize;
 
-				std::vector<nByte> tmpOutputBuffer(blocksToProcess * m_OutputBlockSize);
+				std::vector<nByte> tmpOutputBuffer(static_cast<size_t>(blocksToProcess * m_OutputBlockSize));
 				tie(std::ignore, currentWrittenBytes) = m_Processor->Process(pRead, inputSize, tmpOutputBuffer.data(), tmpOutputBuffer.size());
 
 				writtenBytes += m_InternalStream->WriteBytes(tmpOutputBuffer.data(), currentWrittenBytes);
@@ -551,8 +551,8 @@ nLen natCryptoStream::WriteBytes(ncData pData, nLen Length)
 		}
 		else
 		{
-			std::memmove(m_InputBuffer.data(), pRead, bytesToWrite);
-			m_InputBufferSize += bytesToWrite;
+			std::memmove(m_InputBuffer.data(), pRead, static_cast<size_t>(bytesToWrite));
+			m_InputBufferSize += static_cast<size_t>(bytesToWrite);
 			break;
 		}
 	}

@@ -131,7 +131,7 @@ int main()
 
 		{
 			natVFS vfs;
-			auto req = static_cast<natRefPointer<LocalFileRequest>>(vfs.CreateRequest("file:///main.cpp"));
+			auto req = static_cast<natRefPointer<LocalFileRequest>>(vfs.CreateRequest("file:///test.txt"));
 #ifdef _WIN32
 			req->SetAsync(true);
 #endif
@@ -139,8 +139,9 @@ int main()
 			std::vector<nByte> buffer(static_cast<size_t>(fs->GetSize()));
 			logger.LogMsg("Read {0} bytes."_nv, fs->ReadBytesAsync(buffer.data(), buffer.size()).get());
 #ifdef _WIN32
-			buffer.push_back(0);
-			logger.LogMsg(nString{ AnsiStringView{ reinterpret_cast<const char*>(buffer.data()) } });
+			natStreamReader<StringType::Utf8> reader{ make_ref<natExternMemoryStream>(buffer.data(), buffer.size(), true, false) };
+			const auto str = reader.ReadToEnd();
+			logger.LogMsg(str);
 #endif
 		}
 

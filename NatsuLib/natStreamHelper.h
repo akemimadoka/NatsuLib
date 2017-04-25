@@ -21,7 +21,7 @@ namespace NatsuLib
 			DefaultBufferSize = 128,
 		};
 
-		explicit natStreamReader(natStream* pStream, size_t bufferSize = DefaultBufferSize) noexcept
+		explicit natStreamReader(natRefPointer<natStream> pStream, size_t bufferSize = DefaultBufferSize) noexcept
 			: m_InternalStream(pStream), m_BufferSize{ bufferSize }, m_CurrentPos{}, m_EndPos{}
 		{
 		}
@@ -74,7 +74,10 @@ namespace NatsuLib
 
 			assert(size >= reserved);
 			assert(reserved <= m_Buffer.size());
-			copy(prev(cend(m_Buffer), reserved), cend(m_Buffer), begin(m_Buffer));
+			if (reserved)
+			{
+				copy(prev(cend(m_Buffer), reserved), cend(m_Buffer), begin(m_Buffer));
+			}
 			m_Buffer.resize(size);
 			
 			const auto readBytes = m_InternalStream->ReadBytes(m_Buffer.data() + reserved, size - reserved);
@@ -129,7 +132,7 @@ namespace NatsuLib
 		: public natRefObjImpl<natStreamWriter<encoding>, TextWriter<encoding>>
 	{
 	public:
-		explicit natStreamWriter(natStream* pStream) noexcept
+		explicit natStreamWriter(natRefPointer<natStream> pStream) noexcept
 			: m_InternalStream(pStream)
 		{
 		}

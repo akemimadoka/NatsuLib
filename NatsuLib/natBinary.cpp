@@ -36,7 +36,7 @@ void natBinaryReader::Skip(nLen bytes)
 	else
 	{
 		auto remainedBytes = bytes;
-		std::vector<nByte> buffer(std::min(remainedBytes, static_cast<nLen>(std::numeric_limits<size_t>::max())));
+		std::vector<nByte> buffer(static_cast<size_t>(std::min(remainedBytes, static_cast<nLen>(std::numeric_limits<size_t>::max()))));
 		while (remainedBytes)
 		{
 			m_Stream->ReadBytes(buffer.data(), std::min(remainedBytes, static_cast<nLen>(buffer.size())));

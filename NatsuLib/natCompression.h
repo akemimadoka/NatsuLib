@@ -39,6 +39,8 @@ namespace NatsuLib
 		natZipArchive(natRefPointer<natStream> stream, StringType encoding, ZipArchiveMode mode = ZipArchiveMode::Read);
 		~natZipArchive();
 
+		ZipArchiveMode GetOpenMode() const noexcept;
+
 		///	@brief	以特定的入口名创建入口
 		natRefPointer<ZipEntry> CreateEntry(nStrView entryName);
 		///	@brief	获得所有入口
@@ -242,6 +244,10 @@ namespace NatsuLib
 				NotDecryptYet,
 				NeedNotToDecrypt,
 			};
+
+			nStrView GetEntryName() const noexcept;
+			nuLong GetCompressedSize() const noexcept;
+			nuLong GetUncompressedSize() const noexcept;
 
 			///	@brief	删除入口
 			///	@note	只能在更新模式下删除入口，如果入口正在被写入删除将会失败

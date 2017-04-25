@@ -401,12 +401,10 @@ namespace NatsuLib
 		{
 			try
 			{
-				output.ResizeMore(4);
 				output.Append(StringView<StringType::Utf32>{ codePoint });
 			}
 			catch (...)
 			{
-				output.pop_back(4);
 				return EncodingResult::Reject;	// “Ï≥£±ªÕÃ
 			}
 
@@ -845,31 +843,17 @@ namespace NatsuLib
 	template <>
 	void AnsiString::TransAppendTo(U16String& dst, View const& src)
 	{
-		auto convertedString = natUtil::MultibyteToUnicode(src.cbegin(), static_cast<nInt>(src.size()), CP_ACP);
-		dst.Resize(convertedString.size());
-
-#ifdef _MSC_VER
-		const auto data = stdext::checked_array_iterator<nWStr>{ reinterpret_cast<nWStr>(dst.begin()), dst.size(), 0 };
-#else
-		const auto data = reinterpret_cast<nWStr>(dst.begin());
-#endif
-
-		copy(convertedString.cbegin(), convertedString.cend(), data);
+		const auto convertedString = natUtil::MultibyteToUnicode(src.cbegin(), static_cast<nInt>(src.size()), CP_ACP);
+		const auto iter = dst.ResizeMore(convertedString.size());
+		std::memmove(iter, convertedString.c_str(), convertedString.size() * sizeof(wchar_t));
 	}
 
 	template <>
 	void AnsiString::TransAppendFrom(AnsiString& dst, U16StringView const& src)
 	{
-		auto convertedString = natUtil::WidecharToMultibyte(reinterpret_cast<ncWStr>(src.data()), static_cast<nInt>(src.size()), CP_ACP);
-		dst.Resize(convertedString.size());
-
-#ifdef _MSC_VER
-		const auto data = stdext::checked_array_iterator<nStr>{ reinterpret_cast<nStr>(dst.begin()), dst.size(), 0 };
-#else
-		const auto data = reinterpret_cast<nStr>(dst.begin());
-#endif
-
-		copy(convertedString.cbegin(), convertedString.cend(), data);
+		const auto convertedString = natUtil::WidecharToMultibyte(reinterpret_cast<ncWStr>(src.data()), static_cast<nInt>(src.size()), CP_ACP);
+		const auto iter = dst.ResizeMore(convertedString.size());
+		std::memmove(iter, convertedString.c_str(), convertedString.size() * sizeof(char));
 	}
 
 	template <>

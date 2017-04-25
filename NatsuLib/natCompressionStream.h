@@ -37,6 +37,7 @@ namespace NatsuLib
 		nBool CanRead() const override;
 		nBool CanResize() const override;
 		nBool CanSeek() const override;
+		nBool IsEndOfStream() const override;
 		nLen GetSize() const override;
 		void SetSize(nLen /*Size*/) override;
 		nLen GetPosition() const override;

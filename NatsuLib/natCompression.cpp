@@ -13,6 +13,21 @@ natZipArchive::ZipEntry::~ZipEntry()
 {
 }
 
+nStrView natZipArchive::ZipEntry::GetEntryName() const noexcept
+{
+	return m_CentralDirectoryFileHeader.Filename;
+}
+
+nuLong natZipArchive::ZipEntry::GetCompressedSize() const noexcept
+{
+	return m_CentralDirectoryFileHeader.CompressedSize;
+}
+
+nuLong natZipArchive::ZipEntry::GetUncompressedSize() const noexcept
+{
+	return m_CentralDirectoryFileHeader.UncompressedSize;
+}
+
 void natZipArchive::ZipEntry::Delete()
 {
 	if (!m_Archive)
@@ -286,7 +301,7 @@ void natZipArchive::ZipEntry::loadExtraFieldAndCompressedData()
 	// 读取原压缩数据
 	if (m_OriginallyInArchive && !m_EverOpenedForWrite)
 	{
-		m_CachedCompressedData.emplace(m_CentralDirectoryFileHeader.CompressedSize);
+		m_CachedCompressedData.emplace(static_cast<size_t>(m_CentralDirectoryFileHeader.CompressedSize));
 		stream->SetPosition(NatSeek::Beg, getOffsetOfCompressedData());
 		stream->ReadBytes(m_CachedCompressedData.value().data(), m_CentralDirectoryFileHeader.CompressedSize);
 	}
@@ -513,6 +528,11 @@ natZipArchive::natZipArchive(natRefPointer<natStream> stream, StringType encodin
 natZipArchive::~natZipArchive()
 {
 	close();
+}
+
+natZipArchive::ZipArchiveMode natZipArchive::GetOpenMode() const noexcept
+{
+	return m_Mode;
 }
 
 natRefPointer<natZipArchive::ZipEntry> natZipArchive::CreateEntry(nStrView entryName)

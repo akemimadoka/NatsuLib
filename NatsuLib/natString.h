@@ -625,6 +625,53 @@ namespace NatsuLib
 			return FindCharRepeatBackward(findChar, 1, nEnd);
 		}
 
+		nBool StartWith(CharType findChar, size_t repeatCount = 1) const noexcept
+		{
+			if (!repeatCount || repeatCount > size())
+			{
+				return false;
+			}
+
+			for (size_t i = 0; i < repeatCount; ++i)
+			{
+				if (m_StrBegin[i] != findChar)
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		nBool StartWith(StringView const& other) const noexcept
+		{
+			return size() >= other.size() && Slice(0, other.size()) == other;
+		}
+
+		nBool EndWith(CharType findChar, size_t repeatCount = 1) const noexcept
+		{
+			if (!repeatCount || repeatCount > size())
+			{
+				return false;
+			}
+
+			const auto startIndex = size() - repeatCount;
+			for (size_t i = 0; i < repeatCount; ++i)
+			{
+				if (m_StrBegin[startIndex + i] != findChar)
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		nBool EndWith(StringView const& other) const noexcept
+		{
+			return size() >= other.size() && Slice(size() - other.size(), other.size()) == other;
+		}
+
 		nBool DoesOverlapWith(StringView const& other) const noexcept
 		{
 			// FIXME: 可能是UB，参见n4640 5.9 (3)
@@ -1015,6 +1062,11 @@ namespace NatsuLib
 			Resize(0);
 		}
 
+		nBool IsEmpty() const noexcept
+		{
+			return empty();
+		}
+
 		iterator begin() noexcept
 		{
 			return m_Storage.GetData();
@@ -1040,7 +1092,7 @@ namespace NatsuLib
 			return m_Storage.Size;
 		}
 
-		bool empty() const noexcept
+		nBool empty() const noexcept
 		{
 			return m_Storage.Size == 0;
 		}

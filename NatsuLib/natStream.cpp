@@ -1596,7 +1596,7 @@ nLen natMemoryStream::WriteBytes(ncData pData, nLen Length)
 	{
 		if (m_AutoResize)
 		{
-			Reserve(static_cast<nLen>(detail_::Grow(Length)));
+			Reserve(static_cast<nLen>(detail_::Grow(static_cast<size_t>(Length))));
 			tWriteBytes = Length;
 		}
 		else
@@ -1855,7 +1855,7 @@ nLen natExternMemoryStream::ReadBytes(nData pData, nLen Length)
 	}
 
 	const auto readBytes = std::min(Length, m_Size - m_CurrentPos);
-	memmove(pData, m_ExternData, static_cast<size_t>(readBytes));
+	memmove(pData, m_ExternData + m_CurrentPos, static_cast<size_t>(readBytes));
 	m_CurrentPos += readBytes;
 	return readBytes;
 }

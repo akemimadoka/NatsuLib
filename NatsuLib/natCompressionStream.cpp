@@ -204,6 +204,16 @@ nBool natDeflateStream::CanSeek() const
 	return false;
 }
 
+nBool natDeflateStream::IsEndOfStream() const
+{
+	auto ret = m_InternalStream->IsEndOfStream();
+	if (CanRead())
+	{
+		ret = ret && !m_Impl->InputBufferLeft && !m_Impl->ZStream.avail_in && !m_Impl->ZStream.avail_out;
+	}
+	return ret;
+}
+
 nLen natDeflateStream::GetSize() const
 {
 	nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support GetSize."_nv);
@@ -231,13 +241,13 @@ nLen natDeflateStream::ReadBytes(nData pData, nLen Length)
 		nat_Throw(natErrException, NatErr_IllegalState, "Stream is not readable."_nv);
 	}
 
-	auto pRead = pData;
+	auto pWrite = pData;
 	auto dataRemain = Length;
 
 	while (true)
 	{
 		// 输出之前可能未输出的内容
-		m_Impl->SetOutput(pRead, static_cast<size_t>(dataRemain));
+		m_Impl->SetOutput(pWrite, static_cast<size_t>(dataRemain));
 		const auto ret = m_Impl->DoNext();	// 实现提示：忽略此处可能的部分错误
 		if (ret == Z_DATA_ERROR)
 		{
@@ -245,7 +255,7 @@ nLen natDeflateStream::ReadBytes(nData pData, nLen Length)
 		}
 		const auto currentReadBytes = Length - m_Impl->OutputBufferLeft - m_Impl->ZStream.avail_out;
 		assert(dataRemain >= currentReadBytes);
-		pRead += currentReadBytes;
+		pWrite += currentReadBytes;
 		dataRemain -= currentReadBytes;
 
 		if (dataRemain == 0)

@@ -55,9 +55,6 @@ namespace NatsuLib
 		[[noreturn]] void NotConstructed();
 		[[noreturn]] void ValueNotAvailable();
 
-#ifdef _MSC_VER
-#pragma pack(1)
-#endif
 		template <typename T>
 		class CommonStorage final
 		{
@@ -230,11 +227,8 @@ namespace NatsuLib
 
 		private:
 			nBool m_Constructed;
-			nByte m_Storage[sizeof(T)];
+			alignas(T) nByte m_Storage[sizeof(T)];
 		};
-#ifdef _MSC_VER
-#pragma pack()
-#endif
 	}
 
 	template <typename T, typename Self>
