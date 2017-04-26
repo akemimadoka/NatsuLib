@@ -213,44 +213,14 @@ void natWrappedStream::SetPosition(NatSeek Origin, nLong Offset)
 	m_InternalStream->SetPosition(Origin, Offset);
 }
 
-nByte natWrappedStream::ReadByte()
-{
-	return m_InternalStream->ReadByte();
-}
-
 nLen natWrappedStream::ReadBytes(nData pData, nLen Length)
 {
 	return m_InternalStream->ReadBytes(pData, Length);
 }
 
-void natWrappedStream::ForceReadBytes(nData pData, nLen Length)
-{
-	return m_InternalStream->ForceReadBytes(pData, Length);
-}
-
-std::future<nLen> natWrappedStream::ReadBytesAsync(nData pData, nLen Length)
-{
-	return m_InternalStream->ReadBytesAsync(pData, Length);
-}
-
-void natWrappedStream::WriteByte(nByte byte)
-{
-	m_InternalStream->WriteByte(byte);
-}
-
 nLen natWrappedStream::WriteBytes(ncData pData, nLen Length)
 {
 	return m_InternalStream->WriteBytes(pData, Length);
-}
-
-void natWrappedStream::ForceWriteBytes(ncData pData, nLen Length)
-{
-	m_InternalStream->ForceWriteBytes(pData, Length);
-}
-
-std::future<nLen> natWrappedStream::WriteBytesAsync(ncData pData, nLen Length)
-{
-	return m_InternalStream->WriteBytesAsync(pData, Length);
 }
 
 void natWrappedStream::Flush()

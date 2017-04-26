@@ -46,12 +46,15 @@ namespace NatsuLib
 		nLen WriteBytes(ncData pData, nLen Length) override;
 		void Flush() override;
 
+		void Flush(nLen& flushLength);
+		nLen Finish();
+
 	private:
 		nByte m_Buffer[DefaultBufferSize];
 		std::unique_ptr<detail_::DeflateStreamImpl> m_Impl;
 		nBool m_WroteData;
 
-		nLen writeAll();
+		nLen writeAll(nBool finish = false);
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
