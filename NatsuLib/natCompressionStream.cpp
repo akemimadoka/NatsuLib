@@ -2,7 +2,6 @@
 #include "natCompressionStream.h"
 #include <zlib.h>
 #include <zutil.h>
-#include <random>
 
 using namespace NatsuLib;
 
@@ -89,7 +88,7 @@ namespace NatsuLib
 				}
 			}
 
-			int DoNext(nBool finish = false, nBool flush = true) noexcept
+			int DoNext(nBool finish = false, nBool flush = false) noexcept
 			{
 				constexpr auto max = std::numeric_limits<uInt>::max();
 				if (ZStream.avail_in == 0)
@@ -105,23 +104,6 @@ namespace NatsuLib
 
 				const auto flushValue = finish && !InputBufferLeft ? Z_FINISH : flush ? Z_SYNC_FLUSH : Z_NO_FLUSH;
 				return Compress ? deflate(&ZStream, flushValue) : inflate(&ZStream, flushValue);
-			}
-
-			int Flush() noexcept
-			{
-				constexpr auto max = std::numeric_limits<uInt>::max();
-				if (ZStream.avail_in == 0)
-				{
-					ZStream.avail_in = InputBufferLeft > static_cast<size_t>(max) ? max : static_cast<uInt>(InputBufferLeft);
-					InputBufferLeft -= ZStream.avail_in;
-				}
-				if (ZStream.avail_out == 0)
-				{
-					ZStream.avail_out = OutputBufferLeft > static_cast<size_t>(max) ? max : static_cast<uInt>(OutputBufferLeft);
-					OutputBufferLeft -= ZStream.avail_out;
-				}
-
-				return Compress ? deflate(&ZStream, Z_SYNC_FLUSH) : inflate(&ZStream, Z_SYNC_FLUSH);
 			}
 
 			z_stream ZStream;
@@ -317,7 +299,7 @@ void natDeflateStream::Flush(nLen& flushLength)
 		while (true)
 		{
 			m_Impl->SetOutput(m_Buffer, sizeof m_Buffer);
-			const auto ret = m_Impl->Flush();
+			const auto ret = m_Impl->DoNext();
 			if (ret == Z_OK)
 			{
 				flushLength += m_InternalStream->WriteBytes(m_Buffer, sizeof m_Buffer - m_Impl->OutputBufferLeft - m_Impl->ZStream.avail_out);
@@ -349,8 +331,9 @@ nLen natDeflateStream::Finish()
 		do
 		{
 			m_Impl->SetOutput(m_Buffer, sizeof m_Buffer);
+			const auto totalOutBefore = m_Impl->ZStream.total_out;
 			ret = m_Impl->DoNext(true);
-			const auto availableDataSize = DefaultBufferSize - m_Impl->OutputBufferLeft - m_Impl->ZStream.avail_out;
+			const auto availableDataSize = m_Impl->ZStream.total_out - totalOutBefore;
 			wroteBytes += m_InternalStream->WriteBytes(m_Buffer, availableDataSize);
 		} while (ret != Z_STREAM_END);
 	}
@@ -379,6 +362,7 @@ nLen natDeflateStream::writeAll(nBool finish)
 	{
 		do
 		{
+			const auto totalOutBefore = m_Impl->ZStream.total_out;
 			ret = m_Impl->DoNext(finish);
 
 			if (ret == Z_DATA_ERROR)
@@ -386,7 +370,7 @@ nLen natDeflateStream::writeAll(nBool finish)
 				nat_Throw(InvalidData, "Invalid data with zlib message ({0})."_nv, U8StringView{ m_Impl->ZStream.msg });
 			}
 
-			const auto availableDataSize = DefaultBufferSize - m_Impl->OutputBufferLeft - m_Impl->ZStream.avail_out;
+			const auto availableDataSize = m_Impl->ZStream.total_out - totalOutBefore;
 			const auto currentWrittenBytes = m_InternalStream->WriteBytes(m_Buffer, availableDataSize);
 			// 实现提示：是否需要检查？
 			if (currentWrittenBytes < availableDataSize)

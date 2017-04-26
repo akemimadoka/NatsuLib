@@ -446,6 +446,7 @@ void natZipArchive::ZipEntry::ZipEntryWriteStream::Flush()
 
 void natZipArchive::ZipEntry::ZipEntryWriteStream::finish()
 {
+	GetUnderlyingStreamAs<natDeflateStream>()->Finish();
 	const auto crc32Stream = GetUnderlyingStreamAs<natCrc32Stream>();
 	assert(crc32Stream && "cannot get crc32stream.");
 	m_Entry.m_CentralDirectoryFileHeader.Crc32 = crc32Stream->GetCrc32();
