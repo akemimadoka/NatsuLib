@@ -325,7 +325,7 @@ nLen natDeflateStream::Finish()
 
 	if (m_WroteData)
 	{
-		writeAll();
+		wroteBytes += writeAll();
 
 		int ret;
 		do

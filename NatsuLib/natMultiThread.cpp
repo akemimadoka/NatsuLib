@@ -342,7 +342,7 @@ void natThreadPool::onWorkerThreadIdle(nuInt Index, nBool isTerminating)
 	{
 		auto&& work = m_WorkQueue.front();
 		auto&& ret = m_Threads[Index]->SetWork(std::get<0>(work), std::get<1>(work));
-		std::get<2>(work).set_value(WorkToken(Index, move(ret)));
+		std::get<2>(work).set_value(WorkToken(Index, std::move(ret)));
 		m_WorkQueue.pop();
 	}
 }

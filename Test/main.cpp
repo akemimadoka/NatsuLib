@@ -17,6 +17,8 @@
 #include <natCompressionStream.h>
 #include <natRelationalOperator.h>
 #include <natProperty.h>
+#include <natContainer.h>
+#include <forward_list>
 
 using namespace NatsuLib;
 
@@ -272,6 +274,33 @@ int main()
 			logger.LogMsg("7 > a:%b"_nv, 7 > a);
 			logger.LogMsg("-3 <= a:%b"_nv, -3 <= a);
 			logger.LogMsg("5 >= a:%b"_nv, 5 >= a);
+		}
+
+		{
+			std::vector<int> vec{ 1,2,3,4,5 };
+			const std::vector<int> constvec{ 1,2,3,4,5 };
+
+			Container<int> container{ vec };
+			logger.LogMsg(from(container).aggregate("Values from container:"_ns, [](nString const& prev, int cur)
+			{
+				return natUtil::FormatString("{0} {1}"_nv, prev, cur);
+			}));
+			Container<int> constContainer{ constvec };
+			logger.LogMsg(from(constContainer).aggregate("Values from constContainer:"_ns, [](nString const& prev, int cur)
+			{
+				return natUtil::FormatString("{0} {1}"_nv, prev, cur);
+			}));
+
+			try
+			{
+				std::forward_list<int> list{ 1,2,3,4,5 };
+				Container<int> cont{ list };
+				const auto iter = cont.rbegin();
+			}
+			catch (std::exception& e)
+			{
+				logger.LogErr("{0}"_nv, e.what());
+			}
 		}
 	}
 #ifdef _WIN32

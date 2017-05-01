@@ -22,6 +22,7 @@ set(SOURCE_FILES
     natConfig.h
     natConsole.cpp
     natConsole.h
+    natContainer.h
     natCryptography.cpp
     natCryptography.h
     natDelegate.h

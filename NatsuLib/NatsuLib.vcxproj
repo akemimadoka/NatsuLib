@@ -184,6 +184,7 @@
     <ClInclude Include="natConcepts.h" />
     <ClInclude Include="natConfig.h" />
     <ClInclude Include="natConsole.h" />
+    <ClInclude Include="natContainer.h" />
     <ClInclude Include="natCryptography.h" />
     <ClInclude Include="natDelegate.h" />
     <ClInclude Include="natEncoding.h" />

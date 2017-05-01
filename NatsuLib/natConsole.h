@@ -64,6 +64,18 @@ namespace NatsuLib
 			Write(str.GetView());
 		}
 
+		template <StringType stringType, typename... Args>
+		void Write(String<stringType> const& str, Args&&... args)
+		{
+			Write(str.GetView(), std::forward<Args>(args)...);
+		}
+
+		template <StringType stringType, typename... Args>
+		void Write(StringView<stringType> const& str, Args&&... args)
+		{
+			Write(natUtil::FormatString(str, std::forward<Args>(args)...));
+		}
+
 		template <StringType stringType>
 		void WriteLine(StringView<stringType> const& str)
 		{
@@ -76,6 +88,18 @@ namespace NatsuLib
 		void WriteLine(String<stringType> const& str)
 		{
 			WriteLine(str.GetView());
+		}
+
+		template <StringType stringType, typename... Args>
+		void WriteLine(String<stringType> const& str, Args&&... args)
+		{
+			WriteLine(str.GetView(), std::forward<Args>(args)...);
+		}
+
+		template <StringType stringType, typename... Args>
+		void WriteLine(StringView<stringType> const& str, Args&&... args)
+		{
+			WriteLine(natUtil::FormatString(str, std::forward<Args>(args)...));
 		}
 
 		template <StringType stringType>
@@ -92,6 +116,18 @@ namespace NatsuLib
 			WriteErr(str.GetView());
 		}
 
+		template <StringType stringType, typename... Args>
+		void WriteErr(String<stringType> const& str, Args&&... args)
+		{
+			WriteErr(str.GetView(), std::forward<Args>(args)...);
+		}
+
+		template <StringType stringType, typename... Args>
+		void WriteErr(StringView<stringType> const& str, Args&&... args)
+		{
+			WriteErr(natUtil::FormatString(str, std::forward<Args>(args)...));
+		}
+
 		template <StringType stringType>
 		void WriteLineErr(StringView<stringType> const& str)
 		{
@@ -104,6 +140,18 @@ namespace NatsuLib
 		void WriteLineErr(String<stringType> const& str)
 		{
 			WriteLineErr(str.GetView());
+		}
+
+		template <StringType stringType, typename... Args>
+		void WriteLineErr(String<stringType> const& str, Args&&... args)
+		{
+			WriteLineErr(str.GetView(), std::forward<Args>(args)...);
+		}
+
+		template <StringType stringType, typename... Args>
+		void WriteLineErr(StringView<stringType> const& str, Args&&... args)
+		{
+			WriteLineErr(natUtil::FormatString(str, std::forward<Args>(args)...));
 		}
 
 		template <StringType stringType = Encoding>
