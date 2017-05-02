@@ -285,7 +285,7 @@ int main()
 			{
 				return natUtil::FormatString("{0} {1}"_nv, prev, cur);
 			}));
-			Container<int> constContainer{ constvec };
+			Container<const int> constContainer{ constvec };
 			logger.LogMsg(from(constContainer).aggregate("Values from constContainer:"_ns, [](nString const& prev, int cur)
 			{
 				return natUtil::FormatString("{0} {1}"_nv, prev, cur);

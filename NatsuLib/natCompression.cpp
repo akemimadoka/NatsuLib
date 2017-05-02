@@ -229,12 +229,12 @@ natRefPointer<natStream> const& natZipArchive::ZipEntry::getUncompressedData()
 natRefPointer<natStream> natZipArchive::ZipEntry::createCompressor(natRefPointer<natStream> stream)
 {
 	assert(stream && "stream should not be nullptr.");
-	auto shouldEncrypted = false;
+	auto shouldEncrypt = false;
 	auto compressor = std::move(stream);
 
 	if (m_Password)
 	{
-		shouldEncrypted = true;
+		shouldEncrypt = true;
 		const auto& password = m_Password.value();
 		// 当前仅支持PKZipWeak加解密算法
 		auto cryptoProcessor = make_ref<PKzipWeakAlgorithm>()->CreateEncryptor();
@@ -256,7 +256,7 @@ natRefPointer<natStream> natZipArchive::ZipEntry::createCompressor(natRefPointer
 
 	compressor = make_ref<natCrc32Stream>(make_ref<natDeflateStream>(std::move(compressor), natDeflateStream::CompressionLevel::Optimal));
 
-	if (shouldEncrypted)
+	if (shouldEncrypt)
 	{
 		// 流被析构之时获取crc32用于生成加密头部
 		compressor = make_ref<DisposeCallbackStream>(std::move(compressor), [this] (DisposeCallbackStream& wrappedStream)
@@ -617,7 +617,7 @@ void natZipArchive::writeToFile()
 	ZipEndOfCentralDirectory::Write(m_Writer, m_EntriesMap.size(), startOfCentralDirectory, sizeOfCentralDirectory, m_ZipEndOfCentralDirectory.ArchiveComment, m_Encoding);
 }
 
-void natZipArchive::ExtraField::Read(natBinaryReader* reader)
+void natZipArchive::ExtraField::Read(natRefPointer<natBinaryReader> reader)
 {
 	Tag = reader->ReadPod<nuShort>();
 	Size = reader->ReadPod<nuShort>();
@@ -625,7 +625,7 @@ void natZipArchive::ExtraField::Read(natBinaryReader* reader)
 	reader->GetUnderlyingStream()->ReadBytes(Data.data(), Size);
 }
 
-nBool natZipArchive::ExtraField::ReadWithLimit(natBinaryReader* reader, nLen endExtraField)
+nBool natZipArchive::ExtraField::ReadWithLimit(natRefPointer<natBinaryReader> reader, nLen endExtraField)
 {
 	const auto stream = reader->GetUnderlyingStream();
 	if (endExtraField - stream->GetPosition() < 4)
@@ -647,7 +647,7 @@ nBool natZipArchive::ExtraField::ReadWithLimit(natBinaryReader* reader, nLen end
 	return true;
 }
 
-void natZipArchive::ExtraField::Write(natBinaryWriter* writer) const
+void natZipArchive::ExtraField::Write(natRefPointer<natBinaryWriter> writer) const
 {
 	writer->WritePod(Tag);
 	writer->WritePod(Size);
@@ -735,7 +735,7 @@ nBool natZipArchive::Zip64ExtraField::ReadFromExtraField(ExtraField const& extra
 	return true;
 }
 
-void natZipArchive::Zip64ExtraField::Write(natBinaryWriter* writer)
+void natZipArchive::Zip64ExtraField::Write(natRefPointer<natBinaryWriter> writer)
 {
 	constexpr auto tag = Tag;
 
@@ -759,7 +759,7 @@ void natZipArchive::Zip64ExtraField::Write(natBinaryWriter* writer)
 	}
 }
 
-nBool natZipArchive::CentralDirectoryFileHeader::Read(natBinaryReader* reader, nBool saveExtraFieldsAndComments, StringType encoding)
+nBool natZipArchive::CentralDirectoryFileHeader::Read(natRefPointer<natBinaryReader> reader, nBool saveExtraFieldsAndComments, StringType encoding)
 {
 	if (reader->ReadPod<nuInt>() != Signature)
 	{
@@ -867,7 +867,7 @@ nBool natZipArchive::CentralDirectoryFileHeader::Read(natBinaryReader* reader, n
 	return true;
 }
 
-void natZipArchive::CentralDirectoryFileHeader::Write(natBinaryWriter* writer, StringType encoding)
+void natZipArchive::CentralDirectoryFileHeader::Write(natRefPointer<natBinaryWriter> writer, StringType encoding)
 {
 	constexpr auto signature = Signature;
 
@@ -953,7 +953,7 @@ void natZipArchive::CentralDirectoryFileHeader::Write(natBinaryWriter* writer, S
 	}
 }
 
-nBool natZipArchive::LocalFileHeader::TrySkip(natBinaryReader* reader)
+nBool natZipArchive::LocalFileHeader::TrySkip(natRefPointer<natBinaryReader> reader)
 {
 	constexpr nLong OffsetToFilenameLength = 22;
 
@@ -984,7 +984,7 @@ nBool natZipArchive::LocalFileHeader::TrySkip(natBinaryReader* reader)
 	return true;
 }
 
-nBool natZipArchive::LocalFileHeader::Write(natBinaryWriter* writer, CentralDirectoryFileHeader& header, Optional<std::deque<ExtraField>> const& localFileHeaderFields, StringType encoding)
+nBool natZipArchive::LocalFileHeader::Write(natRefPointer<natBinaryWriter> writer, CentralDirectoryFileHeader& header, Optional<std::deque<ExtraField>> const& localFileHeaderFields, StringType encoding)
 {
 	assert(writer);
 
@@ -1044,7 +1044,7 @@ nBool natZipArchive::LocalFileHeader::Write(natBinaryWriter* writer, CentralDire
 	return needZip64;
 }
 
-void natZipArchive::LocalFileHeader::WriteCrcAndSizes(natBinaryWriter* writer, CentralDirectoryFileHeader const& header, nBool usedZip64)
+void natZipArchive::LocalFileHeader::WriteCrcAndSizes(natRefPointer<natBinaryWriter> writer, CentralDirectoryFileHeader const& header, nBool usedZip64)
 {
 	const auto stream = writer->GetUnderlyingStream();
 	const auto dataEndPosition = stream->GetPosition();
@@ -1069,7 +1069,7 @@ void natZipArchive::LocalFileHeader::WriteCrcAndSizes(natBinaryWriter* writer, C
 	stream->SetPosition(NatSeek::Beg, dataEndPosition);
 }
 
-void natZipArchive::ZipEndOfCentralDirectory::Read(natBinaryReader* reader, StringType encoding)
+void natZipArchive::ZipEndOfCentralDirectory::Read(natRefPointer<natBinaryReader> reader, StringType encoding)
 {
 	const auto stream = reader->GetUnderlyingStream();
 #ifdef _DEBUG
@@ -1111,7 +1111,7 @@ void natZipArchive::ZipEndOfCentralDirectory::Read(natBinaryReader* reader, Stri
 	}
 }
 
-void natZipArchive::ZipEndOfCentralDirectory::Write(natBinaryWriter* writer, nuLong numberOfEntries, nuLong startOfCentralDirectory, nuLong sizeOfCentralDirectory, nStrView archiveComment, StringType encoding)
+void natZipArchive::ZipEndOfCentralDirectory::Write(natRefPointer<natBinaryWriter> writer, nuLong numberOfEntries, nuLong startOfCentralDirectory, nuLong sizeOfCentralDirectory, nStrView archiveComment, StringType encoding)
 {
 	constexpr auto signature = Signature;
 
@@ -1151,7 +1151,7 @@ void natZipArchive::ZipEndOfCentralDirectory::Write(natBinaryWriter* writer, nuL
 	}
 }
 
-void natZipArchive::Zip64EndOfCentralDirectoryLocator::Read(natBinaryReader* reader)
+void natZipArchive::Zip64EndOfCentralDirectoryLocator::Read(natRefPointer<natBinaryReader> reader)
 {
 #ifdef _DEBUG
 	if (reader->ReadPod<nuInt>() != Signature)
@@ -1166,7 +1166,7 @@ void natZipArchive::Zip64EndOfCentralDirectoryLocator::Read(natBinaryReader* rea
 	TotalNumberOfDisks = reader->ReadPod<nuInt>();
 }
 
-void natZipArchive::Zip64EndOfCentralDirectoryLocator::Write(natBinaryWriter* writer, nuLong zip64EOCDRecordStart)
+void natZipArchive::Zip64EndOfCentralDirectoryLocator::Write(natRefPointer<natBinaryWriter> writer, nuLong zip64EOCDRecordStart)
 {
 	constexpr auto signature = Signature;
 
@@ -1176,7 +1176,7 @@ void natZipArchive::Zip64EndOfCentralDirectoryLocator::Write(natBinaryWriter* wr
 	writer->WritePod(1u); // total number of disks
 }
 
-void natZipArchive::Zip64EndOfCentralDirectory::Read(natBinaryReader* reader)
+void natZipArchive::Zip64EndOfCentralDirectory::Read(natRefPointer<natBinaryReader> reader)
 {
 	if (reader->ReadPod<nuInt>() != Signature)
 	{
@@ -1194,7 +1194,7 @@ void natZipArchive::Zip64EndOfCentralDirectory::Read(natBinaryReader* reader)
 	OffsetOfCentralDirectory = reader->ReadPod<nuLong>();
 }
 
-void natZipArchive::Zip64EndOfCentralDirectory::Write(natBinaryWriter* writer, nuLong numberOfEntries, nuLong startOfCentralDirectory, nuLong sizeOfCentralDirectory)
+void natZipArchive::Zip64EndOfCentralDirectory::Write(natRefPointer<natBinaryWriter> writer, nuLong numberOfEntries, nuLong startOfCentralDirectory, nuLong sizeOfCentralDirectory)
 {
 	constexpr auto signature = Signature;
 	constexpr auto sizeWithoutExtraData = SizeWithoutExtraData;
@@ -1292,7 +1292,7 @@ void natZipArchive::removeEntry(ZipEntry* entry)
 	m_EntriesMap.erase(entry->m_CentralDirectoryFileHeader.Filename);
 }
 
-nBool natZipArchive::findSignatureBackward(natStream* stream, nuInt signature)
+nBool natZipArchive::findSignatureBackward(natRefPointer<natStream> stream, nuInt signature)
 {
 	const auto pStream = stream;
 	const auto signatureToFind = signature;
@@ -1337,7 +1337,7 @@ nBool natZipArchive::findSignatureBackward(natStream* stream, nuInt signature)
 	return false;
 }
 
-std::pair<nBool, size_t> natZipArchive::readStreamBackward(natStream* stream, nData buffer, size_t bufferSize)
+std::pair<nBool, size_t> natZipArchive::readStreamBackward(natRefPointer<natStream> stream, nData buffer, size_t bufferSize)
 {
 	const auto pStream = stream;
 	const auto bufSize = static_cast<nLong>(bufferSize);

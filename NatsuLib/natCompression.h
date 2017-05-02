@@ -96,9 +96,9 @@ namespace NatsuLib
 			nuShort Size;
 			std::vector<nByte> Data;
 
-			void Read(natBinaryReader* reader);
-			nBool ReadWithLimit(natBinaryReader* reader, nLen endExtraField);
-			void Write(natBinaryWriter* writer) const;
+			void Read(natRefPointer<natBinaryReader> reader);
+			nBool ReadWithLimit(natRefPointer<natBinaryReader> reader, nLen endExtraField);
+			void Write(natRefPointer<natBinaryWriter> writer) const;
 
 			size_t GetSize() const noexcept;
 		};
@@ -115,7 +115,7 @@ namespace NatsuLib
 			Optional<nuInt> StartDiskNumber;
 
 			nBool ReadFromExtraField(ExtraField const& extraField, nBool readUncompressedSize, nBool readCompressedSize, nBool readLocalHeaderOffset, nBool readStartDiskNumber);
-			void Write(natBinaryWriter* writer);
+			void Write(natRefPointer<natBinaryWriter> writer);
 		};
 
 		struct CentralDirectoryFileHeader
@@ -143,8 +143,8 @@ namespace NatsuLib
 			nString FileComment;
 			std::vector<ExtraField> ExtraFields;
 
-			nBool Read(natBinaryReader* reader, nBool saveExtraFieldsAndComments, StringType encoding);
-			void Write(natBinaryWriter* writer, StringType encoding);
+			nBool Read(natRefPointer<natBinaryReader> reader, nBool saveExtraFieldsAndComments, StringType encoding);
+			void Write(natRefPointer<natBinaryWriter> writer, StringType encoding);
 		};
 
 		struct LocalFileHeader
@@ -155,11 +155,11 @@ namespace NatsuLib
 			static constexpr size_t OffsetToFilenameLength = 26;
 			static constexpr size_t SizeOfLocalHeader = 30;
 
-			static nBool TrySkip(natBinaryReader* reader);
+			static nBool TrySkip(natRefPointer<natBinaryReader> reader);
 
 			// 实现提示：会修改header中的FilenameLength为实际写入的文件名长度
-			static nBool Write(natBinaryWriter* writer, CentralDirectoryFileHeader& header, Optional<std::deque<ExtraField>> const& localFileHeaderFields, StringType encoding);
-			static void WriteCrcAndSizes(natBinaryWriter* writer, CentralDirectoryFileHeader const& header, nBool usedZip64);
+			static nBool Write(natRefPointer<natBinaryWriter> writer, CentralDirectoryFileHeader& header, Optional<std::deque<ExtraField>> const& localFileHeaderFields, StringType encoding);
+			static void WriteCrcAndSizes(natRefPointer<natBinaryWriter> writer, CentralDirectoryFileHeader const& header, nBool usedZip64);
 		};
 
 		struct ZipEndOfCentralDirectory
@@ -175,8 +175,8 @@ namespace NatsuLib
 			nuInt OffsetOfStartOfCentralDirectoryWithRespectToTheStartingDiskNumber;
 			nString ArchiveComment;
 
-			void Read(natBinaryReader* reader, StringType encoding);
-			static void Write(natBinaryWriter* writer, nuLong numberOfEntries, nuLong startOfCentralDirectory, nuLong sizeOfCentralDirectory, nStrView archiveComment, StringType encoding = nString::UsingStringType);
+			void Read(natRefPointer<natBinaryReader> reader, StringType encoding);
+			static void Write(natRefPointer<natBinaryWriter> writer, nuLong numberOfEntries, nuLong startOfCentralDirectory, nuLong sizeOfCentralDirectory, nStrView archiveComment, StringType encoding = nString::UsingStringType);
 		};
 
 		ZipEndOfCentralDirectory m_ZipEndOfCentralDirectory;
@@ -190,8 +190,8 @@ namespace NatsuLib
 			nuLong OffsetOfZip64EOCD;
 			nuInt TotalNumberOfDisks;
 
-			void Read(natBinaryReader* reader);
-			static void Write(natBinaryWriter* writer, nuLong zip64EOCDRecordStart);
+			void Read(natRefPointer<natBinaryReader> reader);
+			static void Write(natRefPointer<natBinaryWriter> writer, nuLong zip64EOCDRecordStart);
 		};
 
 		Zip64EndOfCentralDirectoryLocator m_Zip64EndOfCentralDirectoryLocator;
@@ -211,8 +211,8 @@ namespace NatsuLib
 			nuLong SizeOfCentralDirectory;
 			nuLong OffsetOfCentralDirectory;
 
-			void Read(natBinaryReader* reader);
-			static void Write(natBinaryWriter* writer, nuLong numberOfEntries, nuLong startOfCentralDirectory, nuLong sizeOfCentralDirectory);
+			void Read(natRefPointer<natBinaryReader> reader);
+			static void Write(natRefPointer<natBinaryWriter> writer, nuLong numberOfEntries, nuLong startOfCentralDirectory, nuLong sizeOfCentralDirectory);
 		};
 
 		Zip64EndOfCentralDirectory m_Zip64EndOfCentralDirectory;
@@ -223,8 +223,8 @@ namespace NatsuLib
 
 		void removeEntry(ZipEntry* entry);
 
-		static nBool findSignatureBackward(natStream* stream, nuInt signature);
-		static std::pair<nBool, size_t> readStreamBackward(natStream* stream, nData buffer, size_t bufferSize);
+		static nBool findSignatureBackward(natRefPointer<natStream> stream, nuInt signature);
+		static std::pair<nBool, size_t> readStreamBackward(natRefPointer<natStream> stream, nData buffer, size_t bufferSize);
 
 	public:
 		////////////////////////////////////////////////////////////////////////////////

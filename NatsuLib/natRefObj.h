@@ -478,6 +478,28 @@ namespace NatsuLib
 		}
 
 		template <typename U>
+		nBool operator==(const U* other) const noexcept
+		{
+			return m_pPointer == other;
+		}
+
+		template <typename U>
+		nBool operator!=(const U* other) const noexcept
+		{
+			return m_pPointer != other;
+		}
+
+		nBool operator==(std::nullptr_t) const noexcept
+		{
+			return !m_pPointer;
+		}
+
+		nBool operator!=(std::nullptr_t) const noexcept
+		{
+			return m_pPointer;
+		}
+
+		template <typename U>
 		nBool operator<(natRefPointer<U> const& other) const noexcept
 		{
 			return m_pPointer < other.Get();
@@ -538,12 +560,12 @@ namespace NatsuLib
 			return &m_pPointer;
 		}
 
-		explicit operator nBool() const noexcept
+		operator nBool() const noexcept
 		{
 			return m_pPointer;
 		}
 
-		operator T*() const noexcept
+		explicit operator T*() const noexcept
 		{
 			return m_pPointer;
 		}

@@ -857,7 +857,7 @@ natStdStream::natStdStream(StdStreamType stdStreamType)
 
 nBool natStdStream::UseFileApi() const noexcept
 {
-	return m_InternalStream != nullptr;
+	return m_InternalStream;
 }
 
 natStdStream::~natStdStream()

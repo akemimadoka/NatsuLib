@@ -59,6 +59,49 @@ namespace NatsuLib
 			}
 		};
 
+		template <typename C, nBool = std::is_const<C>::value>
+		struct ConstContainerConcept
+		{
+			static constexpr nBool IsConst = false;
+
+			static void Clone(C& a, const C& b)
+			{
+				a = b;
+			}
+
+			static void Move(C& a, C&& b)
+			{
+				a = std::move(b);
+			}
+
+			static void Swap(C& a, C& b)
+			{
+				using std::swap;
+				swap(a, b);
+			}
+		};
+
+		template <typename C>
+		struct ConstContainerConcept<C, true>
+		{
+			static constexpr nBool IsConst = true;
+
+			[[noreturn]] static void Clone(C&, const C&)
+			{
+				nat_Throw(natErrException, NatErr_NotSupport, "This container is const."_nv);
+			}
+
+			[[noreturn]] static void Move(C&, C&&)
+			{
+				nat_Throw(natErrException, NatErr_NotSupport, "This container is const."_nv);
+			}
+
+			[[noreturn]] static void Swap(C&, C&)
+			{
+				nat_Throw(natErrException, NatErr_NotSupport, "This container is const."_nv);
+			}
+		};
+
 		template <typename C, typename = void>
 		struct ContainerWithSizeConcept
 		{
@@ -98,17 +141,7 @@ namespace NatsuLib
 				nat_Throw(natErrException, NatErr_NotSupport, "This container is not a ReversibleContainer."_nv);
 			}
 
-			[[noreturn]] static const_reverse_iterator rbegin(C const&)
-			{
-				nat_Throw(natErrException, NatErr_NotSupport, "This container is not a ReversibleContainer."_nv);
-			}
-
 			[[noreturn]] static reverse_iterator rend(C&)
-			{
-				nat_Throw(natErrException, NatErr_NotSupport, "This container is not a ReversibleContainer."_nv);
-			}
-
-			[[noreturn]] static const_reverse_iterator rend(C const&)
 			{
 				nat_Throw(natErrException, NatErr_NotSupport, "This container is not a ReversibleContainer."_nv);
 			}
@@ -141,32 +174,22 @@ namespace NatsuLib
 
 			static constexpr nBool IsReversibleContainer = true;
 
-			static reverse_iterator rbegin(C& container)
+			static auto rbegin(C& container)
 			{
 				return container.rbegin();
 			}
 
-			static const_reverse_iterator rbegin(C const& container)
-			{
-				return container.rbegin();
-			}
-
-			static reverse_iterator rend(C& container)
+			static auto rend(C& container)
 			{
 				return container.rend();
 			}
 
-			static const_reverse_iterator rend(C const& container)
-			{
-				return container.rend();
-			}
-
-			static const_reverse_iterator crbegin(C const& container)
+			static auto crbegin(C const& container)
 			{
 				return container.crbegin();
 			}
 
-			static const_reverse_iterator crend(C const& container)
+			static auto crend(C const& container)
 			{
 				return container.crend();
 			}
@@ -194,8 +217,8 @@ namespace NatsuLib
 		struct IContainerWrapper
 			: natRefObj
 		{
-			virtual natRefPointer<IContainerWrapper> Clone() const = 0;
-			virtual natRefPointer<IContainerWrapper> Move() = 0;
+			/*virtual natRefPointer<IContainerWrapper> Clone() const = 0;
+			virtual natRefPointer<IContainerWrapper> Move() = 0;*/
 			virtual void AssignClone(natRefPointer<IContainerWrapper> const& other) = 0;
 			virtual void AssignMove(natRefPointer<IContainerWrapper> const& other) = 0;
 
@@ -236,12 +259,17 @@ namespace NatsuLib
 			static_assert(std::numeric_limits<size_type>::max() >= std::numeric_limits<typename C::size_type>::max(), "size_type is not large enough.");
 			static_assert(std::numeric_limits<difference_type>::max() >= std::numeric_limits<typename C::difference_type>::max(), "difference_type is not large enough.");
 
-			ContainerWrapper(C container)
-				: m_Container(std::move(container))
+			ContainerWrapper(C& container)
+				: m_Container(container)
 			{
 			}
 
-			natRefPointer<IContainerWrapper> Clone() const override
+			C& Get() const noexcept
+			{
+				return m_Container;
+			}
+
+			/*natRefPointer<IContainerWrapper> Clone() const override
 			{
 				return make_ref<ContainerWrapper>(m_Container);
 			}
@@ -249,18 +277,18 @@ namespace NatsuLib
 			natRefPointer<IContainerWrapper> Move() override
 			{
 				return make_ref<ContainerWrapper>(std::move(m_Container));
-			}
+			}*/
 
 			void AssignClone(natRefPointer<IContainerWrapper> const& other) override
 			{
 				const auto realOther = cast(other);
-				m_Container = realOther->m_Container;
+				detail_::ConstContainerConcept<C>::Clone(m_Container, realOther->m_Container);
 			}
 
 			void AssignMove(natRefPointer<IContainerWrapper> const& other) override
 			{
 				const auto realOther = cast(other);
-				m_Container = std::move(realOther->m_Container);
+				detail_::ConstContainerConcept<C>::Move(m_Container, std::move(realOther->m_Container));
 			}
 
 			iterator Begin() override
@@ -297,9 +325,8 @@ namespace NatsuLib
 
 			void Swap(natRefPointer<IContainerWrapper> const& other) override
 			{
-				using std::swap;
 				const auto realOther = cast(other);
-				swap(m_Container, realOther->m_Container);
+				detail_::ConstContainerConcept<C>::Swap(m_Container, realOther->m_Container);
 			}
 
 			nBool HasSize() const noexcept override
@@ -348,7 +375,7 @@ namespace NatsuLib
 			}
 
 		private:
-			C m_Container;
+			C& m_Container;
 
 			static natRefPointer<ContainerWrapper> cast(natRefPointer<IContainerWrapper> const& other)
 			{
@@ -367,19 +394,28 @@ namespace NatsuLib
 		}
 
 		template <typename C, std::enable_if_t<NonSelf<C, Container>::value, int> = 0>
-		Container(C container)
-			: m_Wrapper{ make_ref<ContainerWrapper<C>>(std::move(container)) }
+		Container(C& container)
+			: m_Wrapper{ make_ref<ContainerWrapper<C>>(container) }
 		{
 		}
 
-		Container(Container const& other)
-			: m_Wrapper{ other.m_Wrapper->Clone() }
-		{
-		}
+		Container(Container const& other) = default;
 
-		Container(Container&& other) noexcept
+		/*Container(Container&& other) noexcept
 			: m_Wrapper{ other.m_Wrapper->Move() }
 		{
+		}*/
+
+		template <typename C>
+		C* GetOriginalContainer() const
+		{
+			const auto wrapper = static_cast<natRefPointer<ContainerWrapper<C>>>(m_Wrapper);
+			if (!wrapper)
+			{
+				return nullptr;
+			}
+
+			return &(wrapper->Get());
 		}
 
 		Container& operator=(Container const& other)
