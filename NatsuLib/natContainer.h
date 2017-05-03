@@ -57,6 +57,12 @@ namespace NatsuLib
 			{
 				nat_Throw(natErrException, NatErr_NotSupport, "DummyType"_nv);
 			}
+
+			template <typename T>
+			operator T&&() const
+			{
+				nat_Throw(natErrException, NatErr_NotSupport, "DummyType"_nv);
+			}
 		};
 
 		template <typename C, nBool = std::is_const<C>::value>
