@@ -302,6 +302,11 @@ int main()
 				logger.LogErr("{0}"_nv, e.what());
 			}
 		}
+
+		{
+			natStlStream<std::ostream> out{ std::cout };
+			out.WriteBytes(reinterpret_cast<ncData>("haha\n"), 5);
+		}
 	}
 #ifdef _WIN32
 	catch (natWinException& e)

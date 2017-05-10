@@ -15,6 +15,19 @@ natStream::~natStream()
 {
 }
 
+void natStream::SetPositionFromBegin(nLen Offset)
+{
+	constexpr auto max = static_cast<nLen>(std::numeric_limits<nLong>::max());
+
+	auto current = std::min(Offset, max);
+	SetPosition(NatSeek::Beg, static_cast<nLong>(current));
+	while (Offset -= current)
+	{
+		current = std::min(Offset, max);
+		SetPosition(NatSeek::Cur, static_cast<nLong>(current));
+	}
+}
+
 nByte natStream::ReadByte()
 {
 	nByte byte;
@@ -83,10 +96,10 @@ nLen natStream::CopyTo(natRefPointer<natStream> const& other)
 	assert(other && "other should not be nullptr.");
 
 	nByte buffer[DefaultCopyToBufferSize];
-	nLen readBytes, totalReadBytes{};
+	nLen totalReadBytes{};
 	while (true)
 	{
-		readBytes = ReadBytes(buffer, sizeof buffer);
+		auto readBytes = ReadBytes(buffer, sizeof buffer);
 		totalReadBytes += readBytes;
 
 		if (readBytes == 0)
@@ -332,7 +345,17 @@ void natSubStream::SetPosition(NatSeek Origin, nLong Offset)
 	}
 
 	m_CurrentPosition = position;
+	adjustPosition();
+}
 
+void natSubStream::SetPositionFromBegin(nLen Offset)
+{
+	if (Offset > m_EndPosition - m_StartPosition)
+	{
+		nat_Throw(natErrException, NatErr_InvalidArg, "Out of range."_nv);
+	}
+
+	m_CurrentPosition = m_StartPosition + Offset;
 	adjustPosition();
 }
 
@@ -431,14 +454,7 @@ void natSubStream::adjustPosition() const
 		return;
 	}
 
-	if (m_CurrentPosition <= static_cast<nLen>(std::numeric_limits<nLong>::max()))
-	{
-		m_InternalStream->SetPosition(NatSeek::Beg, m_CurrentPosition);
-	}
-	else
-	{
-		m_InternalStream->SetPosition(NatSeek::End, -static_cast<nLong>(std::numeric_limits<nLen>::max() - m_CurrentPosition));
-	}
+	m_InternalStream->SetPositionFromBegin(m_CurrentPosition);
 }
 
 void natSubStream::checkPosition() const

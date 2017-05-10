@@ -67,6 +67,8 @@ namespace NatsuLib
 		///	@param[in]	Offset	偏移
 		virtual void SetPosition(NatSeek Origin, nLong Offset) = 0;
 
+		virtual void SetPositionFromBegin(nLen Offset);
+
 		/// @brief		从流中读取一个字节
 		virtual nByte ReadByte();
 
@@ -354,8 +356,8 @@ namespace NatsuLib
 #endif
 
 	private:
-        UnsafeHandle m_hFile;
-        const nBool m_ShouldDispose;
+		UnsafeHandle m_hFile;
+		const nBool m_ShouldDispose;
 
 #ifdef _WIN32
 		UnsafeHandle m_hMappedFile;
@@ -387,6 +389,7 @@ namespace NatsuLib
 		void SetSize(nLen Size) override;
 		nLen GetPosition() const override;
 		void SetPosition(NatSeek Origin, nLong Offset) override;
+		void SetPositionFromBegin(nLen Offset) override;
 		nByte ReadByte() override;
 		nLen ReadBytes(nData pData, nLen Length) override;
 		std::future<nLen> ReadBytesAsync(nData pData, nLen Length) override;
@@ -454,5 +457,272 @@ namespace NatsuLib
 #ifdef _WIN32
 		natRefPointer<natFileStream> m_InternalStream;
 #endif
+	};
+
+	namespace detail_
+	{
+		template <typename T, typename = void>
+		struct StlIStreamTraits
+		{
+			static constexpr nBool IsIStream = false;
+
+			[[noreturn]] static nLen Read(T&, nData, nLen)
+			{
+				nat_Throw(natErrException, NatErr_NotSupport, "This stream is not a basic_istream."_nv);
+			}
+
+			[[noreturn]] static void Seek(T&, NatSeek, nLong)
+			{
+				nat_Throw(natErrException, NatErr_NotSupport, "This stream is not a basic_istream."_nv);
+			}
+
+			[[noreturn]] static void Seek(T&, nLen)
+			{
+				nat_Throw(natErrException, NatErr_NotSupport, "This stream is not a basic_istream."_nv);
+			}
+
+			[[noreturn]] static nLen Tell(T&)
+			{
+				nat_Throw(natErrException, NatErr_NotSupport, "This stream is not a basic_istream."_nv);
+			}
+		};
+
+		template <typename T>
+		struct StlIStreamTraits<T, std::enable_if_t<std::is_base_of<std::basic_istream<typename T::char_type, typename T::traits_type>, T>::value>>
+		{
+			static constexpr nBool IsIStream = true;
+
+			static nLen Read(T& stream, nData data, nLen length)
+			{
+				return static_cast<nLen>(stream.readsome(reinterpret_cast<typename T::char_type*>(data), static_cast<std::streamsize>(length) / sizeof(typename T::char_type)));
+			}
+
+			static void Seek(T& stream, NatSeek origin, nLong off)
+			{
+				std::ios_base::seekdir seek;
+				switch (origin)
+				{
+				case NatSeek::Beg:
+				default:
+					assert(origin == NatSeek::Beg && "invalid origin.");
+					seek = std::ios_base::beg;
+					break;
+				case NatSeek::Cur:
+					seek = std::ios_base::cur;
+					break;
+				case NatSeek::End:
+					seek = std::ios_base::end;
+					break;
+				}
+
+				stream.seekg(static_cast<typename T::off_type>(off), seek);
+			}
+
+			static void Seek(T& stream, nLen pos)
+			{
+				stream.seekg(static_cast<typename T::pos_type>(pos));
+			}
+
+			static nLen Tell(T& stream)
+			{
+				return static_cast<nLen>(stream.tellg());
+			}
+		};
+
+		template <typename T, typename = void>
+		struct StlOStreamTraits
+		{
+			static constexpr nBool IsOStream = false;
+
+			[[noreturn]] static nLen Write(T&, ncData, nLen)
+			{
+				nat_Throw(natErrException, NatErr_NotSupport, "This stream is not a basic_ostream."_nv);
+			}
+
+			[[noreturn]] static void Seek(T&, NatSeek, nLong)
+			{
+				nat_Throw(natErrException, NatErr_NotSupport, "This stream is not a basic_ostream."_nv);
+			}
+
+			[[noreturn]] static void Seek(T&, nLen)
+			{
+				nat_Throw(natErrException, NatErr_NotSupport, "This stream is not a basic_ostream."_nv);
+			}
+
+			[[noreturn]] static nLen Tell(T&)
+			{
+				nat_Throw(natErrException, NatErr_NotSupport, "This stream is not a basic_ostream."_nv);
+			}
+		};
+
+		template <typename T>
+		struct StlOStreamTraits<T, std::enable_if_t<std::is_base_of<std::basic_ostream<typename T::char_type, typename T::traits_type>, T>::value>>
+		{
+			static constexpr nBool IsOStream = true;
+			
+			static void Write(T& stream, ncData data, nLen length)
+			{
+				stream.write(reinterpret_cast<const typename T::char_type*>(data), static_cast<std::streamsize>(length) / sizeof(typename T::char_type));
+			}
+
+			static void Seek(T& stream, NatSeek origin, nLong off)
+			{
+				std::ios_base::seekdir seek;
+				switch (origin)
+				{
+				case NatSeek::Beg:
+				default:
+					assert(origin == NatSeek::Beg && "invalid origin.");
+					seek = std::ios_base::beg;
+					break;
+				case NatSeek::Cur:
+					seek = std::ios_base::cur;
+					break;
+				case NatSeek::End:
+					seek = std::ios_base::end;
+					break;
+				}
+
+				stream.seekp(static_cast<typename T::off_type>(off), seek);
+			}
+
+			static void Seek(T& stream, nLen pos)
+			{
+				stream.seekp(static_cast<typename T::pos_type>(pos));
+			}
+
+			static nLen Tell(T& stream)
+			{
+				return static_cast<nLen>(stream.tellp());
+			}
+		};
+		
+		template <typename T>
+		struct StlStreamTraits
+		{
+			static constexpr nBool IsIStream = StlIStreamTraits<T>::IsIStream;
+			static constexpr nBool IsOStream = StlOStreamTraits<T>::IsOStream;
+
+			static_assert(IsIStream || IsOStream, "T is not a stl stream.");
+
+			static nLen Read(T& stream, nData data, nLen length)
+			{
+				return StlIStreamTraits<T>::Read(stream, data, length);
+			}
+
+			static void Write(T& stream, ncData data, nLen length)
+			{
+				return StlOStreamTraits<T>::Write(stream, data, length);
+			}
+
+			static void Seek(T& stream, NatSeek origin, nLong off)
+			{
+				std::conditional_t<IsIStream, StlIStreamTraits<T>, StlOStreamTraits<T>>::Seek(stream, origin, off);
+			}
+
+			static void Seek(T& stream, nLen pos)
+			{
+				std::conditional_t<IsIStream, StlIStreamTraits<T>, StlOStreamTraits<T>>::Seek(stream, pos);
+			}
+
+			static nLen Tell(T& stream)
+			{
+				return std::conditional_t<IsIStream, StlIStreamTraits<T>, StlOStreamTraits<T>>::Tell(stream);
+			}
+		};
+	}
+
+	template <typename baseStream>
+	class natStlStream
+		: public natRefObjImpl<natStlStream<baseStream>, natStream>
+	{
+	public:
+		typedef detail_::StlStreamTraits<baseStream> Traits;
+
+		explicit natStlStream(baseStream& stream)
+			: m_StlStream{ stream }
+		{	
+		}
+
+		baseStream& GetUnderlyingStream() const noexcept
+		{
+			return m_StlStream;
+		}
+
+		nBool CanWrite() const override
+		{
+			return Traits::IsOStream;
+		}
+
+		nBool CanRead() const override
+		{
+			return Traits::IsIStream;
+		}
+
+		nBool CanResize() const override
+		{
+			return false;
+		}
+
+		nBool CanSeek() const override
+		{
+			return true;
+		}
+
+		nBool IsEndOfStream() const override
+		{
+			return m_StlStream.eof();
+		}
+
+		nLen GetSize() const override
+		{
+			const auto current = Traits::Tell(m_StlStream);
+			Traits::Seek(m_StlStream, 0);
+			const auto begin = Traits::Tell(m_StlStream);
+			Traits::Seek(m_StlStream, NatSeek::End, 0);
+			const auto size = Traits::Tell(m_StlStream) - begin;
+			Traits::Seek(m_StlStream, current);
+			return size;
+		}
+
+		void SetSize(nLen /*Size*/) override
+		{
+			nat_Throw(natErrException, NatErr_NotSupport, "The type of this stream does not support this operation."_nv);
+		}
+
+		nLen GetPosition() const override
+		{
+			return Traits::Tell(m_StlStream);
+		}
+
+		void SetPosition(NatSeek Origin, nLong Offset) override
+		{
+			Traits::Seek(m_StlStream, Origin, Offset);
+		}
+
+		void SetPositionFromBegin(nLen pos) override
+		{
+			Traits::Seek(m_StlStream, pos);
+		}
+
+		nLen ReadBytes(nData pData, nLen Length) override
+		{
+			return Traits::Read(m_StlStream, pData, Length);
+		}
+
+		nLen WriteBytes(ncData pData, nLen Length) override
+		{
+			const auto pos = Traits::Tell(m_StlStream);
+			Traits::Write(m_StlStream, pData, Length);
+			return Traits::Tell(m_StlStream) - pos;
+		}
+
+		void Flush() override
+		{
+			m_StlStream.flush();
+		}
+
+	private:
+		baseStream& m_StlStream;
 	};
 }

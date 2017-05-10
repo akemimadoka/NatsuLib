@@ -53,7 +53,7 @@ namespace NatsuLib
 		///	@brief	自动生成变量的访问器
 		///	@param	var					要访问的变量
 		///	@param	autoPropertyFlags	要生成的自动属性访问器，按位指定
-		explicit Property(T& var, AutoPropertyFlags autoPropertyFlags = AutoPropertyFlags::Getter | AutoPropertyFlags::CopySetter | AutoPropertyFlags::MoveSetter)
+		explicit Property(T& var, AutoPropertyFlags autoPropertyFlags = AutoPropertyFlags::All)
 		{
 			if ((autoPropertyFlags & AutoPropertyFlags::Getter) != AutoPropertyFlags::None)
 			{
@@ -76,10 +76,6 @@ namespace NatsuLib
 					var = std::move(value);
 				};
 			}
-		}
-
-		~Property()
-		{
 		}
 
 		operator T() const

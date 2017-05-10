@@ -84,7 +84,12 @@ auto operator##op(natVec2<T> const& v1, natVec2<U> const& v2) noexcept\
 		{
 			assert(i < length() && "Out of range");
 
-			return (&x)[i];
+			if (i == 0)
+			{
+				return x;
+			}
+
+			return y;
 		}
 
 		T& operator[](nuInt i) noexcept
@@ -353,7 +358,17 @@ auto operator##op(natVec3<T> const& v1, natVec3<U> const& v2) noexcept\
 		{
 			assert(i < length() && "Out of range");
 
-			return *(&x + i);
+			if (i == 0)
+			{
+				return x;
+			}
+
+			if (i == 1)
+			{
+				return y;
+			}
+
+			return z;
 		}
 
 		T& operator[](nuInt i) noexcept
@@ -634,7 +649,22 @@ auto operator##op(natVec4<T> const& v1, natVec4<U> const& v2) noexcept\
 		{
 			assert(i < length() && "Out of range");
 
-			return (&x)[i];
+			if (i == 0)
+			{
+				return x;
+			}
+
+			if (i == 1)
+			{
+				return y;
+			}
+
+			if (i == 2)
+			{
+				return z;
+			}
+			
+			return w;
 		}
 
 		T& operator[](nuInt i) noexcept
