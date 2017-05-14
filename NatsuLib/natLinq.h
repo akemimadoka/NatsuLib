@@ -710,6 +710,99 @@ namespace NatsuLib
 			}
 		};
 
+		template <typename Iter_t, typename = void>
+		class ReverseIterator final
+		{
+		public:
+			typedef std::forward_iterator_tag iterator_category;
+			typedef typename std::iterator_traits<Iter_t>::value_type value_type;
+			typedef typename std::iterator_traits<Iter_t>::difference_type difference_type;
+			typedef typename std::iterator_traits<Iter_t>::reference reference;
+			typedef typename std::iterator_traits<Iter_t>::pointer pointer;
+
+		private:
+			typedef ReverseIterator<Iter_t> Self_t;
+
+			std::vector<value_type> m_Buffer;
+			Iter_t m_OriginBegin, m_OriginEnd;
+			typename std::vector<value_type>::reverse_iterator m_Current, m_End;
+			
+		public:
+			ReverseIterator(Iter_t begin, Iter_t end)
+				: m_Buffer(begin, end), m_OriginBegin(begin), m_OriginEnd(end), m_Current(std::rbegin(m_Buffer)), m_End(std::rend(m_Buffer))
+			{
+			}
+
+			Self_t& operator++() &
+			{
+				++m_Current;
+				return *this;
+			}
+
+			decltype(auto) operator*() const
+			{
+				return *m_Current;
+			}
+
+			nBool operator==(Self_t const& other) const
+			{
+				return m_OriginBegin == other.m_OriginBegin &&
+					m_OriginEnd == other.m_OriginEnd &&
+					std::distance(m_Current, m_End) == std::distance(other.m_Current, other.m_End);
+			}
+
+			nBool operator!=(Self_t const& other) const
+			{
+				return !(*this == other);
+			}
+		};
+
+		template <typename Iter_t>
+		class ReverseIterator<Iter_t, 
+			std::enable_if_t<
+				std::is_base_of<
+					std::bidirectional_iterator_tag,
+					typename std::iterator_traits<Iter_t>::iterator_category>::value>>
+			final
+		{
+			typedef ReverseIterator<Iter_t> Self_t;
+
+			Iter_t m_Current, m_End;
+
+		public:
+			typedef std::forward_iterator_tag iterator_category;
+			typedef typename std::iterator_traits<Iter_t>::value_type value_type;
+			typedef typename std::iterator_traits<Iter_t>::difference_type difference_type;
+			typedef typename std::iterator_traits<Iter_t>::reference reference;
+			typedef typename std::iterator_traits<Iter_t>::pointer pointer;
+
+			ReverseIterator(Iter_t begin, Iter_t end)
+				: m_Current{ std::prev(end) }, m_End{ std::prev(begin) }
+			{
+			}
+
+			Self_t& operator++() &
+			{
+				--m_Current;
+				return *this;
+			}
+
+			decltype(auto) operator*() const
+			{
+				return *m_Current;
+			}
+
+			nBool operator==(Self_t const& other) const
+			{
+				return m_Current == other.m_Current && m_End == other.m_End;
+			}
+
+			nBool operator!=(Self_t const& other) const
+			{
+				return !(*this == other);
+			}
+		};
+
 		template <typename Iter1_t, typename Iter2_t>
 		class ZipIterator final
 		{
@@ -947,8 +1040,15 @@ namespace NatsuLib
 			return concat(other).distinct();
 		}
 
+	private:
 		template <typename CallableObj>
-		Element_t aggregate(std::enable_if_t<!std::is_default_constructible<Element_t>::value, CallableObj const&> callableObj) const
+		Element_t aggregateImpl(CallableObj const& callableObj, std::true_type) const
+		{
+			return aggregate(Element_t{}, callableObj);
+		}
+
+		template <typename CallableObj>
+		Element_t aggregateImpl(CallableObj const& callableObj, std::false_type) const
 		{
 			if (m_Range.empty())
 			{
@@ -957,17 +1057,23 @@ namespace NatsuLib
 
 			auto iter = m_Range.begin();
 			Element_t result = *iter;
-			while (iter != m_Range.end())
+			while (++iter != m_Range.end())
 			{
 				result = callableObj(result, *iter);
 			}
 			return result;
 		}
 
-		template <typename CallableObj>
-		Element_t aggregate(std::enable_if_t<std::is_default_constructible<Element_t>::value, CallableObj const&> callableObj) const
+	public:
+		/*Element_t aggregate() const
 		{
-			return aggregate(Element_t{}, callableObj);
+			return aggregate(std::plus<Element_t>{});
+		}*/
+
+		template <typename CallableObj>
+		Element_t aggregate(CallableObj const& callableObj) const
+		{
+			return aggregateImpl(callableObj, std::is_default_constructible<Element_t>{});
 		}
 
 		template <typename Result_t, typename CallableObj>
@@ -1203,6 +1309,12 @@ namespace NatsuLib
 		{
 			return LinqEnumerable<detail_::ZipIterator<Iter_t, Iter2_t>>(detail_::ZipIterator<Iter_t, Iter2_t>(m_Range.begin(), m_Range.end(), e.begin(), e.end()),
 				detail_::ZipIterator<Iter_t, Iter2_t>(m_Range.end(), m_Range.end(), e.end(), e.end()));
+		}
+
+		auto reverse() const
+		{
+			return LinqEnumerable<detail_::ReverseIterator<Iter_t>>(detail_::ReverseIterator<Iter_t>(m_Range.begin(), m_Range.end()),
+				detail_::ReverseIterator<Iter_t>(m_Range.begin(), m_Range.begin()));
 		}
 
 		template <typename Container>

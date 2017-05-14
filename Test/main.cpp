@@ -89,11 +89,12 @@ int main()
 		
 		{
 			int arr[] = { 1, 2, 3, 4, 5 };
-			for (auto&& item : from(arr).select([](int i){ return i + 1; }).where([](int i){ return i > 3; }))
+			for (auto&& item : from(arr).reverse().select([](int i){ return i + 1; }).where([](int i){ return i > 3; }))
 			{
 				logger.LogMsg("%d"_nv, item);
 			}
 			logger.LogMsg("%d"_nv, from_values(2, 4, 6, 3, 2).where([](int i) { return i >= 4; }).count());
+			logger.LogMsg("%d"_nv, from(arr).aggregate(std::plus<int>{}));
 		}
 
 		{
