@@ -214,7 +214,7 @@ namespace NatsuLib
 		{
 			static typename T::Element_t Get(T const& self)
 			{
-				return self.aggregate(0, [](const typename T::Element_t& a, const typename T::Element_t& b) { return a + b; });
+				return self.aggregate(std::plus<typename T::Element_t>{});
 			}
 		};
 
@@ -1065,10 +1065,10 @@ namespace NatsuLib
 		}
 
 	public:
-		/*Element_t aggregate() const
+		Element_t aggregate() const
 		{
-			return aggregate(std::plus<Element_t>{});
-		}*/
+			return sum();
+		}
 
 		template <typename CallableObj>
 		Element_t aggregate(CallableObj const& callableObj) const

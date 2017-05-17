@@ -44,6 +44,7 @@ namespace NatsuLib
 		void SetPosition(NatSeek /*Origin*/, nLong /*Offset*/) override;
 		nLen ReadBytes(nData pData, nLen Length) override;
 		nLen WriteBytes(ncData pData, nLen Length) override;
+		void ForceWriteBytes(ncData pData, nLen Length) override;
 		void Flush() override;
 
 		void Flush(nLen& flushLength);

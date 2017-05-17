@@ -206,10 +206,9 @@ namespace NatsuLib
 		std::enable_if_t<(StringEncodingTrait<stringType>::MaxCharSize > 1), size_t> GetCharCount(const typename StringEncodingTrait<stringType>::CharType* str, size_t length)
 		{
 			size_t count{};
-			size_t currentSize;
 			for (size_t i = 0; i < length; )
 			{
-				currentSize = StringEncodingTrait<stringType>::GetCharCount(str[i]);
+				const auto currentSize = StringEncodingTrait<stringType>::GetCharCount(str[i]);
 				i += currentSize;
 				count += currentSize;
 			}

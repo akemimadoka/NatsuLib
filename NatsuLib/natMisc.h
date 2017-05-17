@@ -563,8 +563,6 @@ namespace NatsuLib
 			//assert(size() >= 0);
 		}
 
-		~Range() = default;
-
 		constexpr Iter begin() const
 		{
 			return m_IterBegin;

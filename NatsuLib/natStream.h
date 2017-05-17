@@ -67,6 +67,8 @@ namespace NatsuLib
 		///	@param[in]	Offset	偏移
 		virtual void SetPosition(NatSeek Origin, nLong Offset) = 0;
 
+		///	@brief		从开头设置读写指针的位置
+		///	@param[in]	Offset	偏移
 		virtual void SetPositionFromBegin(nLen Offset);
 
 		/// @brief		从流中读取一个字节
@@ -97,12 +99,14 @@ namespace NatsuLib
 		///	@param[in]	pData	数据缓冲区
 		///	@param[in]	Length	写入的长度
 		///	@return		实际写入长度
+		///	@note		对于无法反馈已写入字节数的流本方法返回的值无意义
 		virtual nLen WriteBytes(ncData pData, nLen Length) = 0;
 
 		///	@brief		强制写入字节数据
 		///	@param[in]	pData	数据缓冲区
 		///	@param[in]	Length	写入的长度
 		///	@note		重复写入操作直到成功写入的字节数不小于Length为止，注意本方法可能造成死循环
+		///	@warning	并非对于所有流都适用，对于无法反馈已写入字节数的流禁止使用本方法
 		virtual void ForceWriteBytes(ncData pData, nLen Length);
 
 		///	@brief		异步写入字节数据
@@ -471,6 +475,11 @@ namespace NatsuLib
 				nat_Throw(natErrException, NatErr_NotSupport, "This stream is not a basic_istream."_nv);
 			}
 
+			[[noreturn]] static void ForceRead(T&, nData, nLen)
+			{
+				nat_Throw(natErrException, NatErr_NotSupport, "This stream is not a basic_istream."_nv);
+			}
+
 			[[noreturn]] static void Seek(T&, NatSeek, nLong)
 			{
 				nat_Throw(natErrException, NatErr_NotSupport, "This stream is not a basic_istream."_nv);
@@ -495,6 +504,11 @@ namespace NatsuLib
 			static nLen Read(T& stream, nData data, nLen length)
 			{
 				return static_cast<nLen>(stream.readsome(reinterpret_cast<typename T::char_type*>(data), static_cast<std::streamsize>(length) / sizeof(typename T::char_type)));
+			}
+
+			static void ForceRead(T& stream, nData data, nLen length)
+			{
+				stream.read(reinterpret_cast<typename T::char_type*>(data), static_cast<std::streamsize>(length) / sizeof(typename T::char_type));
 			}
 
 			static void Seek(T& stream, NatSeek origin, nLong off)
@@ -610,6 +624,11 @@ namespace NatsuLib
 				return StlIStreamTraits<T>::Read(stream, data, length);
 			}
 
+			static void ForceRead(T& stream, nData data, nLen length)
+			{
+				StlIStreamTraits<T>::ForceRead(stream, data, length);
+			}
+
 			static void Write(T& stream, ncData data, nLen length)
 			{
 				return StlOStreamTraits<T>::Write(stream, data, length);
@@ -710,11 +729,21 @@ namespace NatsuLib
 			return Traits::Read(m_StlStream, pData, Length);
 		}
 
+		void ForceReadBytes(nData pData, nLen Length) override
+		{
+			Traits::ForceRead(m_StlStream, pData, Length);
+		}
+
 		nLen WriteBytes(ncData pData, nLen Length) override
 		{
 			const auto pos = Traits::Tell(m_StlStream);
 			Traits::Write(m_StlStream, pData, Length);
 			return Traits::Tell(m_StlStream) - pos;
+		}
+
+		void ForceWriteBytes(ncData pData, nLen Length) override
+		{
+			nat_Throw(natErrException, NatErr_NotSupport, "The type of this stream does not support this operation."_nv);
 		}
 
 		void Flush() override

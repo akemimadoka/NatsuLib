@@ -7,9 +7,15 @@
 #include "natConfig.h"
 #include <cstdint>
 #include <type_traits>
+#include <limits>
 
 #define NVIMPL(text) text##_nv
 #define NV(text) NVIMPL(text)
+
+#ifdef _MSC_VER
+#pragma push_macro("max")
+#endif
+#undef max
 
 ////////////////////////////////////////////////////////////////////////////////
 ///	@addtogroup	Natsu库基本数据类型
@@ -19,14 +25,14 @@
 typedef	bool				nBool;		///< @brief	逻辑型
 typedef char				nChar;		///< @brief	字符型
 typedef	wchar_t				nWChar;		///< @brief	宽字符型
-typedef std::int8_t				nSByte;		///< @brief	有符号字节型
-typedef	std::uint8_t				nByte;		///< @brief	字节型
-typedef std::int16_t				nShort;		///< @brief	16位短整数
-typedef	std::uint16_t			nuShort;	///< @brief	16位无符号短整数
-typedef	std::int32_t				nInt;		///< @brief	32位整数
-typedef	std::uint32_t			nuInt;		///< @brief	32位无符号整数
-typedef std::int64_t				nLong;		///< @brief	64位长整数
-typedef	std::uint64_t			nuLong;		///< @brief	64位无符号长整数
+typedef std::int8_t			nSByte;		///< @brief	有符号字节型
+typedef	std::uint8_t		nByte;		///< @brief	字节型
+typedef std::int16_t		nShort;		///< @brief	16位短整数
+typedef	std::uint16_t		nuShort;	///< @brief	16位无符号短整数
+typedef	std::int32_t		nInt;		///< @brief	32位整数
+typedef	std::uint32_t		nuInt;		///< @brief	32位无符号整数
+typedef std::int64_t		nLong;		///< @brief	64位长整数
+typedef	std::uint64_t		nuLong;		///< @brief	64位无符号长整数
 typedef	float				nFloat;		///< @brief	单精度浮点数
 typedef	double				nDouble;	///< @brief	双精度浮点数
 typedef	nChar*				nStr;		///< @brief	C风格字符串
@@ -43,7 +49,7 @@ typedef	nInt				nResult;	///< @brief	预定义返回值
 										///	30 - 16 位	： 保留\n
 										///	15 - 0  位	： 错误描述
 
-static_assert(sizeof(nLen) >= sizeof(std::size_t), "");
+static_assert(std::numeric_limits<nLen>::max() >= std::numeric_limits<std::size_t>::max(), "");
 
 template <typename T>
 using nUnsafePtr = std::add_pointer_t<T>;
@@ -171,3 +177,7 @@ NATINLINE std::enable_if_t<NatsuLib::detail_::CanRelease<T>::value> SafeRelease(
 }
 
 ///	@}
+
+#ifdef _MSC_VER
+#pragma pop_macro("max")
+#endif

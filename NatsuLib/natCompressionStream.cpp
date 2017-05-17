@@ -284,6 +284,11 @@ nLen natDeflateStream::WriteBytes(ncData pData, nLen Length)
 	return writtenBytes;
 }
 
+void natDeflateStream::ForceWriteBytes(ncData /*pData*/, nLen /*Length*/)
+{
+	nat_Throw(natErrException, NatErr_NotSupport, "This type of stream does not support ForceWriteBytes."_nv);
+}
+
 void natDeflateStream::Flush()
 {
 	nLen dummyLength;

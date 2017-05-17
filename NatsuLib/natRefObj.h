@@ -606,7 +606,7 @@ namespace NatsuLib
 		pRefObj->SetDeleter();
 		natRefPointer<T> Ret(pRefObj);
 		pRefObj->Release();
-		return std::move(Ret);
+		return Ret;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
