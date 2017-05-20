@@ -577,7 +577,7 @@ auto operator##op(U const& Scalar, natQuat<T> const& q) noexcept\
 		template <typename T, typename U>
 		struct QuatCast<T, natMat3<U>>
 		{
-			natMat3<U> Impl(natQuat<T> const& quat)
+			static natMat3<U> Impl(natQuat<T> const& quat)
 			{
 				natMat3<T> Result;
 				const T qxx(quat.x * quat.x);
