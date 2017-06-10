@@ -6,6 +6,7 @@
 #include "natType.h"
 #include <functional>
 #include <cassert>
+#include <tuple>
 
 #define MAKE_ENUM_CLASS_BITMASK_TYPE(enumName) static_assert(std::is_enum<enumName>::value, "enumName is not a enum.");\
 	constexpr enumName operator|(enumName a, enumName b) noexcept\
@@ -40,12 +41,6 @@ namespace NatsuLib
 {
 	namespace detail_
 	{
-		template <class F, class Tuple, size_t... I>
-		constexpr decltype(auto) apply_impl(F&& f, Tuple&& t, std::index_sequence<I...>)
-		{
-			return std::invoke(std::forward<F>(f), std::get<I>(std::forward<Tuple>(t))...);
-		}
-
 		struct nullopt_t { constexpr nullopt_t() = default; };
 		constexpr nullopt_t nullopt{};
 
@@ -234,13 +229,6 @@ namespace NatsuLib
 	template <typename T, typename Self>
 	using NonSelf = std::bool_constant<!std::is_same<std::decay_t<T>, Self>::value && !std::is_base_of<Self, std::decay_t<T>>::value>;
 
-	template <class F, class Tuple>
-	constexpr decltype(auto) apply(F&& f, Tuple&& t)
-	{
-		return detail_::apply_impl(std::forward<F>(f), std::forward<Tuple>(t),
-			std::make_index_sequence<std::tuple_size<std::decay_t<Tuple>>::value>{});
-	}
-
 	///	@brief	自动回调域
 	///	@remark	用于在析构时执行特定操作
 	template <typename T, typename... Args>
@@ -262,7 +250,7 @@ namespace NatsuLib
 		{
 			if (m_ShouldCall)
 			{
-				apply(m_CallableObj, m_Args);
+				std::apply(m_CallableObj, m_Args);
 			}
 		}
 

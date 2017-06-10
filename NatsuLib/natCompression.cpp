@@ -955,7 +955,7 @@ void natZipArchive::CentralDirectoryFileHeader::Write(natRefPointer<natBinaryWri
 
 nBool natZipArchive::LocalFileHeader::TrySkip(natRefPointer<natBinaryReader> reader)
 {
-	constexpr nLong OffsetToFilenameLength = 22;
+	constexpr nLong offsetToFilenameLength = 22;
 
 	const auto stream = reader->GetUnderlyingStream();
 
@@ -964,12 +964,12 @@ nBool natZipArchive::LocalFileHeader::TrySkip(natRefPointer<natBinaryReader> rea
 		return false;
 	}
 
-	if (stream->GetSize() < stream->GetPosition() + OffsetToFilenameLength)
+	if (stream->GetSize() < stream->GetPosition() + offsetToFilenameLength)
 	{
 		return false;
 	}
 
-	stream->SetPosition(NatSeek::Cur, OffsetToFilenameLength);
+	stream->SetPosition(NatSeek::Cur, offsetToFilenameLength);
 
 	const auto filenameLength = reader->ReadPod<nuShort>();
 	const auto extraFieldLength = reader->ReadPod<nuShort>();

@@ -9,6 +9,7 @@
 #include <mutex>
 #include <atomic>
 #include <memory>
+#include <functional>
 
 #ifdef TraceRefObj
 #include "natUtil.h"

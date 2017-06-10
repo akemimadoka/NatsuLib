@@ -86,7 +86,7 @@ void natCriticalSection::Lock()
 
 nBool natCriticalSection::TryLock()
 {
-	return TryEnterCriticalSection(&m_Section) == TRUE;
+	return TryEnterCriticalSection(&m_Section) != FALSE;
 }
 
 void natCriticalSection::UnLock()

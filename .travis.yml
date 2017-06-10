@@ -8,13 +8,13 @@ addons:
       - llvm-toolchain-precise-3.6
       - kalakris-cmake
     packages:
-      - gcc-6
-      - g++-6
+      - gcc-7
+      - g++-7
       - cmake
 env: 
 compiler: gcc
 install:
-  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 60 --slave /usr/bin/g++ g++ /usr/bin/g++-6
+  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 60 --slave /usr/bin/g++ g++ /usr/bin/g++-7
 script:
   - cmake .
   - make
