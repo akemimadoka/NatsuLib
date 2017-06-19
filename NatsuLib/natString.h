@@ -1365,7 +1365,17 @@ namespace NatsuLib
 			}
 		};
 	}
+
+	typedef StringEncodingTrait<StringType::Utf8>::CharType nU8Char;
+	typedef nU8Char nTChar;
+	typedef U8StringView nStrView;
+	typedef U8String nString;
 }
+
+using NatsuLib::nU8Char;
+using NatsuLib::nTChar;
+using NatsuLib::nStrView;
+using NatsuLib::nString;
 
 #ifdef _WIN32
 
@@ -1547,13 +1557,6 @@ NATINLINE NatsuLib::WideString operator""_ws(const NatsuLib::WideString::CharTyp
 	return NatsuLib::WideStringView{ str,length };
 }
 #endif
-
-typedef NatsuLib::StringEncodingTrait<NatsuLib::StringType::Utf8>::CharType nU8Char;
-typedef NatsuLib::U8StringView nStrView;
-typedef NatsuLib::U8String nString;
-typedef nString::CharType nTChar;
-typedef nTChar* nTStr;
-typedef const nTChar* ncTStr;
 
 NATINLINE nStrView operator""_nv(const nU8Char* str, size_t length) noexcept
 {

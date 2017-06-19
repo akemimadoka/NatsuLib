@@ -789,7 +789,7 @@ void natFileStream::Flush()
 {
 	if (m_pMappedFile)
 	{
-		FlushViewOfFile(m_pMappedFile->GetInternalBuffer(), static_cast<SIZE_T>(GetSize()));
+		FlushViewOfFile(m_pMappedFile->GetExternData(), static_cast<SIZE_T>(GetSize()));
 	}
 
 	FlushFileBuffers(m_hFile);
@@ -805,7 +805,7 @@ natFileStream::UnsafeHandle natFileStream::GetUnsafeHandle() const noexcept
 	return m_hFile;
 }
 
-natRefPointer<natMemoryStream> natFileStream::MapToMemoryStream()
+natRefPointer<natExternMemoryStream> natFileStream::MapToMemoryStream()
 {
 	if (m_pMappedFile)
 	{

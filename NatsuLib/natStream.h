@@ -356,7 +356,7 @@ namespace NatsuLib
 		UnsafeHandle GetUnsafeHandle() const noexcept;
 
 #ifdef _WIN32
-		natRefPointer<natMemoryStream> MapToMemoryStream();
+		natRefPointer<natExternMemoryStream> MapToMemoryStream();
 #endif
 
 	private:
@@ -365,7 +365,7 @@ namespace NatsuLib
 
 #ifdef _WIN32
 		UnsafeHandle m_hMappedFile;
-		natRefPointer<natMemoryStream> m_pMappedFile;
+		natRefPointer<natExternMemoryStream> m_pMappedFile;
 		const nBool m_IsAsync;
 #else
 		nBool m_IsEndOfFile;
