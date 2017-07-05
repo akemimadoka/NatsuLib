@@ -116,3 +116,15 @@ namespace NatsuLib
 		std::unordered_map<nStrView, natRefPointer<IScheme>> m_SchemeMap;
 	};
 }
+
+namespace std
+{
+	template <>
+	struct hash<NatsuLib::Uri>
+	{
+		std::size_t operator()(NatsuLib::Uri const& uri) const noexcept
+		{
+			return hash<nStrView>{}(uri.GetUnderlyingString());
+		}
+	};
+}

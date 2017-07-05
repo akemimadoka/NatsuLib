@@ -834,12 +834,14 @@ namespace NatsuLib
 					Reserve(Grow(newSize));
 				}
 
+				const auto data = GetData();
+
 				for (auto i = Size; i < newSize; ++i)
 				{
-					GetData()[i] = CharType{};
+					data[i] = CharType{};
 				}
 				Size = newSize;
-				GetData()[Size] = CharType{};
+				data[Size] = CharType{};
 
 				assert(Capacity > Size);
 			}
