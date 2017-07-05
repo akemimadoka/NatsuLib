@@ -1078,6 +1078,16 @@ namespace NatsuLib
 			return m_Storage.GetData() + m_Storage.Size;
 		}
 
+		const_iterator begin() const noexcept
+		{
+			return m_Storage.GetData();
+		}
+
+		const_iterator end() const noexcept
+		{
+			return m_Storage.GetData() + m_Storage.Size;
+		}
+
 		const_iterator cbegin() const noexcept
 		{
 			return m_Storage.GetData();

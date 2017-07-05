@@ -601,7 +601,7 @@ namespace NatsuLib
 	};
 
 	template <typename T, typename... Args>
-	NATINLINE std::enable_if_t<std::is_constructible<T, Args...>::value, natRefPointer<T>> make_ref(Args &&... args)
+	NATINLINE auto make_ref(Args &&... args) -> std::enable_if_t<std::is_constructible<T, decltype(args)...>::value, natRefPointer<T>>
 	{
 		const auto pRefObj = new T(std::forward<Args>(args)...);
 		pRefObj->SetDeleter();

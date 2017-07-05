@@ -387,10 +387,14 @@ namespace NatsuLib
 					while (std::isblank(*lpStr, std::locale{})) { ++lpStr; }
 					if (*lpStr != '}')
 					{
-						nat_Throw(natException, "Expected '}', got '%c'"_nv, *lpStr);
+						nat_Throw(natException, "Expected '}', got '%c'", *lpStr);
 					}
 
-					visit_at(argsTuple, tmpIndex, [&ss](auto&& item) { using ::operator<<; ss << item; });
+					if (tmpIndex < std::tuple_size<decltype(argsTuple)>::value)
+					{
+						visit_at(argsTuple, tmpIndex, [&ss](auto&& item) { using ::operator<<; ss << item; });
+					}
+					
 					break;
 				}
 				default:
