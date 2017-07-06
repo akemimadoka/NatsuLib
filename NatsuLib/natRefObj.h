@@ -211,7 +211,7 @@ namespace NatsuLib
 		typedef detail_::RefCountBase<B> Base;
 
 		template <typename T_, typename... Args>
-		friend NATINLINE auto make_ref(Args &&... args) -> std::enable_if_t<std::is_constructible<T_, decltype(args)...>::value, natRefPointer<T_>>;
+		friend natRefPointer<T_> make_ref(Args&&... args);
 
 		struct DefaultDeleter
 		{
@@ -601,7 +601,7 @@ namespace NatsuLib
 	};
 
 	template <typename T, typename... Args>
-	NATINLINE auto make_ref(Args &&... args) -> std::enable_if_t<std::is_constructible<T, decltype(args)...>::value, natRefPointer<T>>
+	natRefPointer<T> make_ref(Args&&... args)
 	{
 		const auto pRefObj = new T(std::forward<Args>(args)...);
 		pRefObj->SetDeleter();
