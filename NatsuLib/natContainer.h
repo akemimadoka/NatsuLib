@@ -412,6 +412,11 @@ namespace NatsuLib
 		{
 		}*/
 
+		nBool HasContainer() const noexcept
+		{
+			return m_Wrapper;
+		}
+
 		template <typename C>
 		C* GetOriginalContainer() const
 		{
