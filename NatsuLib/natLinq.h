@@ -281,6 +281,11 @@ namespace NatsuLib
 				{
 					return m_Iterator == dynamic_cast<IteratorImpl const&>(other).m_Iterator;
 				}
+
+				Iter_t GetIterator() const noexcept
+				{
+					return m_Iterator;
+				}
 			};
 
 			typedef CommonIterator<T> Self_t;
@@ -303,6 +308,18 @@ namespace NatsuLib
 			CommonIterator(Self_t const& other)
 				: m_Iterator(other.m_Iterator->Clone())
 			{
+			}
+
+			template <typename Iter_t>
+			Iter_t GetOriginalIterator() const
+			{
+				auto iter = std::dynamic_pointer_cast<IteratorImpl<Iter_t>>(m_Iterator);
+				if (iter)
+				{
+					return iter->GetIterator();
+				}
+
+				nat_Throw(natErrException, NatErr_InvalidArg, "Iter_t is not the type of original iterator.");
 			}
 
 			Self_t& operator++() &
