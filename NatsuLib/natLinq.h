@@ -954,6 +954,11 @@ namespace NatsuLib
 			return size();
 		}
 
+		constexpr nBool empty() const
+		{
+			return m_Range.empty();
+		}
+
 		template <typename CallableObj>
 		LinqEnumerable<detail_::SelectIterator<Iter_t, CallableObj>> select(CallableObj const& callableObj) const
 		{
@@ -1107,6 +1112,11 @@ namespace NatsuLib
 		nBool all(CallableObj const& callableObj) const
 		{
 			return select(callableObj).aggregate(true, [](nBool a, nBool b) { return a && b; });
+		}
+
+		nBool any() const
+		{
+			return !empty();
 		}
 
 		template <typename CallableObj>

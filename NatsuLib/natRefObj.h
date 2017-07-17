@@ -208,7 +208,10 @@ namespace NatsuLib
 		template <typename T_>
 		friend class natWeakRefPointer;
 
-		typedef detail_::RefCountBase<B> Base;
+		typedef detail_::RefCountBase<B> RefCountBase;
+
+		typedef natRefPointer<T> RefPointer;
+		typedef natWeakRefPointer<T> WeakRefPointer;
 
 		template <typename T_, typename... Args>
 		friend natRefPointer<T_> make_ref(Args&&... args);
@@ -246,7 +249,7 @@ namespace NatsuLib
 
 		template <typename... Args>
 		constexpr natRefObjImpl(SpecifySelfDeleter_t, SelfDeleter deleter, Args&&... args) noexcept
-			: Base(std::forward<Args>(args)...), m_View{ nullptr }, m_Deleter{ std::move(deleter) }
+			: RefCountBase(std::forward<Args>(args)...), m_View{ nullptr }, m_Deleter{ std::move(deleter) }
 		{
 #ifdef TraceRefObj
 			OutputDebugString(natUtil::FormatString("Type %s created at (%p)\n"_nv, nStringView{ typeid(*this).name() }, this).c_str());
@@ -283,7 +286,7 @@ namespace NatsuLib
 
 		nBool Release() const volatile override
 		{
-			const auto result = Base::Release();
+			const auto result = RefCountBase::Release();
 			const SelfDeleter& deleter = const_cast<const SelfDeleter&>(m_Deleter);
 			if (result && deleter)
 			{
