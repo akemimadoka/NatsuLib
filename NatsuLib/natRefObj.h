@@ -210,9 +210,6 @@ namespace NatsuLib
 
 		typedef detail_::RefCountBase<B> RefCountBase;
 
-		typedef natRefPointer<T> RefPointer;
-		typedef natWeakRefPointer<T> WeakRefPointer;
-
 		template <typename T_, typename... Args>
 		friend natRefPointer<T_> make_ref(Args&&... args);
 
@@ -240,6 +237,9 @@ namespace NatsuLib
 	public:
 		typedef std::function<void(T*)> SelfDeleter;
 		typedef detail_::WeakRefView<natRefObjImpl> WeakRefView;
+
+		typedef natRefPointer<T> RefPointer;
+		typedef natWeakRefPointer<T> WeakRefPointer;
 
 		template <typename... Args>
 		constexpr natRefObjImpl(Args&&... args)
