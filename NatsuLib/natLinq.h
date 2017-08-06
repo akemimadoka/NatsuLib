@@ -1098,6 +1098,59 @@ namespace NatsuLib
 			return aggregateImpl(callableObj, std::is_default_constructible<Element_t>{});
 		}
 
+		Element_t first() const
+		{
+			if (empty())
+			{
+				nat_Throw(natErrException, NatErr_OutOfRange, "No element."_nv);
+			}
+
+			return *begin();
+		}
+
+		template <typename CallableObj>
+		Element_t first(CallableObj const& callableObj) const
+		{
+			if (empty())
+			{
+				nat_Throw(natErrException, NatErr_OutOfRange, "No element."_nv);
+			}
+
+			for (auto&& item : *this)
+			{
+				if (!!callableObj(item))
+				{
+					return item;
+				}
+			}
+
+			nat_Throw(natErrException, NatErr_OutOfRange, "No matching element found."_nv);
+		}
+
+		Element_t first_or_default(Element_t defItem) const
+		{
+			return empty() ? defItem : *begin();
+		}
+
+		template <typename CallableObj>
+		Element_t first_or_default(Element_t defItem, CallableObj const& callableObj) const
+		{
+			if (empty())
+			{
+				return defItem;
+			}
+
+			for (auto&& item : *this)
+			{
+				if (!!callableObj(item))
+				{
+					return item;
+				}
+			}
+
+			return defItem;
+		}
+
 		template <typename Result_t, typename CallableObj>
 		Result_t aggregate(Result_t result, CallableObj const& callableObj) const
 		{
