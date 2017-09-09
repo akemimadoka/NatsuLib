@@ -1,6 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////
+ï»¿////////////////////////////////////////////////////////////////////////////////
 ///	@file	natLinq.h
-///	@brief	ÓïÑÔ¼¯³É²éÑ¯
+///	@brief	è¯­è¨€é›†æˆæŸ¥è¯¢
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "natMisc.h"
@@ -300,7 +300,7 @@ namespace NatsuLib
 			typedef std::add_pointer_t<value_type> pointer;
 
 			template <typename Iter_t>
-			explicit CommonIterator(Iter_t const& iterator)
+			CommonIterator(Iter_t const& iterator)
 				: m_Iterator(std::make_shared<IteratorImpl<Iter_t>>(iterator))
 			{
 			}
@@ -322,7 +322,7 @@ namespace NatsuLib
 				nat_Throw(natErrException, NatErr_InvalidArg, "Iter_t is not the type of original iterator.");
 			}
 
-			Self_t& operator++() &
+			Self_t& operator++()
 			{
 				m_Iterator->MoveNext();
 

@@ -1,6 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////
+ï»¿////////////////////////////////////////////////////////////////////////////////
 ///	@file	natType.h
-///	@brief	ÃèÊöNatsuLibÖĞ»ù±¾Êı¾İÀàĞÍ¡¢²¿·Öºê¼°ÄÚÁªº¯Êı
+///	@brief	æè¿°NatsuLibä¸­åŸºæœ¬æ•°æ®ç±»å‹ã€éƒ¨åˆ†å®åŠå†…è”å‡½æ•°
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
@@ -18,36 +18,36 @@
 #undef max
 
 ////////////////////////////////////////////////////////////////////////////////
-///	@addtogroup	Natsu¿â»ù±¾Êı¾İÀàĞÍ
-///	@brief		Natsu¿â»ù±¾Êı¾İÀàĞÍ¶¨Òå
+///	@addtogroup	Natsuåº“åŸºæœ¬æ•°æ®ç±»å‹
+///	@brief		Natsuåº“åŸºæœ¬æ•°æ®ç±»å‹å®šä¹‰
 ///	@{
 
-typedef	bool				nBool;		///< @brief	Âß¼­ĞÍ
-typedef char				nChar;		///< @brief	×Ö·ûĞÍ
-typedef	wchar_t				nWChar;		///< @brief	¿í×Ö·ûĞÍ
-typedef std::int8_t			nSByte;		///< @brief	ÓĞ·ûºÅ×Ö½ÚĞÍ
-typedef	std::uint8_t		nByte;		///< @brief	×Ö½ÚĞÍ
-typedef std::int16_t		nShort;		///< @brief	16Î»¶ÌÕûÊı
-typedef	std::uint16_t		nuShort;	///< @brief	16Î»ÎŞ·ûºÅ¶ÌÕûÊı
-typedef	std::int32_t		nInt;		///< @brief	32Î»ÕûÊı
-typedef	std::uint32_t		nuInt;		///< @brief	32Î»ÎŞ·ûºÅÕûÊı
-typedef std::int64_t		nLong;		///< @brief	64Î»³¤ÕûÊı
-typedef	std::uint64_t		nuLong;		///< @brief	64Î»ÎŞ·ûºÅ³¤ÕûÊı
-typedef	float				nFloat;		///< @brief	µ¥¾«¶È¸¡µãÊı
-typedef	double				nDouble;	///< @brief	Ë«¾«¶È¸¡µãÊı
-typedef	nChar*				nStr;		///< @brief	C·ç¸ñ×Ö·û´®
-typedef	const nChar*		ncStr;		///< @brief	C·ç¸ñ³£Á¿×Ö·û´®
-typedef	nWChar*				nWStr;		///< @brief	C·ç¸ñ¿í×Ö·û´®
-typedef	const nWChar*		ncWStr;		///< @brief	C·ç¸ñ³£Á¿¿í×Ö·û´®
-typedef	nByte*				nData;		///< @brief	ÄÚ´æÊı¾İÖ¸Õë
-typedef	const nByte*		ncData;		///< @brief	³£Á¿ÄÚ´æÊı¾İÖ¸Õë
-typedef	nuLong				nLen;		///< @brief	³¤¶ÈĞÍ
-typedef	nInt				nResult;	///< @brief	Ô¤¶¨Òå·µ»ØÖµ
+typedef	bool				nBool;		///< @brief	é€»è¾‘å‹
+typedef char				nChar;		///< @brief	å­—ç¬¦å‹
+typedef	wchar_t				nWChar;		///< @brief	å®½å­—ç¬¦å‹
+typedef std::int8_t			nSByte;		///< @brief	æœ‰ç¬¦å·å­—èŠ‚å‹
+typedef	std::uint8_t		nByte;		///< @brief	å­—èŠ‚å‹
+typedef std::int16_t		nShort;		///< @brief	16ä½çŸ­æ•´æ•°
+typedef	std::uint16_t		nuShort;	///< @brief	16ä½æ— ç¬¦å·çŸ­æ•´æ•°
+typedef	std::int32_t		nInt;		///< @brief	32ä½æ•´æ•°
+typedef	std::uint32_t		nuInt;		///< @brief	32ä½æ— ç¬¦å·æ•´æ•°
+typedef std::int64_t		nLong;		///< @brief	64ä½é•¿æ•´æ•°
+typedef	std::uint64_t		nuLong;		///< @brief	64ä½æ— ç¬¦å·é•¿æ•´æ•°
+typedef	float				nFloat;		///< @brief	å•ç²¾åº¦æµ®ç‚¹æ•°
+typedef	double				nDouble;	///< @brief	åŒç²¾åº¦æµ®ç‚¹æ•°
+typedef	nChar*				nStr;		///< @brief	Cé£æ ¼å­—ç¬¦ä¸²
+typedef	const nChar*		ncStr;		///< @brief	Cé£æ ¼å¸¸é‡å­—ç¬¦ä¸²
+typedef	nWChar*				nWStr;		///< @brief	Cé£æ ¼å®½å­—ç¬¦ä¸²
+typedef	const nWChar*		ncWStr;		///< @brief	Cé£æ ¼å¸¸é‡å®½å­—ç¬¦ä¸²
+typedef	nByte*				nData;		///< @brief	å†…å­˜æ•°æ®æŒ‡é’ˆ
+typedef	const nByte*		ncData;		///< @brief	å¸¸é‡å†…å­˜æ•°æ®æŒ‡é’ˆ
+typedef	nuLong				nLen;		///< @brief	é•¿åº¦å‹
+typedef	nInt				nResult;	///< @brief	é¢„å®šä¹‰è¿”å›å€¼
 										///< @details
-										///	nResult ¶¨Òå	£º\n
-										///	·û  ºÅ  Î»	£º 0 - ³É¹¦ 1 - Ê§°Ü\n
-										///	30 - 16 Î»	£º ±£Áô\n
-										///	15 - 0  Î»	£º ´íÎóÃèÊö
+										///	nResult å®šä¹‰	ï¼š\n
+										///	ç¬¦  å·  ä½	ï¼š 0 - æˆåŠŸ 1 - å¤±è´¥\n
+										///	30 - 16 ä½	ï¼š ä¿ç•™\n
+										///	15 - 0  ä½	ï¼š é”™è¯¯æè¿°
 
 static_assert(std::numeric_limits<nLen>::max() >= std::numeric_limits<std::size_t>::max(), "");
 
@@ -57,64 +57,64 @@ using nUnsafePtr = std::add_pointer_t<T>;
 ///	@}
 
 ////////////////////////////////////////////////////////////////////////////////
-///	@addtogroup	Natsu¿â»ù±¾ºê
-///	@brief		Natsu¿â»ù±¾ºê¶¨Òå
+///	@addtogroup	Natsuåº“åŸºæœ¬å®
+///	@brief		Natsuåº“åŸºæœ¬å®å®šä¹‰
 ///	@{
 
 #ifdef _MSC_VER
-///	@brief	Ç¿ÖÆÄÚÁª
+///	@brief	å¼ºåˆ¶å†…è”
 #define	NATINLINE			__forceinline
-///	@brief	¾Ü¾øÄÚÁª
+///	@brief	æ‹’ç»å†…è”
 #define NATNOINLINE			__declspec(noinline)
 #else
-///	@brief	Ç¿ÖÆÄÚÁª
+///	@brief	å¼ºåˆ¶å†…è”
 #define	NATINLINE			inline
-///	@brief	¾Ü¾øÄÚÁª
+///	@brief	æ‹’ç»å†…è”
 #define NATNOINLINE
 #endif
 
-///	@brief	ÊÇ·ñ³É¹¦
+///	@brief	æ˜¯å¦æˆåŠŸ
 #define NATOK(x)			(((nResult)(x)) >= 0)
-///	@brief	ÊÇ·ñÊ§°Ü
+///	@brief	æ˜¯å¦å¤±è´¥
 #define	NATFAIL(x)			(((nResult)(x)) <  0)
-///	@brief	´´½¨´íÎóÂë
+///	@brief	åˆ›å»ºé”™è¯¯ç 
 #define	NATMAKEERR(code)	((nResult) (0x80000000 | ((nInt)(code))))
-///	@brief	×´Ì¬Âë
+///	@brief	çŠ¶æ€ç 
 #define	NATRESULTCODE(code)	((code) & 0xFFFF)
 
 ///	@}
 
 ////////////////////////////////////////////////////////////////////////////////
-///	@addtogroup	Natsu¿â³£¼û´íÎó
-///	@brief		³£¼û´íÎó
+///	@addtogroup	Natsuåº“å¸¸è§é”™è¯¯
+///	@brief		å¸¸è§é”™è¯¯
 ///	@{
 
 enum /*[[nodiscard]]*/ NatErr : nResult
 {
-	NatErr_Interrupted	=	1,		///< @brief	Õı³£ÖĞ¶Ï
+	NatErr_Interrupted	=	1,		///< @brief	æ­£å¸¸ä¸­æ–­
 
-	NatErr_OK			=	0,		///< @brief	Õı³£
+	NatErr_OK			=	0,		///< @brief	æ­£å¸¸
 
-	NatErr_Unknown		=	NATMAKEERR(1),	///< @brief	Î´Öª´íÎó
-	NatErr_IllegalState	=	NATMAKEERR(2),	///< @brief	·Ç·¨×´Ì¬
-	NatErr_InvalidArg	=	NATMAKEERR(3),	///< @brief	ÎŞĞ§²ÎÊı
-	NatErr_InternalErr	=	NATMAKEERR(4),	///< @brief	ÄÚ²¿´íÎó
-	NatErr_OutOfRange	=	NATMAKEERR(5),	///< @brief	³¬³ö·¶Î§
-	NatErr_NotImpl		=	NATMAKEERR(6),	///< @brief	Î´ÊµÏÖ
-	NatErr_NotSupport	=	NATMAKEERR(7),	///< @brief	²»Ö§³ÖµÄ¹¦ÄÜ
-	NatErr_Duplicated	=	NATMAKEERR(8),	///< @brief	·¢ÉúÖØ¸´
-	NatErr_NotFound		=	NATMAKEERR(9),	///< @brief	Î´ÕÒµ½
+	NatErr_Unknown		=	NATMAKEERR(1),	///< @brief	æœªçŸ¥é”™è¯¯
+	NatErr_IllegalState	=	NATMAKEERR(2),	///< @brief	éæ³•çŠ¶æ€
+	NatErr_InvalidArg	=	NATMAKEERR(3),	///< @brief	æ— æ•ˆå‚æ•°
+	NatErr_InternalErr	=	NATMAKEERR(4),	///< @brief	å†…éƒ¨é”™è¯¯
+	NatErr_OutOfRange	=	NATMAKEERR(5),	///< @brief	è¶…å‡ºèŒƒå›´
+	NatErr_NotImpl		=	NATMAKEERR(6),	///< @brief	æœªå®ç°
+	NatErr_NotSupport	=	NATMAKEERR(7),	///< @brief	ä¸æ”¯æŒçš„åŠŸèƒ½
+	NatErr_Duplicated	=	NATMAKEERR(8),	///< @brief	å‘ç”Ÿé‡å¤
+	NatErr_NotFound		=	NATMAKEERR(9),	///< @brief	æœªæ‰¾åˆ°
 };
 
 ///	@}
 
 ////////////////////////////////////////////////////////////////////////////////
-///	@addtogroup	Natsu¿â»ù±¾ÄÚÁªº¯Êı
-///	@brief		Natsu¿â»ù±¾ÄÚÁªº¯Êı¶¨Òå
+///	@addtogroup	Natsuåº“åŸºæœ¬å†…è”å‡½æ•°
+///	@brief		Natsuåº“åŸºæœ¬å†…è”å‡½æ•°å®šä¹‰
 ///	@{
 
-///	@brief		°²È«É¾³ıÖ¸Õë
-///	@warning	±ÜÃâÊ¹ÓÃ±¾º¯Êı
+///	@brief		å®‰å…¨åˆ é™¤æŒ‡é’ˆ
+///	@warning	é¿å…ä½¿ç”¨æœ¬å‡½æ•°
 template <typename T>
 NATINLINE void SafeDel(T* volatile & ptr)
 {
@@ -122,8 +122,8 @@ NATINLINE void SafeDel(T* volatile & ptr)
 	ptr = nullptr;
 }
 
-///	@brief		°²È«É¾³ıÊı×é
-///	@warning	±ÜÃâÊ¹ÓÃ±¾º¯Êı
+///	@brief		å®‰å…¨åˆ é™¤æ•°ç»„
+///	@warning	é¿å…ä½¿ç”¨æœ¬å‡½æ•°
 template <typename T>
 NATINLINE void SafeDelArr(T* volatile & ptr)
 {
@@ -161,9 +161,9 @@ namespace NatsuLib
 	}
 }
 
-///	@brief	°²È«ÊÍ·Å
+///	@brief	å®‰å…¨é‡Šæ”¾
 template <typename T>
-NATINLINE std::enable_if_t<NatsuLib::detail_::CanRelease<T>::value> SafeRelease(T* volatile & ptr)
+void SafeRelease(T* volatile & ptr)
 {
 	const auto ptrToRelease = ptr;
 	if (ptrToRelease != nullptr)
@@ -171,7 +171,7 @@ NATINLINE std::enable_if_t<NatsuLib::detail_::CanRelease<T>::value> SafeRelease(
 		ptrToRelease->Release();
 		if (ptr == ptrToRelease)
 		{
-			ptr = nullptr;	// ¿ÉÄÜ·ÇÏß³Ì°²È«£¿
+			ptr = nullptr;	// å¯èƒ½éçº¿ç¨‹å®‰å…¨ï¼Ÿ
 		}
 	}
 }

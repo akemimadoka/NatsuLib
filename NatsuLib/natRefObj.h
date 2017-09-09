@@ -1,6 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////
+ï»¿////////////////////////////////////////////////////////////////////////////////
 ///	@file	natRefObj.h
-///	@brief	ÒıÓÃ¼ÆÊı¶ÔÏóÏà¹Ø
+///	@brief	å¼•ç”¨è®¡æ•°å¯¹è±¡ç›¸å…³
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "natType.h"
@@ -19,24 +19,24 @@
 namespace NatsuLib
 {
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	ÒıÓÃ¼ÆÊı½Ó¿Ú
+	///	@brief	å¼•ç”¨è®¡æ•°æ¥å£
 	////////////////////////////////////////////////////////////////////////////////
 	struct natRefObj
 	{
 		virtual ~natRefObj() = default;
 
-		///	@brief	»ñÈ¡µ±Ç°µÄÒıÓÃ¼ÆÊı
+		///	@brief	è·å–å½“å‰çš„å¼•ç”¨è®¡æ•°
 		virtual size_t GetRefCount() const volatile noexcept = 0;
 
-		///	@brief	³¢ÊÔÔö¼ÓÒıÓÃ¼ÆÊı
-		///	@return	ÊÇ·ñ³É¹¦Ôö¼ÓÁËÒıÓÃ¼ÆÊı
+		///	@brief	å°è¯•å¢åŠ å¼•ç”¨è®¡æ•°
+		///	@return	æ˜¯å¦æˆåŠŸå¢åŠ äº†å¼•ç”¨è®¡æ•°
 		virtual nBool TryAddRef() const volatile = 0;
 
-		///	@brief	Ôö¼ÓÒıÓÃ¼ÆÊı
+		///	@brief	å¢åŠ å¼•ç”¨è®¡æ•°
 		virtual void AddRef() const volatile = 0;
 
-		///	@brief	¼õÉÙÒıÓÃ¼ÆÊı
-		///	@return	ÒıÓÃ¼ÆÊıÊÇ·ñÒÑÎª0
+		///	@brief	å‡å°‘å¼•ç”¨è®¡æ•°
+		///	@return	å¼•ç”¨è®¡æ•°æ˜¯å¦å·²ä¸º0
 		virtual nBool Release() const volatile = 0;
 	};
 
@@ -57,7 +57,7 @@ namespace NatsuLib
 			}
 		};
 
-		// decltype(static_cast<Dst>(std::declval<Src>())) ËÆºõÔÚMSVCÉÏ´æÔÚÎÊÌâ£¿ÔİÊ±Ê¹ÓÃÌæ´ú·½°¸
+		// decltype(static_cast<Dst>(std::declval<Src>())) ä¼¼ä¹åœ¨MSVCä¸Šå­˜åœ¨é—®é¢˜ï¼Ÿæš‚æ—¶ä½¿ç”¨æ›¿ä»£æ–¹æ¡ˆ
 		template <typename Dst, typename Src>
 		struct static_cast_or_dynamic_cast_helper<Dst, Src, std::enable_if_t<std::is_same<Src, Dst>::value || !std::is_base_of<Src, Dst>::value>>
 		{
@@ -171,12 +171,12 @@ namespace NatsuLib
 					return {};
 				}
 
-				if (!static_cast<std::add_cv_t<decltype(m_Owner)>>(m_Owner)->TryAddRef())
+				if (!static_cast<std::add_pointer_t<std::add_cv_t<Owner>>>(m_Owner)->TryAddRef())
 				{
 					return {};
 				}
 
-				return { other };
+				return natRefPointer<T>{ other };
 			}
 
 		private:
@@ -196,8 +196,8 @@ namespace NatsuLib
 	using detail_::SpecifySelfDeleter;
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	ÒıÓÃ¼ÆÊıÊµÏÖ
-	///	@note	Ê¹ÓÃÄ£°å·ÀÖ¹ÁâĞÎ¼Ì³Ğ
+	///	@brief	å¼•ç”¨è®¡æ•°å®ç°
+	///	@note	ä½¿ç”¨æ¨¡æ¿é˜²æ­¢è±å½¢ç»§æ‰¿
 	////////////////////////////////////////////////////////////////////////////////
 	template <typename T, typename B = natRefObj>
 	class natRefObjImpl
@@ -236,7 +236,7 @@ namespace NatsuLib
 
 	public:
 		typedef std::function<void(T*)> SelfDeleter;
-		typedef detail_::WeakRefView<natRefObjImpl> WeakRefView;
+		typedef detail_::WeakRefView<natRefObj> WeakRefView;
 
 		typedef natRefPointer<T> RefPointer;
 		typedef natWeakRefPointer<T> WeakRefPointer;
@@ -396,8 +396,8 @@ namespace NatsuLib
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	Ç¿ÒıÓÃÖ¸ÕëÊµÏÖ
-	///	@note	½öÄÜÓÃÓÚÒıÓÃ¼ÆÊı¶ÔÏó
+	///	@brief	å¼ºå¼•ç”¨æŒ‡é’ˆå®ç°
+	///	@note	ä»…èƒ½ç”¨äºå¼•ç”¨è®¡æ•°å¯¹è±¡
 	////////////////////////////////////////////////////////////////////////////////
 	template <typename T>
 	class natRefPointer final
@@ -422,7 +422,7 @@ namespace NatsuLib
 		{
 			if (m_pPointer)
 			{
-				m_pPointer->AddRef();
+				static_cast<const volatile natRefObj*>(m_pPointer)->AddRef();
 			}
 		}
 
@@ -434,7 +434,10 @@ namespace NatsuLib
 
 		~natRefPointer()
 		{
-			SafeRelease(m_pPointer);
+			if (m_pPointer)
+			{
+				static_cast<const volatile natRefObj*>(m_pPointer)->Release();
+			}
 		}
 
 		void Reset(std::nullptr_t = nullptr) noexcept
@@ -542,7 +545,11 @@ namespace NatsuLib
 
 		natRefPointer& operator=(std::nullptr_t)
 		{
-			SafeRelease(m_pPointer);
+			if (m_pPointer)
+			{
+				static_cast<const volatile natRefObj*>(m_pPointer)->Release();
+			}
+			
 			return *this;
 		}
 
@@ -614,8 +621,8 @@ namespace NatsuLib
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	ÈõÒıÓÃÖ¸ÕëÊµÏÖ
-	///	@note	½öÄÜÓÃÓÚÒıÓÃ¼ÆÊı¶ÔÏó
+	///	@brief	å¼±å¼•ç”¨æŒ‡é’ˆå®ç°
+	///	@note	ä»…èƒ½ç”¨äºå¼•ç”¨è®¡æ•°å¯¹è±¡
 	////////////////////////////////////////////////////////////////////////////////
 	template <typename T>
 	class natWeakRefPointer
@@ -623,7 +630,7 @@ namespace NatsuLib
 		template <typename>
 		friend class natWeakRefPointer;
 
-		typedef typename T::WeakRefView WeakRefView;
+		typedef detail_::WeakRefView<natRefObj> WeakRefView;
 
 		static WeakRefView* GetViewFrom(const volatile T* item)
 		{
@@ -711,7 +718,7 @@ namespace NatsuLib
 			{
 				return 0;
 			}
-			return view->GetRefCount() - 1;	// ±¾Ìå×Ô´ø1¸ö¶ÔWeakRefViewµÄÒıÓÃ
+			return view->GetRefCount() - 1;	// æœ¬ä½“è‡ªå¸¦1ä¸ªå¯¹WeakRefViewçš„å¼•ç”¨
 		}
 
 		template <typename U = T>
