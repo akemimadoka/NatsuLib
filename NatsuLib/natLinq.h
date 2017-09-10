@@ -20,6 +20,17 @@
 
 namespace NatsuLib
 {
+	////////////////////////////////////////////////////////////////////////////////
+	///	@brief	允许 Linq 返回值而不是引用的辅助类模板
+	///	@tparam	T	要返回的值的类型
+	///	@remark	用于 Linq 的模板参数
+	////////////////////////////////////////////////////////////////////////////////
+	template <typename T>
+	class Valued
+	{
+		explicit Valued() = delete;
+	};
+
 	namespace detail_
 	{
 		template <typename T, typename U = T, typename = void>
@@ -288,7 +299,7 @@ namespace NatsuLib
 				}
 			};
 
-			typedef CommonIterator<T> Self_t;
+			typedef CommonIterator Self_t;
 
 			std::shared_ptr<IteratorInterface> m_Iterator;
 
@@ -297,6 +308,112 @@ namespace NatsuLib
 			typedef std::remove_reference_t<T> value_type;
 			typedef std::ptrdiff_t difference_type;
 			typedef std::add_lvalue_reference_t<value_type> reference;
+			typedef std::add_pointer_t<value_type> pointer;
+
+			template <typename Iter_t>
+			CommonIterator(Iter_t const& iterator)
+				: m_Iterator(std::make_shared<IteratorImpl<Iter_t>>(iterator))
+			{
+			}
+
+			CommonIterator(Self_t const& other)
+				: m_Iterator(other.m_Iterator->Clone())
+			{
+			}
+
+			template <typename Iter_t>
+			Iter_t GetOriginalIterator() const
+			{
+				auto iter = std::dynamic_pointer_cast<IteratorImpl<Iter_t>>(m_Iterator);
+				if (iter)
+				{
+					return iter->GetIterator();
+				}
+
+				nat_Throw(natErrException, NatErr_InvalidArg, "Iter_t is not the type of original iterator.");
+			}
+
+			Self_t& operator++()
+			{
+				m_Iterator->MoveNext();
+
+				return *this;
+			}
+
+			decltype(auto) operator*() const
+			{
+				return m_Iterator->Deref();
+			}
+
+			nBool operator==(CommonIterator const& other) const
+			{
+				return m_Iterator->Equals(*other.m_Iterator);
+			}
+
+			nBool operator!=(CommonIterator const& other) const
+			{
+				return !(*this == other);
+			}
+		};
+
+		template <typename T>
+		class CommonIterator<Valued<T>> final
+		{
+			struct IteratorInterface
+			{
+				virtual ~IteratorInterface() = default;
+
+				virtual std::shared_ptr<IteratorInterface> Clone() const = 0;
+				virtual void MoveNext() = 0;
+				virtual T Deref() const = 0;
+				virtual nBool Equals(IteratorInterface const& other) const = 0;
+			};
+
+			template <typename Iter_t>
+			class IteratorImpl final : public IteratorInterface
+			{
+				Iter_t m_Iterator;
+			public:
+				explicit IteratorImpl(Iter_t const& iterator)
+					: m_Iterator(iterator)
+				{
+				}
+
+				std::shared_ptr<IteratorInterface> Clone() const override
+				{
+					return std::static_pointer_cast<IteratorInterface>(std::make_shared<IteratorImpl>(m_Iterator));
+				}
+
+				void MoveNext() override
+				{
+					++m_Iterator;
+				}
+
+				T Deref() const override
+				{
+					return *m_Iterator;
+				}
+
+				nBool Equals(IteratorInterface const& other) const override
+				{
+					return m_Iterator == dynamic_cast<IteratorImpl const&>(other).m_Iterator;
+				}
+
+				Iter_t GetIterator() const noexcept
+				{
+					return m_Iterator;
+				}
+			};
+
+			typedef CommonIterator Self_t;
+
+			std::shared_ptr<IteratorInterface> m_Iterator;
+
+		public:
+			typedef std::forward_iterator_tag iterator_category;
+			typedef std::remove_reference_t<T> value_type;
+			typedef std::ptrdiff_t difference_type;
+			typedef value_type reference;
 			typedef std::add_pointer_t<value_type> pointer;
 
 			template <typename Iter_t>
