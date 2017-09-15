@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "natConfig.h"
 #include "natEnvironment.h"
 #include "natRefObj.h"
@@ -11,8 +11,8 @@ namespace NatsuLib
 	{
 		typedef typename StringEncodingTrait<encoding>::CharType CharType;
 
-		// ÎÒÃÇ¼ÙÉèÒ»¸önuInt¿ÉÒÔÈİÄÉÈÎºÎNatsuLibÖ§³ÖµÄ±àÂëµÄµ¥¸öÓĞĞ§×Ö·û
-		// ×¢Òâ£ºÊä³ö×ÜÊÇÒ»¸öCodePoint£¬²¢·ÇrawµÄ×Ö·û×éºÏ
+		// æˆ‘ä»¬å‡è®¾ä¸€ä¸ªnuIntå¯ä»¥å®¹çº³ä»»ä½•NatsuLibæ”¯æŒçš„ç¼–ç çš„å•ä¸ªæœ‰æ•ˆå­—ç¬¦
+		// æ³¨æ„ï¼šè¾“å‡ºæ€»æ˜¯ä¸€ä¸ªCodePointï¼Œå¹¶érawçš„å­—ç¬¦ç»„åˆ
 		virtual nBool Read(nuInt& Char) = 0;
 		virtual nBool Peek(nuInt& Char) = 0;
 
@@ -67,6 +67,12 @@ namespace NatsuLib
 					break;
 				}
 			}
+
+			if (matchedLength == m_NewLine.size())
+			{
+				result.pop_back(matchedLength);
+			}
+
 			return result;
 		}
 

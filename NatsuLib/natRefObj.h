@@ -548,6 +548,7 @@ namespace NatsuLib
 			if (m_pPointer)
 			{
 				static_cast<const volatile natRefObj*>(m_pPointer)->Release();
+				m_pPointer = nullptr;
 			}
 			
 			return *this;
