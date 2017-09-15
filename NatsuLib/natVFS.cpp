@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "natVFS.h"
 #include "natException.h"
 #include "natLocalFileScheme.h"
@@ -7,8 +7,8 @@ using namespace NatsuLib;
 
 namespace
 {
-	// ÎŞÊÓÒç³ö£¬Ë­Òç³öË­ÖÎÀí
-	// ¼ÙÉèbeginºÍend×ÜÊÇÖ¸ÏòÏàÍ¬µÄÄÚ´æ¿é»òÆäºóÒ»×Ö½Ú
+	// æ— è§†æº¢å‡ºï¼Œè°æº¢å‡ºè°æ²»ç†
+	// å‡è®¾beginå’Œendæ€»æ˜¯æŒ‡å‘ç›¸åŒçš„å†…å­˜å—æˆ–å…¶åä¸€å­—èŠ‚
 	template <typename CharType, typename T>
 	std::enable_if_t<std::is_arithmetic<T>::value, bool> TryParseNumber(const CharType* begin, const CharType* end, T& num) noexcept
 	{
@@ -43,12 +43,25 @@ Uri::Uri(nString uri)
 }
 
 Uri::Uri(Uri const& other)
-	: Uri(other.m_UriInfo.UriString)
+	: m_UriInfo{ other.m_UriInfo.UriString }
 {
+	const auto view = m_UriInfo.UriString.GetView();
+	const auto otherBegin = other.m_UriInfo.UriString.cbegin();
+
+#define URI_ASSIGN(prop) m_UriInfo.prop = view.Slice(std::distance(other.m_UriInfo.prop.cbegin(), otherBegin), std::distance(other.m_UriInfo.prop.cend(), otherBegin))
+	URI_ASSIGN(Scheme);
+	URI_ASSIGN(User);
+	URI_ASSIGN(Password);
+	URI_ASSIGN(Host);
+	m_UriInfo.Port = other.m_UriInfo.Port;
+	URI_ASSIGN(Path);
+	URI_ASSIGN(Query);
+	URI_ASSIGN(Fragment);
+#undef URI_ASSIGN
 }
 
 Uri::Uri(Uri&& other) noexcept
-	: Uri(std::move(other.m_UriInfo.UriString))
+	: m_UriInfo{ std::move(other.m_UriInfo.UriString) }
 {
 }
 
@@ -130,13 +143,13 @@ void Uri::ParseUri()
 		Reject
 	} state { State::Scheme };
 
-	// ¼ÙÉèpRead, pLastBeginºÍpEnd¶¼ÊÇRandomAccessIterator£¬ÇÒ¶¼Ö¸ÏòÍ¬Ò»ÄÚ´æ¿é»òÆäºóÇ¡ºÃÒ»×Ö½Ú´¦
+	// å‡è®¾pRead, pLastBeginå’ŒpEndéƒ½æ˜¯RandomAccessIteratorï¼Œä¸”éƒ½æŒ‡å‘åŒä¸€å†…å­˜å—æˆ–å…¶åæ°å¥½ä¸€å­—èŠ‚å¤„
 
 	auto pRead = m_UriInfo.UriString.cbegin();
 	auto pLastBegin = pRead;
 	const auto pEnd = m_UriInfo.UriString.cend();
 
-	nStrView user; // ÁÙÊ±´æ´¢ÓÃ»§Ãû£¬ÒòÎª¿ÉÄÜ²¢·ÇÕæÕıµÄÓÃ»§Ãû
+	nStrView user; // ä¸´æ—¶å­˜å‚¨ç”¨æˆ·åï¼Œå› ä¸ºå¯èƒ½å¹¶éçœŸæ­£çš„ç”¨æˆ·å
 	nuShort port;
 
 	for (; pRead < pEnd; ++pRead)
@@ -150,12 +163,12 @@ void Uri::ParseUri()
 				{
 					m_UriInfo.Scheme = nStrView{ pLastBegin, pRead };
 					pLastBegin = pRead + 3;
-					pRead += 2; // Ñ­»·»áÔÙºóÒÆÒ»Î»
+					pRead += 2; // å¾ªç¯ä¼šå†åç§»ä¸€ä½
 					state = State::User;
 				}
 				else
 				{
-					pRead = pEnd - 1; // Á¢¼´½áÊøÑ­»·
+					pRead = pEnd - 1; // ç«‹å³ç»“æŸå¾ªç¯
 					state = State::Reject;
 				}
 			}
@@ -175,7 +188,7 @@ void Uri::ParseUri()
 				state = State::Host;
 				break;
 			case '/':
-				// ¶ÁÈ¡µÄÊÇHost¶ø²»ÊÇUser
+				// è¯»å–çš„æ˜¯Hostè€Œä¸æ˜¯User
 				m_UriInfo.Host = nStrView{ pLastBegin, pRead };
 				pLastBegin = pRead + 1;
 				state = State::Path;
@@ -194,8 +207,8 @@ void Uri::ParseUri()
 				state = State::Host;
 				break;
 			case '/':
-				// ¶ÁÈ¡µÄÊÇPort¶ø²»ÊÇPassword£¬Ö®Ç°¶ÁÈ¡µÄÊÇHost¶ø²»ÊÇUser
-				// **Äã±»Æ­ÁË£¡**
+				// è¯»å–çš„æ˜¯Portè€Œä¸æ˜¯Passwordï¼Œä¹‹å‰è¯»å–çš„æ˜¯Hostè€Œä¸æ˜¯User
+				// **ä½ è¢«éª—äº†ï¼**
 				m_UriInfo.Host = user;
 				if (!TryParseNumber(pLastBegin, pRead, port))
 				{
