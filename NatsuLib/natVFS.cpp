@@ -61,8 +61,35 @@ Uri::Uri(Uri const& other)
 }
 
 Uri::Uri(Uri&& other) noexcept
-	: m_UriInfo{ std::move(other.m_UriInfo.UriString) }
 {
+	const auto otherBegin = other.m_UriInfo.UriString.cbegin();
+
+	using OffsetPair = std::pair<std::iterator_traits<nString::const_iterator>::difference_type, std::iterator_traits<nString::const_iterator>::difference_type>;
+
+	m_UriInfo.Port = other.m_UriInfo.Port;
+
+#define URI_ASSIGN(prop) OffsetPair prop{ std::distance(other.m_UriInfo.prop.cbegin(), otherBegin), std::distance(other.m_UriInfo.prop.cend(), otherBegin) }
+	URI_ASSIGN(Scheme);
+	URI_ASSIGN(User);
+	URI_ASSIGN(Password);
+	URI_ASSIGN(Host);
+	URI_ASSIGN(Path);
+	URI_ASSIGN(Query);
+	URI_ASSIGN(Fragment);
+#undef URI_ASSIGN
+
+	m_UriInfo.UriString = std::move(other.m_UriInfo.UriString);
+	const auto view = m_UriInfo.UriString.GetView();
+
+#define URI_ASSIGN(prop) m_UriInfo.prop = view.Slice(prop.first, prop.second)
+	URI_ASSIGN(Scheme);
+	URI_ASSIGN(User);
+	URI_ASSIGN(Password);
+	URI_ASSIGN(Host);
+	URI_ASSIGN(Path);
+	URI_ASSIGN(Query);
+	URI_ASSIGN(Fragment);
+#undef URI_ASSIGN
 }
 
 Uri& Uri::operator=(Uri const& other)

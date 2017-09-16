@@ -1,6 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////
+ï»¿////////////////////////////////////////////////////////////////////////////////
 ///	@file	natMisc.h
-///	@brief	NatsuLibÔÓÏî¹¤¾ß
+///	@brief	NatsuLibæ‚é¡¹å·¥å…·
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "natType.h"
@@ -229,8 +229,8 @@ namespace NatsuLib
 	template <typename T, typename Self>
 	using NonSelf = std::bool_constant<!std::is_same<std::decay_t<T>, Self>::value && !std::is_base_of<Self, std::decay_t<T>>::value>;
 
-	///	@brief	×Ô¶¯»Øµ÷Óò
-	///	@remark	ÓÃÓÚÔÚÎö¹¹Ê±Ö´ĞĞÌØ¶¨²Ù×÷
+	///	@brief	è‡ªåŠ¨å›è°ƒåŸŸ
+	///	@remark	ç”¨äºåœ¨ææ„æ—¶æ‰§è¡Œç‰¹å®šæ“ä½œ
 	template <typename T, typename... Args>
 	class natScope final
 	{
@@ -273,8 +273,8 @@ namespace NatsuLib
 	using detail_::defaultconstruct;
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	¿É¿ÕÀàĞÍ
-	///	@note	ÓÉÓÚstd::optional½øÈëC++17£¬´ËÀàÒÑÎŞ±ØÒª¼ÌĞøÊ¹ÓÃ£¬ÎªÁË¼æÈİĞÔ¶ø±£Áô
+	///	@brief	å¯ç©ºç±»å‹
+	///	@note	ç”±äºstd::optionalè¿›å…¥C++17ï¼Œæ­¤ç±»å·²æ— å¿…è¦ç»§ç»­ä½¿ç”¨ï¼Œä¸ºäº†å…¼å®¹æ€§è€Œä¿ç•™
 	////////////////////////////////////////////////////////////////////////////////
 	template <typename T>
 	class Optional final
@@ -526,7 +526,7 @@ namespace NatsuLib
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	·¶Î§
+	///	@brief	èŒƒå›´
 	////////////////////////////////////////////////////////////////////////////////
 	template <typename Iter>
 	class Range final
@@ -659,95 +659,98 @@ namespace NatsuLib
 		Iter m_IterBegin, m_IterEnd;
 	};
 
-	template <typename Iter>
-	class natRange_ptrIterator final
+	namespace detail_
 	{
-	public:
-		typedef typename std::iterator_traits<Iter>::iterator_category iterator_category;
-		typedef typename std::iterator_traits<Iter>::value_type value_type;
-		typedef typename std::iterator_traits<Iter>::difference_type difference_type;
-		typedef typename std::iterator_traits<Iter>::reference reference;
-		typedef typename std::iterator_traits<Iter>::pointer pointer;
-
-		constexpr explicit natRange_ptrIterator(Iter iter)
-			: m_Iter(iter)
+		template <typename Iter>
+		class natRange_ptrIterator final
 		{
-		}
+		public:
+			typedef typename std::iterator_traits<Iter>::iterator_category iterator_category;
+			typedef typename std::iterator_traits<Iter>::value_type value_type;
+			typedef typename std::iterator_traits<Iter>::difference_type difference_type;
+			typedef typename std::iterator_traits<Iter>::reference reference;
+			typedef typename std::iterator_traits<Iter>::pointer pointer;
 
-		constexpr operator pointer() const
-		{
-			return std::addressof(*m_Iter);
-		}
+			constexpr explicit natRange_ptrIterator(Iter iter)
+				: m_Iter(iter)
+			{
+			}
 
-		decltype(auto) operator*() const
-		{
-			return *m_Iter;
-		}
+			constexpr operator pointer() const
+			{
+				return std::addressof(*m_Iter);
+			}
 
-		natRange_ptrIterator& operator++() &
-		{
-			return *this += 1;
-		}
+			decltype(auto) operator*() const
+			{
+				return *m_Iter;
+			}
 
-		natRange_ptrIterator& operator--() &
-		{
-			return *this -= 1;
-		}
+			natRange_ptrIterator& operator++() &
+			{
+				return *this += 1;
+			}
 
-		natRange_ptrIterator operator+(difference_type n) const
-		{
-			return natRange_ptrIterator(std::next(m_Iter, n));
-		}
+			natRange_ptrIterator& operator--() &
+			{
+				return *this -= 1;
+			}
 
-		natRange_ptrIterator operator-(difference_type n) const
-		{
-			return natRange_ptrIterator(std::prev(m_Iter, n));
-		}
+			natRange_ptrIterator operator+(difference_type n) const
+			{
+				return natRange_ptrIterator(std::next(m_Iter, n));
+			}
 
-		natRange_ptrIterator& operator+=(difference_type n) &
-		{
-			std::advance(m_Iter, n);
-			return *this;
-		}
+			natRange_ptrIterator operator-(difference_type n) const
+			{
+				return natRange_ptrIterator(std::prev(m_Iter, n));
+			}
 
-		natRange_ptrIterator& operator-=(difference_type n) &
-		{
-			std::advance(m_Iter, -n);
-			return *this;
-		}
+			natRange_ptrIterator& operator+=(difference_type n) &
+			{
+				std::advance(m_Iter, n);
+				return *this;
+			}
 
-		decltype(auto) operator[](difference_type n) const
-		{
-			return *std::next(m_Iter, n);
-		}
+			natRange_ptrIterator& operator-=(difference_type n) &
+			{
+				std::advance(m_Iter, -n);
+				return *this;
+			}
 
-		nBool operator<=(natRange_ptrIterator const& other) const
-		{
-			return std::distance(m_Iter, other.m_Iter) <= 0;
-		}
+			decltype(auto) operator[](difference_type n) const
+			{
+				return *std::next(m_Iter, n);
+			}
 
-		nBool operator>=(natRange_ptrIterator const& other) const
-		{
-			return std::distance(m_Iter, other.m_Iter) >= 0;
-		}
+			nBool operator<=(natRange_ptrIterator const& other) const
+			{
+				return std::distance(m_Iter, other.m_Iter) <= 0;
+			}
 
-		nBool operator==(natRange_ptrIterator const& other) const
-		{
-			return m_Iter == other.m_Iter;
-		}
+			nBool operator>=(natRange_ptrIterator const& other) const
+			{
+				return std::distance(m_Iter, other.m_Iter) >= 0;
+			}
 
-		nBool operator<(natRange_ptrIterator const& other) const
-		{
-			return !(*this >= other);
-		}
+			nBool operator==(natRange_ptrIterator const& other) const
+			{
+				return m_Iter == other.m_Iter;
+			}
 
-		nBool operator>(natRange_ptrIterator const& other) const
-		{
-			return !(*this <= other);
-		}
-	private:
-		Iter m_Iter;
-	};
+			nBool operator<(natRange_ptrIterator const& other) const
+			{
+				return !(*this >= other);
+			}
+
+			nBool operator>(natRange_ptrIterator const& other) const
+			{
+				return !(*this <= other);
+			}
+		private:
+			Iter m_Iter;
+		};
+	}
 
 	template<typename Iter>
 	constexpr auto make_range(Iter begin, Iter end)
@@ -764,13 +767,13 @@ namespace NatsuLib
 	template<typename Range_t>
 	constexpr auto make_ptr_range(Range_t && r)
 	{
-		return Range<natRange_ptrIterator<decltype(std::begin(r))>>(r);
+		return Range<detail_::natRange_ptrIterator<decltype(std::begin(r))>>(r);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	²»¿É¸´ÖÆÀà
-	///	@remark	Í¨¹ı¼Ì³Ğ´ËÀàÊ¹×ÓÀàÎŞ·¨¸´ÖÆ
-	///	@note	×ÓÀàÈÔ¿É±»ÒÆ¶¯
+	///	@brief	ä¸å¯å¤åˆ¶ç±»
+	///	@remark	é€šè¿‡ç»§æ‰¿æ­¤ç±»ä½¿å­ç±»æ— æ³•å¤åˆ¶
+	///	@note	å­ç±»ä»å¯è¢«ç§»åŠ¨
 	////////////////////////////////////////////////////////////////////////////////
 	class noncopyable
 	{
@@ -787,8 +790,8 @@ namespace NatsuLib
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	²»¿ÉÒÆ¶¯Àà
-	///	@remark	Í¨¹ı¼Ì³Ğ´ËÀàÊ¹×ÓÀàÎŞ·¨¸´ÖÆ»òÒÆ¶¯
+	///	@brief	ä¸å¯ç§»åŠ¨ç±»
+	///	@remark	é€šè¿‡ç»§æ‰¿æ­¤ç±»ä½¿å­ç±»æ— æ³•å¤åˆ¶æˆ–ç§»åŠ¨
 	////////////////////////////////////////////////////////////////////////////////
 	class nonmovable
 	{
@@ -803,7 +806,7 @@ namespace NatsuLib
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	ÑÓ³ÙÇóÖµ
+	///	@brief	å»¶è¿Ÿæ±‚å€¼
 	////////////////////////////////////////////////////////////////////////////////
 	template <typename T>
 	class Lazy
@@ -847,8 +850,8 @@ namespace NatsuLib
 
 		T const& GetValue() const
 		{
-			// constµÄLazy²»ÄÜÉú³ÉÖµ£¬µ«ÊÇÈç¹ûÖµÒÑ¾­Éú³É¿ÉÒÔ»ñÈ¡
-			// Èç¹ûÖµÎ´×¼±¸ºÃ»áÅ×³öÒì³£
+			// constçš„Lazyä¸èƒ½ç”Ÿæˆå€¼ï¼Œä½†æ˜¯å¦‚æœå€¼å·²ç»ç”Ÿæˆå¯ä»¥è·å–
+			// å¦‚æœå€¼æœªå‡†å¤‡å¥½ä¼šæŠ›å‡ºå¼‚å¸¸
 			return m_Value.value();
 		}
 
