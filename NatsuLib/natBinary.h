@@ -1,6 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////
+ï»¿////////////////////////////////////////////////////////////////////////////////
 ///	@file	natBinary.h
-///	@brief	¶ş½øÖÆ¶ÁĞ´¹¤¾ßÀà
+///	@brief	äºŒè¿›åˆ¶è¯»å†™å·¥å…·ç±»
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
@@ -25,9 +25,9 @@ namespace NatsuLib
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief		¶ş½øÖÆ¶ÁÈ¡Àà
-	///	@note		¶ÁÈ¡Àà²¢ÒÔÌØ¶¨×Ö½ÚĞò×÷ÎªÌØ¶¨PODÀàĞÍ½â¶Á
-	///	@warning	²»ÊÊÓÃÓÚ¶à¸ö³ÉÔ±µÄ½á¹¹Ìå
+	///	@brief		äºŒè¿›åˆ¶è¯»å–ç±»
+	///	@note		è¯»å–ç±»å¹¶ä»¥ç‰¹å®šå­—èŠ‚åºä½œä¸ºç‰¹å®šPODç±»å‹è§£è¯»
+	///	@warning	ä¸é€‚ç”¨äºå¤šä¸ªæˆå‘˜çš„ç»“æ„ä½“
 	////////////////////////////////////////////////////////////////////////////////
 	class natBinaryReader
 		: public natRefObjImpl<natBinaryReader, natRefObj>
@@ -41,8 +41,8 @@ namespace NatsuLib
 
 		void Skip(nLen bytes);
 
-		///	@brief		¶ÁÈ¡Á÷²¢×÷ÎªPODÀàĞÍT½â¶Á
-		///	@warning	²»ÊÊÓÃÓÚ¶à¸ö³ÉÔ±µÄ½á¹¹Ìå
+		///	@brief		è¯»å–æµå¹¶ä½œä¸ºPODç±»å‹Tè§£è¯»
+		///	@warning	ä¸é€‚ç”¨äºå¤šä¸ªæˆå‘˜çš„ç»“æ„ä½“
 		template <typename T>
 		std::enable_if_t<std::is_pod<T>::value, T> ReadPod()
 		{
@@ -52,8 +52,8 @@ namespace NatsuLib
 			return ret;
 		}
 
-		///	@brief		¶ÁÈ¡Á÷²¢×÷ÎªPODÀàĞÍT½â¶Á
-		///	@warning	²»ÊÊÓÃÓÚ¶à¸ö³ÉÔ±µÄ½á¹¹Ìå
+		///	@brief		è¯»å–æµå¹¶ä½œä¸ºPODç±»å‹Tè§£è¯»
+		///	@warning	ä¸é€‚ç”¨äºå¤šä¸ªæˆå‘˜çš„ç»“æ„ä½“
 		template <typename T>
 		std::enable_if_t<std::is_pod<T>::value> ReadPod(T& obj)
 		{
@@ -76,9 +76,9 @@ namespace NatsuLib
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief		¶ş½øÖÆĞ´ÈëÀà
-	///	@note		½«ÌØ¶¨PODÀàĞÍÒÔÌØ¶¨×Ö½ÚĞòĞ´ÈëÁ÷
-	///	@warning	²»ÊÊÓÃÓÚ¶à¸ö³ÉÔ±µÄ½á¹¹Ìå
+	///	@brief		äºŒè¿›åˆ¶å†™å…¥ç±»
+	///	@note		å°†ç‰¹å®šPODç±»å‹ä»¥ç‰¹å®šå­—èŠ‚åºå†™å…¥æµ
+	///	@warning	ä¸é€‚ç”¨äºå¤šä¸ªæˆå‘˜çš„ç»“æ„ä½“
 	////////////////////////////////////////////////////////////////////////////////
 	class natBinaryWriter
 		: public natRefObjImpl<natBinaryWriter, natRefObj>
@@ -90,8 +90,8 @@ namespace NatsuLib
 		natRefPointer<natStream> GetUnderlyingStream() const noexcept;
 		Environment::Endianness GetEndianness() const noexcept;
 
-		///	@brief		½«PODÀàĞÍµÄÊµÀıĞ´ÈëÁ÷
-		///	@warning	²»ÊÊÓÃÓÚ¶à¸ö³ÉÔ±µÄ½á¹¹Ìå
+		///	@brief		å°†PODç±»å‹çš„å®ä¾‹å†™å…¥æµ
+		///	@warning	ä¸é€‚ç”¨äºå¤šä¸ªæˆå‘˜çš„ç»“æ„ä½“
 		template <typename T>
 		std::enable_if_t<std::is_pod<T>::value> WritePod(T const& obj)
 		{

@@ -224,7 +224,17 @@ namespace NatsuLib
 			nBool m_Constructed;
 			alignas(T) nByte m_Storage[sizeof(T)];
 		};
+
+		struct OnlyFail_t
+		{
+			constexpr OnlyFail_t() = default;
+		};
+
+		constexpr OnlyFail_t OnlyFail{};
 	}
+
+	using detail_::OnlyFail_t;
+	using detail_::OnlyFail;
 
 	template <typename T, typename Self>
 	using NonSelf = std::bool_constant<!std::is_same<std::decay_t<T>, Self>::value && !std::is_base_of<Self, std::decay_t<T>>::value>;
@@ -236,25 +246,31 @@ namespace NatsuLib
 	{
 	public:
 		constexpr explicit natScope(T CallableObj, Args&&... args)
-			: m_ShouldCall(true), m_CallableObj(CallableObj), m_Args(std::forward<Args>(args)...)
+			: m_OnlyFail{ false }, m_ShouldCall(true), m_CallableObj(CallableObj), m_Args(std::forward<Args>(args)...)
+		{
+		}
+
+		constexpr explicit natScope(OnlyFail_t, T CallableObj, Args&&... args)
+			: m_OnlyFail{ true }, m_ShouldCall(true), m_CallableObj(CallableObj), m_Args(std::forward<Args>(args)...)
 		{
 		}
 
 		constexpr natScope(natScope && other) noexcept
-			: m_ShouldCall(true), m_CallableObj(std::move(other.m_CallableObj)), m_Args(std::move(other.m_Args))
+			: m_OnlyFail{ other.m_OnlyFail }, m_ShouldCall(true), m_CallableObj(std::move(other.m_CallableObj)), m_Args(std::move(other.m_Args))
 		{
 			other.m_ShouldCall = false;
 		}
 
 		~natScope()
 		{
-			if (m_ShouldCall)
+			if (m_ShouldCall && (m_OnlyFail && std::uncaught_exceptions()))
 			{
 				std::apply(m_CallableObj, m_Args);
 			}
 		}
 
 	private:
+		const nBool m_OnlyFail;
 		nBool m_ShouldCall;
 		T m_CallableObj;
 		std::tuple<Args const&...> m_Args;
