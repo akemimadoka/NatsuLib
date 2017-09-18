@@ -875,6 +875,54 @@ namespace NatsuLib
 		std::function<T()> m_Function;
 		Optional<T> m_Value;
 	};
+
+	namespace detail_
+	{
+		template <typename F, typename ...G>
+		struct OverloadType
+			: OverloadType<F>::type, OverloadType<G...>::type
+		{
+			using type = OverloadType;
+			using OverloadType<F>::type::operator();
+			using OverloadType<G...>::type::operator();
+
+			template <typename F_, typename ...G_>
+			constexpr explicit OverloadType(F_&& f, G_&&... g)
+				: OverloadType<F>::type(std::forward<F_>(f))
+				, OverloadType<G...>::type(std::forward<G_>(g)...)
+			{
+			}
+		};
+
+		template <typename F>
+		struct OverloadType<F>
+		{
+			using type = F;
+		};
+
+		template <typename R, typename ...Args>
+		struct OverloadType<R(*)(Args...)>
+		{
+			using type = OverloadType;
+			R(* const FunctionPointer)(Args...);
+
+			explicit constexpr OverloadType(R(*fp)(Args...)) noexcept
+				: FunctionPointer(fp)
+			{
+			}
+
+			constexpr R operator()(Args... args) const noexcept(noexcept(FunctionPointer(static_cast<Args&&>(args)...)))
+			{
+				return FunctionPointer(std::forward<Args>(args)...);
+			}
+		};
+	}
+
+	template <typename... F, typename Overload = typename detail_::OverloadType<std::decay_t<F>...>::type>
+	constexpr Overload MakeOverload(F&&... f)
+	{
+		return Overload(std::forward<F>(f)...);
+	}
 }
 
 namespace std
