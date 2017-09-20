@@ -1,4 +1,4 @@
-#pragma once
+Ôªø#pragma once
 #include "natConfig.h"
 #include "natType.h"
 #include <cstddef>
@@ -36,7 +36,7 @@ namespace NatsuLib
 		typedef char CharType;
 		enum
 		{
-			MaxCharSize = 4,	///< @brief	∂‘”⁄¥À±‡¬Î£¨“ª∏ˆ”––ß◊÷∑˚ø…ƒ‹’º”√µƒ◊Ó¥ÛCharType ˝
+			MaxCharSize = 4,	///< @brief	ÂØπ‰∫éÊ≠§ÁºñÁ†ÅÔºå‰∏Ä‰∏™ÊúâÊïàÂ≠óÁ¨¶ÂèØËÉΩÂç†Áî®ÁöÑÊúÄÂ§ßCharTypeÊï∞
 		};
 
 		static size_t GetCharCount(CharType Char) noexcept
@@ -48,7 +48,7 @@ namespace NatsuLib
 			}
 			if (unsignedChar - 0x80 < 0x40)
 			{
-				// ¥ÌŒÛµƒ±‡¬Î
+				// ÈîôËØØÁöÑÁºñÁ†Å
 				return size_t(-1);
 			}
 			if (unsignedChar - 0xC0 < 0x20)
@@ -163,7 +163,7 @@ namespace NatsuLib
 			{
 				while (true)
 				{
-					if (srcEnd - current < static_cast<std::ptrdiff_t>(repeatCount))
+					if (srcEnd - current < static_cast<ptrdiff_t>(repeatCount))
 					{
 						return npos;
 					}
@@ -174,7 +174,7 @@ namespace NatsuLib
 					++current;
 				}
 
-				std::ptrdiff_t matchLen = 1;
+				ptrdiff_t matchLen = 1;
 				while (true)
 				{
 					if (static_cast<size_t>(matchLen) >= repeatCount)
@@ -221,7 +221,7 @@ namespace NatsuLib
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	±‡¬ÎΩ·π˚
+	///	@brief	ÁºñÁ†ÅÁªìÊûú
 	////////////////////////////////////////////////////////////////////////////////
 	enum class EncodingResult
 	{
@@ -238,9 +238,9 @@ namespace NatsuLib
 	std::pair<EncodingResult, char32_t*> EncodeUtf32(char32_t* strBegin, const char32_t* strEnd, char32_t input) noexcept;
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	◊÷∑˚¥Æ ”Õº
-	///	@tparam	stringType	◊÷∑˚¥Æµƒ±‡¬Î
-	///	@note	±Ì æ◊÷∑˚¥Æµƒ‘≠ º±Ì æ
+	///	@brief	Â≠óÁ¨¶‰∏≤ËßÜÂõæ
+	///	@tparam	stringType	Â≠óÁ¨¶‰∏≤ÁöÑÁºñÁ†Å
+	///	@note	Ë°®Á§∫Â≠óÁ¨¶‰∏≤ÁöÑÂéüÂßãË°®Á§∫
 	////////////////////////////////////////////////////////////////////////////////
 	template <StringType stringType>
 	class StringView
@@ -292,7 +292,7 @@ namespace NatsuLib
 		}
 
 		template <size_t N>
-		StringView(const CharType (&array)[N])
+		StringView(const CharType(&array)[N])
 			: StringView(array, array + N)
 		{
 		}
@@ -301,7 +301,7 @@ namespace NatsuLib
 		{
 		}
 
-		///	@brief	◊÷∑˚¥Æ ”Õº «∑ÒŒ™ø’
+		///	@brief	Â≠óÁ¨¶‰∏≤ËßÜÂõæÊòØÂê¶‰∏∫Á©∫
 		nBool IsEmpty() const noexcept
 		{
 			return m_StrBegin == m_StrEnd;
@@ -469,15 +469,15 @@ namespace NatsuLib
 			return 0;
 		}
 
-		StringView Slice(std::ptrdiff_t begin, std::ptrdiff_t end) const noexcept
+		StringView Slice(ptrdiff_t begin, ptrdiff_t end) const noexcept
 		{
 			const auto size = GetSize();
 			return { m_StrBegin + ApplyOffset(begin, size), m_StrBegin + ApplyOffset(end, size) };
 		}
 
-		///	@brief	◊÷∑˚¥Æ∑÷∏Ó∫Ø ˝
-		///	@param[in]	pattern		∑÷∏Ó◊÷∑˚
-		///	@param[in]	callableObject	ø…±ªµ˜”√µƒ∂‘œÛ£¨Ω” ‹≤Œ ˝Œ™StringView
+		///	@brief	Â≠óÁ¨¶‰∏≤ÂàÜÂâ≤ÂáΩÊï∞
+		///	@param[in]	pattern		ÂàÜÂâ≤Â≠óÁ¨¶
+		///	@param[in]	callableObject	ÂèØË¢´Ë∞ÉÁî®ÁöÑÂØπË±°ÔºåÊé•ÂèóÂèÇÊï∞‰∏∫StringView
 		template <typename CallableObject>
 		void Split(StringView const& pattern, CallableObject callableObject) const noexcept
 		{
@@ -511,7 +511,7 @@ namespace NatsuLib
 			m_StrEnd = end;
 		}
 
-		void Assign(std::nullptr_t, std::nullptr_t = nullptr) noexcept
+		void Assign(nullptr_t, nullptr_t = nullptr) noexcept
 		{
 			m_StrBegin = nullptr;
 			m_StrEnd = nullptr;
@@ -532,7 +532,7 @@ namespace NatsuLib
 			Assign(begin, detail_::GetEndOfString(begin));
 		}
 
-		size_t Find(StringView const& pattern, std::ptrdiff_t nBegin = 0) const noexcept
+		size_t Find(StringView const& pattern, ptrdiff_t nBegin = 0) const noexcept
 		{
 			const auto length = GetSize();
 			const auto realBegin = ApplyOffset(nBegin, length);
@@ -553,7 +553,7 @@ namespace NatsuLib
 			return pos + realBegin;
 		}
 
-		size_t FindBackward(StringView const& pattern, std::ptrdiff_t nEnd = -1) const noexcept
+		size_t FindBackward(StringView const& pattern, ptrdiff_t nEnd = -1) const noexcept
 		{
 			const auto length = GetSize();
 			const auto realEnd = ApplyOffset(nEnd, length);
@@ -574,7 +574,7 @@ namespace NatsuLib
 			return realEnd - pos - patternLength;
 		}
 
-		size_t FindCharRepeat(CharType findChar, size_t repeatCount, std::ptrdiff_t nBegin = 0) const noexcept
+		size_t FindCharRepeat(CharType findChar, size_t repeatCount, ptrdiff_t nBegin = 0) const noexcept
 		{
 			const auto length = GetSize();
 			const auto realBegin = ApplyOffset(nBegin, length);
@@ -594,7 +594,7 @@ namespace NatsuLib
 			return pos + realBegin;
 		}
 
-		size_t FindCharRepeatBackward(CharType findChar, size_t repeatCount, std::ptrdiff_t nEnd = 0) const noexcept
+		size_t FindCharRepeatBackward(CharType findChar, size_t repeatCount, ptrdiff_t nEnd = 0) const noexcept
 		{
 			const auto length = GetSize();
 			const auto realEnd = ApplyOffset(nEnd, length);
@@ -614,12 +614,12 @@ namespace NatsuLib
 			return realEnd - pos - repeatCount;
 		}
 
-		size_t Find(CharType findChar, std::ptrdiff_t nBegin = 0) const noexcept
+		size_t Find(CharType findChar, ptrdiff_t nBegin = 0) const noexcept
 		{
 			return FindCharRepeat(findChar, 1, nBegin);
 		}
 
-		size_t FindBackward(CharType findChar, std::ptrdiff_t nEnd = -1) const noexcept
+		size_t FindBackward(CharType findChar, ptrdiff_t nEnd = -1) const noexcept
 		{
 			return FindCharRepeatBackward(findChar, 1, nEnd);
 		}
@@ -673,7 +673,7 @@ namespace NatsuLib
 
 		nBool DoesOverlapWith(StringView const& other) const noexcept
 		{
-			// FIXME: ø…ƒ‹ «UB£¨≤Œº˚n4640 5.9 (3)
+			// FIXME: ÂèØËÉΩÊòØUBÔºåÂèÇËßÅn4640 5.9 (3)
 			return m_StrBegin < other.m_StrEnd && m_StrEnd > other.m_StrBegin;
 		}
 
@@ -681,7 +681,7 @@ namespace NatsuLib
 		CharIterator m_StrBegin;
 		CharIterator m_StrEnd;
 
-		static size_t ApplyOffset(std::ptrdiff_t offset, size_t size) noexcept
+		static size_t ApplyOffset(ptrdiff_t offset, size_t size) noexcept
 		{
 			auto ret = static_cast<size_t>(offset);
 			if (offset < 0)
@@ -726,7 +726,7 @@ namespace NatsuLib
 			{
 				Reserve(capacity);
 			}
-			
+
 			StringStorage(const CharType* str, size_t length)
 				: StringStorage{}
 			{
@@ -857,9 +857,9 @@ namespace NatsuLib
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	◊÷∑˚¥Æ
-	///	@tparam	stringType	◊÷∑˚¥Æ±‡¬Î
-	///	@note	±£¥Ê◊÷∑˚¥Æµƒ‘≠ º±Ì æ
+	///	@brief	Â≠óÁ¨¶‰∏≤
+	///	@tparam	stringType	Â≠óÁ¨¶‰∏≤ÁºñÁ†Å
+	///	@note	‰øùÂ≠òÂ≠óÁ¨¶‰∏≤ÁöÑÂéüÂßãË°®Á§∫
 	////////////////////////////////////////////////////////////////////////////////
 	template <StringType stringType>
 	class String
@@ -874,7 +874,7 @@ namespace NatsuLib
 		typedef const CharType* const_iterator;
 		typedef std::reverse_iterator<iterator> reverse_iterator;
 		typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
-		
+
 		enum : size_t
 		{
 			npos = detail_::npos,
@@ -1389,10 +1389,10 @@ using NatsuLib::nTChar;
 using NatsuLib::nStrView;
 using NatsuLib::nString;
 
-#ifdef _WIN32
-
 namespace NatsuLib
 {
+
+#ifdef _WIN32
 	namespace detail_
 	{
 		template <typename CharType>
@@ -1401,7 +1401,11 @@ namespace NatsuLib
 		template <>
 		struct SelectStringType<char>
 		{
+#ifndef NATSULIB_UTF8_SOURCE
 			static constexpr StringType SelectedStringType = StringType::Ansi;
+#else
+			static constexpr StringType SelectedStringType = StringType::Utf8;
+#endif
 		};
 
 		template <>
@@ -1422,12 +1426,8 @@ namespace NatsuLib
 			static constexpr StringType SelectedStringType = StringType::Wide;
 		};
 	}
-}
 
 #else
-
-namespace NatsuLib
-{
 	namespace detail_
 	{
 		template <typename CharType>
@@ -1458,182 +1458,86 @@ namespace NatsuLib
 			static constexpr StringType SelectedStringType = StringType::Utf32;
 		};
 	}
-}
-
 #endif
 
-template <typename CharType>
-std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::StringView<NatsuLib::detail_::SelectStringType<CharType>::SelectedStringType> const& str)
-{
-	return os.write(str.data(), str.size());
-}
+	template <typename CharType>
+	std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, StringView<detail_::SelectStringType<CharType>::SelectedStringType> const& str)
+	{
+		return os.write(str.data(), str.size());
+	}
 
-template <typename CharType, NatsuLib::StringType stringType, std::enable_if_t<NatsuLib::detail_::SelectStringType<CharType>::SelectedStringType != stringType, int> = 0>
-std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::StringView<stringType> const& str)
-{
-	return os << NatsuLib::String<NatsuLib::detail_::SelectStringType<CharType>::SelectedStringType>{ str }.GetView();
-}
+	template <typename CharType, StringType stringType, std::enable_if_t<detail_::SelectStringType<CharType>::SelectedStringType != stringType, int> = 0>
+	std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, StringView<stringType> const& str)
+	{
+		return os << NatsuLib::String<detail_::SelectStringType<CharType>::SelectedStringType>{ str }.GetView();
+	}
 
-template <typename CharType, NatsuLib::StringType stringType>
-std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, NatsuLib::String<stringType> const& str)
-{
-	return os << str.GetView();
-}
+	template <typename CharType, StringType stringType>
+	std::basic_ostream<CharType>& operator<<(std::basic_ostream<CharType>& os, String<stringType> const& str)
+	{
+		return os << str.GetView();
+	}
 
-template <typename CharType, NatsuLib::StringType stringType>
-std::basic_istream<CharType>& operator>>(std::basic_istream<CharType>& is, NatsuLib::String<stringType>& str)
-{
-	std::basic_string<CharType> tmpStr;
-	is >> tmpStr;
-	str.Assign(NatsuLib::StringView<NatsuLib::detail_::SelectStringType<CharType>::SelectedStringType>{ tmpStr.c_str() });
-	return is;
-}
+	template <typename CharType, StringType stringType>
+	std::basic_istream<CharType>& operator>>(std::basic_istream<CharType>& is, String<stringType>& str)
+	{
+		std::basic_string<CharType> tmpStr;
+		is >> tmpStr;
+		str.Assign(NatsuLib::StringView<detail_::SelectStringType<CharType>::SelectedStringType>{ tmpStr.c_str() });
+		return is;
+	}
 
 #ifdef _MSC_VER
 #pragma pop_macro("max")
 #endif
 
-NATINLINE NatsuLib::U8StringView operator""_u8v(const NatsuLib::U8StringView::CharType* str, size_t length) noexcept
-{
-	return { str,length };
-}
+	template <StringType stringTypel, StringType stringTyper>
+	String<stringTypel> operator+(StringView<stringTypel> const& left, StringView<stringTyper> const& right)
+	{
+		String<stringTypel> ret{ left };
+		ret.Append(right);
+		return ret;
+	}
 
-NATINLINE NatsuLib::U8String operator""_u8s(NatsuLib::U8StringView::CharType Char) noexcept
-{
-	return NatsuLib::U8StringView{ Char };
-}
+	template <StringType stringTypel, StringType stringTyper>
+	String<stringTypel> operator+(String<stringTypel> const& left, StringView<stringTyper> const& right)
+	{
+		return left.GetView() + right;
+	}
 
-NATINLINE NatsuLib::U8String operator""_u8s(const NatsuLib::U8String::CharType* str, size_t length) noexcept
-{
-	return NatsuLib::U8StringView{ str,length };
-}
+	template <StringType stringTypel, StringType stringTyper>
+	String<stringTypel> operator+(StringView<stringTypel> const& left, String<stringTyper> const& right)
+	{
+		return left + right.GetView();
+	}
 
-NATINLINE NatsuLib::U16StringView operator""_u16v(const NatsuLib::U16StringView::CharType* str, size_t length) noexcept
-{
-	return { str,length };
-}
+	template <StringType stringTypel, StringType stringTyper>
+	String<stringTypel> operator+(String<stringTypel> const& left, String<stringTyper> const& right)
+	{
+		return left.GetView() + right.GetView();
+	}
 
-NATINLINE NatsuLib::U16String operator""_u16s(NatsuLib::U16StringView::CharType Char) noexcept
-{
-	return NatsuLib::U16StringView{ Char };
-}
+	template <StringType stringTypel, StringType stringTyper>
+	String<stringTypel>& operator+=(String<stringTypel>& left, StringView<stringTyper> const& right)
+	{
+		left.Append(right);
+		return left;
+	}
 
-NATINLINE NatsuLib::U16String operator""_u16s(const NatsuLib::U16String::CharType* str, size_t length) noexcept
-{
-	return NatsuLib::U16StringView{ str,length };
-}
+	template <StringType stringTypel, StringType stringTyper>
+	String<stringTypel>& operator+=(String<stringTypel>& left, String<stringTyper> const& right)
+	{
+		left.Append(right);
+		return left;
+	}
 
-NATINLINE NatsuLib::U32StringView operator""_u32v(const NatsuLib::U32StringView::CharType* str, size_t length) noexcept
-{
-	return { str,length };
-}
-
-NATINLINE NatsuLib::U32String operator""_u32s(NatsuLib::U32StringView::CharType Char) noexcept
-{
-	return NatsuLib::U32StringView{ Char };
-}
-
-NATINLINE NatsuLib::U32String operator""_u32s(const NatsuLib::U32String::CharType* str, size_t length) noexcept
-{
-	return NatsuLib::U32StringView{ str,length };
-}
-
-#ifdef _WIN32
-NATINLINE NatsuLib::AnsiStringView operator""_av(const NatsuLib::AnsiStringView::CharType* str, size_t length) noexcept
-{
-	return { str,length };
-}
-
-NATINLINE NatsuLib::AnsiString operator""_as(NatsuLib::AnsiStringView::CharType Char) noexcept
-{
-	return NatsuLib::AnsiStringView{ Char };
-}
-
-NATINLINE NatsuLib::AnsiString operator""_as(const NatsuLib::AnsiString::CharType* str, size_t length) noexcept
-{
-	return NatsuLib::AnsiStringView{ str,length };
-}
-
-NATINLINE NatsuLib::WideStringView operator""_wv(const NatsuLib::WideStringView::CharType* str, size_t length) noexcept
-{
-	return{ str,length };
-}
-
-NATINLINE NatsuLib::WideString operator""_ws(NatsuLib::WideStringView::CharType Char) noexcept
-{
-	return NatsuLib::WideStringView{ Char };
-}
-
-NATINLINE NatsuLib::WideString operator""_ws(const NatsuLib::WideString::CharType* str, size_t length) noexcept
-{
-	return NatsuLib::WideStringView{ str,length };
-}
-#endif
-
-NATINLINE nStrView operator""_nv(const nU8Char* str, size_t length) noexcept
-{
-	return { str, length };
-}
-
-NATINLINE nString operator""_ns(nU8Char Char) noexcept
-{
-	return nStrView{ Char };
-}
-
-NATINLINE nString operator""_ns(const nU8Char* str, size_t length)
-{
-	return nStrView{ str, length };
-}
-
-template <NatsuLib::StringType stringTypel, NatsuLib::StringType stringTyper>
-NatsuLib::String<stringTypel> operator+(NatsuLib::StringView<stringTypel> const& left, NatsuLib::StringView<stringTyper> const& right)
-{
-	NatsuLib::String<stringTypel> ret{ left };
-	ret.Append(right);
-	return ret;
-}
-
-template <NatsuLib::StringType stringTypel, NatsuLib::StringType stringTyper>
-NatsuLib::String<stringTypel> operator+(NatsuLib::String<stringTypel> const& left, NatsuLib::StringView<stringTyper> const& right)
-{
-	return left.GetView() + right;
-}
-
-template <NatsuLib::StringType stringTypel, NatsuLib::StringType stringTyper>
-NatsuLib::String<stringTypel> operator+(NatsuLib::StringView<stringTypel> const& left, NatsuLib::String<stringTyper> const& right)
-{
-	return left + right.GetView();
-}
-
-template <NatsuLib::StringType stringTypel, NatsuLib::StringType stringTyper>
-NatsuLib::String<stringTypel> operator+(NatsuLib::String<stringTypel> const& left, NatsuLib::String<stringTyper> const& right)
-{
-	return left.GetView() + right.GetView();
-}
-
-template <NatsuLib::StringType stringTypel, NatsuLib::StringType stringTyper>
-NatsuLib::String<stringTypel>& operator+=(NatsuLib::String<stringTypel>& left, NatsuLib::StringView<stringTyper> const& right)
-{
-	left.Append(right);
-	return left;
-}
-
-template <NatsuLib::StringType stringTypel, NatsuLib::StringType stringTyper>
-NatsuLib::String<stringTypel>& operator+=(NatsuLib::String<stringTypel>& left, NatsuLib::String<stringTyper> const& right)
-{
-	left.Append(right);
-	return left;
-}
-
-namespace NatsuLib
-{
 	namespace detail_
 	{
-		// –ﬁ∏ƒ◊‘ https://www.byvoid.com/blog/string-hash-compare
+		// ‰øÆÊîπËá™ https://www.byvoid.com/blog/string-hash-compare
 		template <typename CharType>
 		size_t BKDRHash(const CharType* strBegin, const CharType* strEnd)
 		{
-			size_t seed = 131; // 31 131 1313 13131 131313 etc..
+			constexpr size_t seed = 131; // 31 131 1313 13131 131313 etc..
 			size_t hash = 0;
 
 			while (strBegin != strEnd)
@@ -1642,6 +1546,101 @@ namespace NatsuLib
 			}
 
 			return (hash & 0x7FFFFFFF);
+		}
+	}
+
+	inline namespace StringLiterals
+	{
+		NATINLINE U8StringView operator""_u8v(const U8StringView::CharType* str, std::size_t length) noexcept
+		{
+			return { str,length };
+		}
+
+		NATINLINE U8String operator""_u8s(U8StringView::CharType Char) noexcept
+		{
+			return U8StringView{ Char };
+		}
+
+		NATINLINE U8String operator""_u8s(const U8String::CharType* str, size_t length) noexcept
+		{
+			return U8StringView{ str,length };
+		}
+
+		NATINLINE U16StringView operator""_u16v(const U16StringView::CharType* str, size_t length) noexcept
+		{
+			return { str,length };
+		}
+
+		NATINLINE U16String operator""_u16s(U16StringView::CharType Char) noexcept
+		{
+			return U16StringView{ Char };
+		}
+
+		NATINLINE U16String operator""_u16s(const U16String::CharType* str, size_t length) noexcept
+		{
+			return U16StringView{ str,length };
+		}
+
+		NATINLINE U32StringView operator""_u32v(const U32StringView::CharType* str, size_t length) noexcept
+		{
+			return { str,length };
+		}
+
+		NATINLINE U32String operator""_u32s(U32StringView::CharType Char) noexcept
+		{
+			return U32StringView{ Char };
+		}
+
+		NATINLINE U32String operator""_u32s(const U32String::CharType* str, size_t length) noexcept
+		{
+			return U32StringView{ str,length };
+		}
+
+#ifdef _WIN32
+		NATINLINE AnsiStringView operator""_av(const AnsiStringView::CharType* str, size_t length) noexcept
+		{
+			return { str,length };
+		}
+
+		NATINLINE AnsiString operator""_as(AnsiStringView::CharType Char) noexcept
+		{
+			return AnsiStringView{ Char };
+		}
+
+		NATINLINE AnsiString operator""_as(const AnsiString::CharType* str, size_t length) noexcept
+		{
+			return AnsiStringView{ str,length };
+		}
+
+		NATINLINE WideStringView operator""_wv(const WideStringView::CharType* str, size_t length) noexcept
+		{
+			return{ str,length };
+		}
+
+		NATINLINE WideString operator""_ws(WideStringView::CharType Char) noexcept
+		{
+			return WideStringView{ Char };
+		}
+
+		NATINLINE WideString operator""_ws(const WideString::CharType* str, size_t length) noexcept
+		{
+			return WideStringView{ str,length };
+		}
+#endif
+
+		NATINLINE nStrView operator""_nv(const nU8Char* str, size_t length) noexcept
+		{
+			return { str, length };
+		}
+
+		NATINLINE nString operator""_ns(nU8Char Char) noexcept
+		{
+			return nStrView{ Char };
+		}
+
+		NATINLINE nString operator""_ns(const nU8Char* str, size_t length)
+		{
+			return nStrView{ str, length };
 		}
 	}
 }
@@ -1681,7 +1680,7 @@ namespace NatsuLib
 
 			const auto patternSize = static_cast<size_t>(std::distance(patternBegin, patternEnd));
 
-			std::ptrdiff_t* table{};
+			ptrdiff_t* table{};
 			auto shouldDelete = false;
 			const auto tableSize = patternSize - 1;
 			auto scope = make_scope([&table, &shouldDelete]
@@ -1692,14 +1691,14 @@ namespace NatsuLib
 				}
 			});
 
-			if (tableSize >= MaxAllocaSize / sizeof(std::ptrdiff_t))
+			if (tableSize >= MaxAllocaSize / sizeof(ptrdiff_t))
 			{
-				table = new(std::nothrow) std::ptrdiff_t[tableSize];
+				table = new(std::nothrow) ptrdiff_t[tableSize];
 				shouldDelete = true;
 			}
 			else if (tableSize > 0)
 			{
-				table = static_cast<std::ptrdiff_t*>(alloca(tableSize * sizeof(std::ptrdiff_t)));
+				table = static_cast<ptrdiff_t*>(alloca(tableSize * sizeof(ptrdiff_t)));
 				shouldDelete = false;
 			}
 
@@ -1709,7 +1708,7 @@ namespace NatsuLib
 
 				if (patternSize > 2)
 				{
-					std::ptrdiff_t pos = 1, cand = 0;
+					ptrdiff_t pos = 1, cand = 0;
 
 					do
 					{
@@ -1738,7 +1737,7 @@ namespace NatsuLib
 			{
 				for (;; ++current)
 				{
-					if (std::distance(current, srcEnd) < static_cast<std::ptrdiff_t>(patternSize))
+					if (std::distance(current, srcEnd) < static_cast<ptrdiff_t>(patternSize))
 					{
 						return npos;
 					}
@@ -1748,7 +1747,7 @@ namespace NatsuLib
 					}
 				}
 
-				std::ptrdiff_t matchLen = 1;
+				ptrdiff_t matchLen = 1;
 
 				while (true)
 				{

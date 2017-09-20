@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "natException.h"
 #include <cassert>
 #include <sstream>
@@ -165,14 +165,14 @@ namespace NatsuLib
 					case '%':
 						ss << '%';
 						break;
-					case 'b':	// ��չ
+					case 'b':	// 扩展
 						visit_at(argsTuple, index++, [&ss](auto&& item) { const auto fmt = ss.setf(std::ios_base::boolalpha); ss << Expect<nBool>::Get(item); ss.setf(fmt); });
 						break;
 					case 'c':
 						visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<nTChar>::Get(item); });
 						break;
 					case 's':
-						visit_at(argsTuple, index++, [&ss](auto&& item) { using ::operator<<; ss << Expect<nString>::Get(item); });
+						visit_at(argsTuple, index++, [&ss](auto&& item) { ss << Expect<nString>::Get(item); });
 						break;
 					case 'd':
 					case 'i':
@@ -392,7 +392,7 @@ namespace NatsuLib
 
 					if (tmpIndex < std::tuple_size<decltype(argsTuple)>::value)
 					{
-						visit_at(argsTuple, tmpIndex, [&ss](auto&& item) { using ::operator<<; ss << item; });
+						visit_at(argsTuple, tmpIndex, [&ss](auto&& item) { ss << item; });
 					}
 					
 					break;
