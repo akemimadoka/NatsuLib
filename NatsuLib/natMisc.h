@@ -263,7 +263,7 @@ namespace NatsuLib
 
 		~natScope()
 		{
-			if (m_ShouldCall && (m_OnlyFail && std::uncaught_exceptions()))
+			if (m_ShouldCall && (!m_OnlyFail || std::uncaught_exceptions()))
 			{
 				std::apply(m_CallableObj, m_Args);
 			}
