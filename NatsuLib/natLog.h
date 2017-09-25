@@ -1,6 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////
+ï»¿////////////////////////////////////////////////////////////////////////////////
 ///	@file	natLog.h
-///	@brief	ÈÕÖ¾Ïà¹Ø
+///	@brief	æ—¥å¿—ç›¸å…³
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include <string>
@@ -13,7 +13,7 @@
 namespace NatsuLib
 {
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	ÈÕÖ¾ÀàÊµÏÖ
+	///	@brief	æ—¥å¿—ç±»å®ç°
 	////////////////////////////////////////////////////////////////////////////////
 	class natLog final
 	{
@@ -53,46 +53,46 @@ namespace NatsuLib
 			nStrView m_Data;
 		};
 
-		///	@brief	Ô¤ÖÃÈÕÖ¾ÀàĞÍ
+		///	@brief	é¢„ç½®æ—¥å¿—ç±»å‹
 		enum LogType : nuInt
 		{
-			Msg,	///< @brief	ÏûÏ¢
-			Err,	///< @brief	´íÎó
-			Warn	///< @brief	¾¯¸æ
+			Msg,	///< @brief	æ¶ˆæ¯
+			Err,	///< @brief	é”™è¯¯
+			Warn	///< @brief	è­¦å‘Š
 		};
 
 		explicit natLog(natEventBus& eventBus);
 		~natLog();
 
-		///	@brief	¼ÇÂ¼ĞÅÏ¢
+		///	@brief	è®°å½•ä¿¡æ¯
 		template <typename... Arg>
 		void LogMsg(nStrView content, Arg &&... arg)
 		{
 			Log(Msg, content, std::forward<Arg>(arg)...);
 		}
 
-		///	@brief	¼ÇÂ¼´íÎó
+		///	@brief	è®°å½•é”™è¯¯
 		template <typename... Arg>
 		void LogErr(nStrView content, Arg &&... arg)
 		{
 			Log(Err, content, std::forward<Arg>(arg)...);
 		}
 
-		///	@brief	¼ÇÂ¼¾¯¸æ
+		///	@brief	è®°å½•è­¦å‘Š
 		template <typename... Arg>
 		void LogWarn(nStrView content, Arg &&... arg)
 		{
 			Log(Warn, content, std::forward<Arg>(arg)...);
 		}
 
-		///	@brief	¼ÇÂ¼
+		///	@brief	è®°å½•
 		template <typename... Arg>
 		void Log(nuInt type, nStrView content, Arg &&... arg)
 		{
 			UpdateLog(type, natUtil::FormatString(content, std::forward<Arg>(arg)...));
 		}
 
-		///	@brief	×¢²áÈÕÖ¾¸üĞÂÊÂ¼ş´¦Àíº¯Êı
+		///	@brief	æ³¨å†Œæ—¥å¿—æ›´æ–°äº‹ä»¶å¤„ç†å‡½æ•°
 		void RegisterLogUpdateEventFunc(natEventBus::EventListenerDelegate func);
 
 	private:
@@ -101,7 +101,6 @@ namespace NatsuLib
 			template <typename... RestChar_t>
 			static void Impl(nStrView str, std::basic_ostream<nChar>& currentOStream, std::basic_ostream<RestChar_t>&... _ostreams)
 			{
-				using ::operator<<;
 				currentOStream << str << std::endl;
 				Impl(str, _ostreams...);
 			}
@@ -109,7 +108,6 @@ namespace NatsuLib
 			template <typename... RestChar_t>
 			static void Impl(nStrView str, std::basic_ostream<nWChar>& currentOStream, std::basic_ostream<RestChar_t>&... _ostreams)
 			{
-				using ::operator<<;
 				currentOStream << str << std::endl;
 				Impl(str, _ostreams...);
 			}
