@@ -957,16 +957,14 @@ namespace NatsuLib
 			typedef typename std::iterator_traits<Iter2_t>::reference reference2;
 			typedef typename std::iterator_traits<Iter2_t>::pointer pointer2;
 
-			typedef std::forward_iterator_tag iterator_category;
-			typedef std::common_type_t<value_type1, value_type2> value_type;
-			typedef std::common_type_t<difference_type1, difference_type2> difference_type;
-			typedef std::common_type_t<reference1, reference2> reference;
-			typedef std::common_type_t<pointer1, pointer2> pointer;
-
-		private:
 			typedef std::pair<value_type1, value_type2> Element_t;
 
-		public:
+			typedef std::forward_iterator_tag iterator_category;
+			typedef Element_t value_type;
+			typedef std::ptrdiff_t difference_type;
+			typedef Element_t& reference;
+			typedef Element_t* pointer;
+
 			ZipIterator(Iter1_t const& current1, Iter1_t const& end1, Iter2_t const& current2, Iter2_t const& end2)
 				: m_Current1(current1), m_End1(end1), m_Current2(current2), m_End2(end2)
 			{
