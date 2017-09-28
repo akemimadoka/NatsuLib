@@ -403,11 +403,7 @@ namespace NatsuLib
 				}
 			}
 
-#ifdef _WIN32
-			return { AnsiStringView{ ss.str().c_str() } };
-#else
 			return { U8StringView{ ss.str().c_str() } };
-#endif
 		}
 
 		template <>
