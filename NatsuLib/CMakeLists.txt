@@ -3,11 +3,11 @@ project(NatsuLib CXX)
 
 message(STATUS "Operation system is ${CMAKE_SYSTEM}")
 
-if(WIN32)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra")
-else()
+if (NOT MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra -Wno-missing-field-initializers -Wno-unused-local-typedefs -Wno-unused-parameter")
 endif()
+
+add_subdirectory(extern/zlib)
 
 include_directories(${zlib_INCLUDE_DIRS})
 

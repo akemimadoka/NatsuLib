@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
-project(zlib C)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -Wno-implicit-function-declaration")
+if (NOT MSVC)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -Wno-implicit-function-declaration")
+endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 

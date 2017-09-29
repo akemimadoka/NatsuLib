@@ -4,6 +4,4 @@ if (WIN32)
   set(CMAKE_SHARED_LIBRARY_PREFIX "")
 endif ()
 
-add_subdirectory(NatsuLib/extern/zlib)
-
 add_subdirectory(NatsuLib)
