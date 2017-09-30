@@ -77,4 +77,8 @@ include_directories(${zlib_INCLUDE_DIRS})
 
 add_library(${PROJECT_NAME} STATIC ${SOURCE_FILES})
 
-target_link_libraries(${PROJECT_NAME} zlib)
+if(WIN32)
+    target_link_libraries(${PROJECT_NAME} zlib)
+else()
+    target_link_libraries(${PROJECT_NAME} zlib pthread)
+endif()
