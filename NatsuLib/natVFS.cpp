@@ -48,7 +48,7 @@ Uri::Uri(Uri const& other)
 	const auto view = m_UriInfo.UriString.GetView();
 	const auto otherBegin = other.m_UriInfo.UriString.cbegin();
 
-#define URI_ASSIGN(prop) m_UriInfo.prop = view.Slice(std::distance(other.m_UriInfo.prop.cbegin(), otherBegin), std::distance(other.m_UriInfo.prop.cend(), otherBegin))
+#define URI_ASSIGN(prop) if (!other.m_UriInfo.prop.IsEmpty()) m_UriInfo.prop = view.Slice(std::distance(otherBegin, other.m_UriInfo.prop.cbegin()), std::distance(otherBegin, other.m_UriInfo.prop.cend()))
 	URI_ASSIGN(Scheme);
 	URI_ASSIGN(User);
 	URI_ASSIGN(Password);
@@ -68,7 +68,7 @@ Uri::Uri(Uri&& other) noexcept
 
 	m_UriInfo.Port = other.m_UriInfo.Port;
 
-#define URI_ASSIGN(prop) OffsetPair prop{ std::distance(other.m_UriInfo.prop.cbegin(), otherBegin), std::distance(other.m_UriInfo.prop.cend(), otherBegin) }
+#define URI_ASSIGN(prop) OffsetPair prop{ other.m_UriInfo.prop.IsEmpty() ? 0 : std::distance(otherBegin, other.m_UriInfo.prop.cbegin()), other.m_UriInfo.prop.IsEmpty() ? 0 : std::distance(otherBegin, other.m_UriInfo.prop.cend()) }
 	URI_ASSIGN(Scheme);
 	URI_ASSIGN(User);
 	URI_ASSIGN(Password);
@@ -81,7 +81,7 @@ Uri::Uri(Uri&& other) noexcept
 	m_UriInfo.UriString = std::move(other.m_UriInfo.UriString);
 	const auto view = m_UriInfo.UriString.GetView();
 
-#define URI_ASSIGN(prop) m_UriInfo.prop = view.Slice(prop.first, prop.second)
+#define URI_ASSIGN(prop) if (prop.first != prop.second) m_UriInfo.prop = view.Slice(prop.first, prop.second)
 	URI_ASSIGN(Scheme);
 	URI_ASSIGN(User);
 	URI_ASSIGN(Password);
