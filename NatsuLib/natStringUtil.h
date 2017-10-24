@@ -403,7 +403,11 @@ namespace NatsuLib
 				}
 			}
 
+#if defined(_WIN32) && !defined(NATSULIB_UTF8_SOURCE)
+			return { AnsiStringView{ ss.str().c_str() } };
+#else
 			return { U8StringView{ ss.str().c_str() } };
+#endif
 		}
 
 		template <>
