@@ -402,7 +402,11 @@ namespace NatsuLib
 	template <typename T>
 	class natRefPointer final
 	{
+		template <typename>
+		friend class natRefPointer;
 	public:
+		typedef std::add_pointer_t<T> pointer;
+
 		constexpr natRefPointer(std::nullptr_t = nullptr) noexcept
 			: m_pPointer(nullptr)
 		{
@@ -430,6 +434,23 @@ namespace NatsuLib
 			: m_pPointer(other.m_pPointer)
 		{
 			other.m_pPointer = nullptr;
+		}
+
+		template <typename U, std::enable_if_t<std::is_convertible<typename natRefPointer<U>::pointer, pointer>::value || std::is_base_of<U, T>::value, int> = 0>
+		natRefPointer(natRefPointer<U> const& other) noexcept
+			: m_pPointer(other.m_pPointer ? detail_::static_cast_or_dynamic_cast<pointer>(other.m_pPointer) : nullptr)
+		{
+			if (m_pPointer)
+			{
+				static_cast<const volatile natRefObj*>(m_pPointer)->AddRef();
+			}
+		}
+
+		template <typename U, std::enable_if_t<std::is_convertible<typename natRefPointer<U>::pointer, pointer>::value || std::is_base_of<U, T>::value, int> = 0>
+		natRefPointer(natRefPointer<U> && other) noexcept
+		{
+			const auto otherPointer = std::exchange(other.m_pPointer, nullptr);
+			m_pPointer = otherPointer ? detail_::static_cast_or_dynamic_cast<pointer>(otherPointer) : nullptr;
 		}
 
 		~natRefPointer()
@@ -603,9 +624,6 @@ namespace NatsuLib
 			m_pPointer = other.m_pPointer;
 			other.m_pPointer = ptr;
 		}
-
-		template <typename P>
-		operator natRefPointer<P>() const;
 
 	private:
 		T* m_pPointer;
@@ -881,16 +899,4 @@ namespace std
 			return ptr.GetHashCode();
 		}
 	};
-}
-
-#include "natException.h"
-
-namespace NatsuLib
-{
-	template <typename T>
-	template <typename P>
-	natRefPointer<T>::operator natRefPointer<P>() const
-	{
-		return natRefPointer<P> { m_pPointer ? detail_::static_cast_or_dynamic_cast<P*>(m_pPointer) : nullptr };
-	}
 }
