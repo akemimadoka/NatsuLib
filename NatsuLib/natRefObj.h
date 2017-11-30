@@ -203,15 +203,15 @@ namespace NatsuLib
 	class natRefObjImpl
 		: public detail_::RefCountBase<B>
 	{
-		static_assert(std::is_base_of<natRefObj, B>::value, "B should inherit from natRefObj.");
+		static_assert(std::is_base_of<natRefObj, B>::value, "B should inherit natRefObj.");
 
 		template <typename T_>
 		friend class natWeakRefPointer;
 
 		typedef detail_::RefCountBase<B> RefCountBase;
 
-		template <typename T_, typename... Args>
-		friend natRefPointer<T_> make_ref(Args&&... args);
+		template <typename TRefObj, typename... Args>
+		friend natRefPointer<TRefObj> make_ref(Args&&... args);
 
 		struct DefaultDeleter
 		{
@@ -629,14 +629,14 @@ namespace NatsuLib
 		T* m_pPointer;
 	};
 
-	template <typename T, typename... Args>
-	natRefPointer<T> make_ref(Args&&... args)
+	template <typename TRefObj, typename... Args>
+	natRefPointer<TRefObj> make_ref(Args&&... args)
 	{
-		const auto pRefObj = new T(std::forward<Args>(args)...);
+		const auto pRefObj = new TRefObj(std::forward<Args>(args)...);
 		pRefObj->SetDeleter();
-		natRefPointer<T> Ret(pRefObj);
+		natRefPointer<TRefObj> ret(pRefObj);
 		pRefObj->Release();
-		return Ret;
+		return ret;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
