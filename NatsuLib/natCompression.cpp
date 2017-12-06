@@ -1,11 +1,11 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "natCompression.h"
 #include "natEncoding.h"
 #include "natCryptography.h"
 
 using namespace NatsuLib;
 
-// ÔÚĞ´ÈëÊ±±»odr-useÁË£¬ËùÒÔĞèÒªÌá¹©¶¨Òå
+// åœ¨å†™å…¥æ—¶è¢«odr-useäº†ï¼Œæ‰€ä»¥éœ€è¦æä¾›å®šä¹‰
 constexpr nuInt natZipArchive::Mask32Bit;
 constexpr nuShort natZipArchive::Mask16Bit;
 
@@ -120,9 +120,9 @@ natRefPointer<natStream> natZipArchive::ZipEntry::openForRead()
 		}
 
 		const auto& password = m_Password.value();
-		// µ±Ç°½öÖ§³ÖPKZipWeak¼Ó½âÃÜËã·¨
+		// å½“å‰ä»…æ”¯æŒPKZipWeakåŠ è§£å¯†ç®—æ³•
 		auto cryptoProcessor = make_ref<PKzipWeakAlgorithm>()->CreateDecryptor();
-		auto pkZipWeakProcessor = static_cast<natRefPointer<PKzipWeakProcessor>>(cryptoProcessor);
+		auto pkZipWeakProcessor = cryptoProcessor.Cast<PKzipWeakProcessor>();
 		pkZipWeakProcessor->InitCipher(password.data(), password.size());
 		pkZipWeakProcessor->InitHeaderFrom(compressedStream);
 		m_DecryptStatus = pkZipWeakProcessor->CheckHeaderWithCrc32(m_CentralDirectoryFileHeader.Crc32) ? DecryptStatus::Success : DecryptStatus::Crc32CheckFailed;
@@ -221,11 +221,11 @@ natRefPointer<natStream> const& natZipArchive::ZipEntry::getUncompressedData()
 	return m_UncompressedData;
 }
 
-// Ñ¹ËõÁ÷°ü×°Á´£ºDisposeCallbackStream£¨Èô¼ÓÃÜ£¬ÓÃÓÚ»ñÈ¡crc32£©
-//	-> natCrc32Stream£¨¼ÆËãcrc32£© -> natDeflateStream£¨Ñ¹ËõÊı¾İ£©
-//		-> DisposeCallbackStream£¨Èô¼ÓÃÜ£¬ÓÃÓÚĞ´Èëµ½ÕæÕıµÄÊä³öÁ÷£© -> natMemoryStream£¨Èô¼ÓÃÜ£¬ÓÃÓÚ±£´æÎ´¼ÓÃÜºÍÑ¹ËõµÄÊı¾İ£©
-//																\-> natCryptoStream£¨Èô¼ÓÃÜ£¬ÓÃÓÚ¼ÓÃÜÊı¾İ£© -> stream£¨Êä³öÁ÷£©
-// Ñ¹ËõÊ±ÏÈÑ¹ËõÔÙ¼ÓÃÜ
+// å‹ç¼©æµåŒ…è£…é“¾ï¼šDisposeCallbackStreamï¼ˆè‹¥åŠ å¯†ï¼Œç”¨äºè·å–crc32ï¼‰
+//	-> natCrc32Streamï¼ˆè®¡ç®—crc32ï¼‰ -> natDeflateStreamï¼ˆå‹ç¼©æ•°æ®ï¼‰
+//		-> DisposeCallbackStreamï¼ˆè‹¥åŠ å¯†ï¼Œç”¨äºå†™å…¥åˆ°çœŸæ­£çš„è¾“å‡ºæµï¼‰ -> natMemoryStreamï¼ˆè‹¥åŠ å¯†ï¼Œç”¨äºä¿å­˜æœªåŠ å¯†å’Œå‹ç¼©çš„æ•°æ®ï¼‰
+//																\-> natCryptoStreamï¼ˆè‹¥åŠ å¯†ï¼Œç”¨äºåŠ å¯†æ•°æ®ï¼‰ -> streamï¼ˆè¾“å‡ºæµï¼‰
+// å‹ç¼©æ—¶å…ˆå‹ç¼©å†åŠ å¯†
 natRefPointer<natStream> natZipArchive::ZipEntry::createCompressor(natRefPointer<natStream> stream)
 {
 	assert(stream && "stream should not be nullptr.");
@@ -236,12 +236,12 @@ natRefPointer<natStream> natZipArchive::ZipEntry::createCompressor(natRefPointer
 	{
 		shouldEncrypt = true;
 		const auto& password = m_Password.value();
-		// µ±Ç°½öÖ§³ÖPKZipWeak¼Ó½âÃÜËã·¨
+		// å½“å‰ä»…æ”¯æŒPKZipWeakåŠ è§£å¯†ç®—æ³•
 		auto cryptoProcessor = make_ref<PKzipWeakAlgorithm>()->CreateEncryptor();
-		auto pkZipWeakProcessor = static_cast<natRefPointer<PKzipWeakProcessor>>(cryptoProcessor);
+		auto pkZipWeakProcessor = cryptoProcessor.Cast<PKzipWeakProcessor>();
 		pkZipWeakProcessor->InitCipher(password.data(), password.size());
 		compressor = m_CryptoStream = make_ref<natCryptoStream>(std::move(compressor), std::move(cryptoProcessor), natCryptoStream::CryptoStreamMode::Write);
-		// ÎªÁËÉú³ÉÕıÈ·µÄÍ·²¿£¬ÏÈ»º´æÊı¾İµ½ÄÚ´æÁ÷£¬ÔÚÄÚÈİĞ´ÈëÍê³ÉºóÔÙ¼ÓÃÜ
+		// ä¸ºäº†ç”Ÿæˆæ­£ç¡®çš„å¤´éƒ¨ï¼Œå…ˆç¼“å­˜æ•°æ®åˆ°å†…å­˜æµï¼Œåœ¨å†…å®¹å†™å…¥å®Œæˆåå†åŠ å¯†
 		auto wrappedStream = make_ref<DisposeCallbackStream>(make_ref<natMemoryStream>(0, true, true, true),
 			[this, originStream = std::move(compressor)] (DisposeCallbackStream& disposeCallbackStream)
 			{
@@ -258,11 +258,11 @@ natRefPointer<natStream> natZipArchive::ZipEntry::createCompressor(natRefPointer
 
 	if (shouldEncrypt)
 	{
-		// Á÷±»Îö¹¹Ö®Ê±»ñÈ¡crc32ÓÃÓÚÉú³É¼ÓÃÜÍ·²¿
+		// æµè¢«ææ„ä¹‹æ—¶è·å–crc32ç”¨äºç”ŸæˆåŠ å¯†å¤´éƒ¨
 		compressor = make_ref<DisposeCallbackStream>(std::move(compressor), [this] (DisposeCallbackStream& wrappedStream)
 		{
-			const auto crc32 = static_cast<natRefPointer<natCrc32Stream>>(wrappedStream.GetUnderlyingStream())->GetCrc32();
-			static_cast<natRefPointer<PKzipWeakProcessor>>(m_CryptoStream->GetProcessor())->GenerateHeaderWithCrc32(crc32);
+			const auto crc32 = wrappedStream.GetUnderlyingStream().Cast<natCrc32Stream>()->GetCrc32();
+			m_CryptoStream->GetProcessor().Cast<PKzipWeakProcessor>()->GenerateHeaderWithCrc32(crc32);
 		});
 	}
 
@@ -275,7 +275,7 @@ void natZipArchive::ZipEntry::loadExtraFieldAndCompressedData()
 	const auto reader = m_Archive->m_Reader;
 	assert(stream && reader && "stream or reader should not be nullptr.");
 
-	// ¶ÁÈ¡LocalFileHeaderµÄ¸½¼Ó×Ö¶Î
+	// è¯»å–LocalFileHeaderçš„é™„åŠ å­—æ®µ
 	if (m_OriginallyInArchive)
 	{
 		stream->SetPosition(NatSeek::Beg, m_CentralDirectoryFileHeader.RelativeOffsetOfLocalHeader + LocalFileHeader::OffsetToFilenameLength);
@@ -298,7 +298,7 @@ void natZipArchive::ZipEntry::loadExtraFieldAndCompressedData()
 		}
 	}
 
-	// ¶ÁÈ¡Ô­Ñ¹ËõÊı¾İ
+	// è¯»å–åŸå‹ç¼©æ•°æ®
 	if (m_OriginallyInArchive && !m_EverOpenedForWrite)
 	{
 		m_CachedCompressedData.emplace(static_cast<size_t>(m_CentralDirectoryFileHeader.CompressedSize));
@@ -343,8 +343,8 @@ void natZipArchive::ZipEntry::writeSecurityMetadata(natRefPointer<natStream> con
 	if (m_CentralDirectoryFileHeader.GeneralPurposeBitFlag & static_cast<nuShort>(BitFlag::Encrypted))
 	{
 		assert(m_CryptoStream && "m_CryptoStream should not be nullptr.");
-		// µ±Ç°½öÖ§³ÖPKZipWeak¼Ó½âÃÜËã·¨
-		const auto pkZipWeakProcessor = static_cast<natRefPointer<PKzipWeakProcessor>>(m_CryptoStream->GetProcessor());
+		// å½“å‰ä»…æ”¯æŒPKZipWeakåŠ è§£å¯†ç®—æ³•
+		const auto pkZipWeakProcessor = m_CryptoStream->GetProcessor().Cast<PKzipWeakProcessor>();
 		nByte tmpHeader[PKzipWeakProcessor::HeaderSize];
 		if (!pkZipWeakProcessor->GetHeader(tmpHeader, sizeof tmpHeader))
 		{
@@ -453,7 +453,7 @@ void natZipArchive::ZipEntry::ZipEntryWriteStream::finish()
 	m_Entry.m_CentralDirectoryFileHeader.UncompressedSize = crc32Stream->GetPosition();
 	m_Entry.m_CentralDirectoryFileHeader.CompressedSize = crc32Stream->GetUltimateUnderlyingStream()->GetPosition() - m_InitialPosition;
 
-	// Ó²±àÂë¼ÓÈë¼ÓÃÜÍ·µÄ³¤¶È
+	// ç¡¬ç¼–ç åŠ å…¥åŠ å¯†å¤´çš„é•¿åº¦
 	if (m_Entry.m_CentralDirectoryFileHeader.GeneralPurposeBitFlag & static_cast<nuShort>(BitFlag::Encrypted))
 	{
 		m_Entry.m_CentralDirectoryFileHeader.CompressedSize += PKzipWeakProcessor::HeaderSize;
@@ -461,7 +461,7 @@ void natZipArchive::ZipEntry::ZipEntryWriteStream::finish()
 
 	if (m_WroteData)
 	{
-		// ÒÑ¾­Ğ´ÁË LocalFileHeader£¬²¹³äCrc32ÒÔ¼°´óĞ¡ĞÅÏ¢£¨Ô­±¾Ğ´ÈëµÄÊÇ²»ÍêÕûµÄ£¬ĞèÒªĞŞÕı£©
+		// å·²ç»å†™äº† LocalFileHeaderï¼Œè¡¥å……Crc32ä»¥åŠå¤§å°ä¿¡æ¯ï¼ˆåŸæœ¬å†™å…¥çš„æ˜¯ä¸å®Œæ•´çš„ï¼Œéœ€è¦ä¿®æ­£ï¼‰
 		LocalFileHeader::WriteCrcAndSizes(m_Entry.m_Archive->m_Writer, m_Entry.m_CentralDirectoryFileHeader, m_UseZip64);
 	}
 	else

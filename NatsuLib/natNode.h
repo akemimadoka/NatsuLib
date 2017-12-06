@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include "natRefObj.h"
 #include <functional>
@@ -16,14 +16,14 @@ namespace NatsuLib
 		template <typename T>
 		natRefPointer<T> GetChildByName(nStrView Name) const
 		{
-			return static_cast<natRefPointer<T>>(GetChildByName(Name));
+			return GetChildByName(Name).Cast<T>();
 		}
 
 		/**
-		* @brief Ã¶¾Ù×Ó½Úµã
-		* @param[in] Recursive µİ¹éµØÃ¶¾Ù
-		* @param[in] EnumCallback Ã¶¾Ù»Øµ÷º¯Êı£¬½ÓÊÜÒ»¸ö²ÎÊı£¬ÆäÀàĞÍÎªnatNode*£¬±íÊ¾´Ë´ÎÃ¶¾Ùµ½µÄ½Úµã£¬·µ»ØÖµÎªbool£¬·µ»ØtrueÊ±Ã¶¾ÙÁ¢¼´ÖÕÖ¹
-		* @return ÊÇ·ñÒòÎªEnumCallback·µ»Øtrue¶øÖÕÖ¹Ã¶¾Ù
+		* @brief æšä¸¾å­èŠ‚ç‚¹
+		* @param[in] Recursive é€’å½’åœ°æšä¸¾
+		* @param[in] EnumCallback æšä¸¾å›è°ƒå‡½æ•°ï¼Œæ¥å—ä¸€ä¸ªå‚æ•°ï¼Œå…¶ç±»å‹ä¸ºnatNode*ï¼Œè¡¨ç¤ºæ­¤æ¬¡æšä¸¾åˆ°çš„èŠ‚ç‚¹ï¼Œè¿”å›å€¼ä¸ºboolï¼Œè¿”å›trueæ—¶æšä¸¾ç«‹å³ç»ˆæ­¢
+		* @return æ˜¯å¦å› ä¸ºEnumCallbackè¿”å›trueè€Œç»ˆæ­¢æšä¸¾
 		*/
 		virtual nBool EnumChildNode(nBool Recursive, std::function<nBool(natRefPointer<natNode>)> EnumCallback) = 0;
 

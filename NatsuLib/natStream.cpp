@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "natStream.h"
 #include "natException.h"
 #include <algorithm>
@@ -133,7 +133,7 @@ nBool natWrappedStream::EnumUnderlyingStream(std::function<nBool(natWrappedStrea
 
 	while (true)
 	{
-		const auto wrappedStream = static_cast<natRefPointer<natWrappedStream>>(pStream);
+		const auto wrappedStream = pStream.Cast<natWrappedStream>();
 		if (wrappedStream && wrappedStream != this)
 		{
 			if (enumerator(*wrappedStream))
@@ -862,8 +862,8 @@ natStdStream::natStdStream(StdStreamType stdStreamType)
 		nat_Throw(natWinException, "GetStdHandle failed."_nv);
 	}
 
-	// µ±¿ØÖÆÌ¨´úÂëÒ³²»ÊÇUnicode»òÕß±»ÖØ¶¨ÏòµÄÊ±ºòÎÒÃÇÓ¦µ±Ê¹ÓÃÎÄ¼şAPI
-	// ÓÉÓÚnatConsole±»ÇÕ¶¨±àÂë£¬ËùÒÔÔÚ´ËÎÒÃÇÖ»ÅĞ¶ÏÊÇ·ñÖØ¶¨Ïò
+	// å½“æ§åˆ¶å°ä»£ç é¡µä¸æ˜¯Unicodeæˆ–è€…è¢«é‡å®šå‘çš„æ—¶å€™æˆ‘ä»¬åº”å½“ä½¿ç”¨æ–‡ä»¶API
+	// ç”±äºnatConsoleè¢«é’¦å®šç¼–ç ï¼Œæ‰€ä»¥åœ¨æ­¤æˆ‘ä»¬åªåˆ¤æ–­æ˜¯å¦é‡å®šå‘
 	DWORD consoleMode;
 	if (!(GetFileType(m_StdHandle) & FILE_TYPE_CHAR) || !GetConsoleMode(m_StdHandle, &consoleMode))
 	{
@@ -953,7 +953,7 @@ nLen natStdStream::ReadBytes(nData pData, nLen Length)
 		return m_InternalStream->ReadBytes(pData, Length);
 	}
 
-	// Workaround: À±¼¦WinAPI
+	// Workaround: è¾£é¸¡WinAPI
 	if (!CanRead())
 	{
 		nat_Throw(natErrException, NatErr_IllegalState, "This stream cannot read."_nv);
@@ -1001,7 +1001,7 @@ nLen natStdStream::WriteBytes(ncData pData, nLen Length)
 		return m_InternalStream->WriteBytes(pData, Length);
 	}
 
-	// Workaround: À±¼¦WinAPI
+	// Workaround: è¾£é¸¡WinAPI
 	if (!CanWrite())
 	{
 		nat_Throw(natErrException, NatErr_IllegalState, "This stream cannot write."_nv);
@@ -1720,7 +1720,7 @@ void natMemoryStream::allocateAndInvalidateOldData(nLen newCapacity)
 	}*/
 
 	auto pNewStorage = new nByte[static_cast<size_t>(newCapacity)];
-	swap(m_pData, pNewStorage); // ¼ÙÉèswap×ÜÊÇnoexceptµÄ
+	swap(m_pData, pNewStorage); // å‡è®¾swapæ€»æ˜¯noexceptçš„
 	m_Size = m_CurPos = 0;
 	m_Capacity = newCapacity;
 	delete[] pNewStorage;

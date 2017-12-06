@@ -385,7 +385,7 @@ namespace NatsuLib
 
 			static natRefPointer<ContainerWrapper> cast(natRefPointer<IContainerWrapper> const& other)
 			{
-				const auto realOther = static_cast<natRefPointer<ContainerWrapper>>(other);
+				const auto realOther = other.Cast<ContainerWrapper>();
 				if (!realOther)
 				{
 					nat_Throw(natErrException, NatErr_InvalidArg, "Require same type."_nv);
@@ -420,7 +420,7 @@ namespace NatsuLib
 		template <typename C>
 		C* GetOriginalContainer() const
 		{
-			const auto wrapper = static_cast<natRefPointer<ContainerWrapper<C>>>(m_Wrapper);
+			const auto wrapper = m_Wrapper.Cast<ContainerWrapper<C>>();
 			if (!wrapper)
 			{
 				return nullptr;

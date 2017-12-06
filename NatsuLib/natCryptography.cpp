@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "natCryptography.h"
 #include "gzguts.h"
 #include <random>
@@ -57,7 +57,7 @@ namespace NatsuLib
 			return t;
 		}
 
-		// ²»¼ì²é»º´æ´óÐ¡£¬Ö±½ÓÉú³É£¬µ÷ÓÃÕßÐè±£Ö¤µ÷ÓÃÊ±bufµÄ´óÐ¡²»Ð¡ÓÚPKzipWeakProcessor::HeaderSize
+		// ä¸æ£€æŸ¥ç¼“å­˜å¤§å°ï¼Œç›´æŽ¥ç”Ÿæˆï¼Œè°ƒç”¨è€…éœ€ä¿è¯è°ƒç”¨æ—¶bufçš„å¤§å°ä¸å°äºŽPKzipWeakProcessor::HeaderSize
 		void UncheckedCryptHead(nData buf, nuInt* pKeys, const nuInt* crc32Table, nuInt crcForCrypting) noexcept
 		{
 			std::random_device randomDevice;
@@ -581,7 +581,7 @@ void natCryptoStream::FlushFinalBlock()
 		m_InternalStream->WriteBytes(finalBytes.data(), finalBytes.size());
 	}
 
-	const auto innerCryptoStream = static_cast<natRefPointer<natCryptoStream>>(m_InternalStream);
+	const auto innerCryptoStream = m_InternalStream.Cast<natCryptoStream>();
 	if (innerCryptoStream)
 	{
 		if (!innerCryptoStream->m_FinalBlockProcessed)

@@ -461,6 +461,18 @@ namespace NatsuLib
 			}
 		}
 
+		template <typename U, std::enable_if_t<std::is_convertible<typename natRefPointer<std::remove_cv_t<std::remove_reference_t<U>>>::pointer, pointer>::value || std::is_base_of<std::remove_cv_t<std::remove_reference_t<U>>, T>::value, int> = 0>
+		natRefPointer<std::remove_cv_t<std::remove_reference_t<U>>> Cast() const noexcept
+		{
+			return { *this };
+		}
+
+		template <typename U, std::enable_if_t<std::is_convertible<typename natRefPointer<std::remove_cv_t<std::remove_reference_t<U>>>::pointer, pointer>::value || std::is_base_of<std::remove_cv_t<std::remove_reference_t<U>>, T>::value, int> = 0>
+		natRefPointer<std::remove_cv_t<std::remove_reference_t<U>>> CastMove() noexcept
+		{
+			return { std::move(*this) };
+		}
+
 		void Reset(std::nullptr_t = nullptr) noexcept
 		{
 			natRefPointer{}.swap(*this);
