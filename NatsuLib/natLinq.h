@@ -1081,6 +1081,15 @@ namespace NatsuLib
 				detail_::SelectIterator<Iter_t, CallableObj>(m_Range.end(), callableObj));
 		}
 
+		template <typename T>
+		auto ofType() const
+		{
+			return select([](auto&& origin)
+			{
+				return static_cast<T>(static_cast<std::remove_reference_t<decltype(origin)>&&>(origin));
+			});
+		}
+
 		template <typename CallableObj>
 		LinqEnumerable<detail_::WhereIterator<Iter_t, CallableObj>> where(CallableObj const& callableObj) const
 		{
