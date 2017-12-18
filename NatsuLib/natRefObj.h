@@ -449,8 +449,14 @@ namespace NatsuLib
 		template <typename U, std::enable_if_t<std::is_convertible<typename natRefPointer<U>::pointer, pointer>::value || std::is_base_of<U, T>::value, int> = 0>
 		natRefPointer(natRefPointer<U> && other) noexcept
 		{
-			const auto otherPointer = std::exchange(other.m_pPointer, nullptr);
+			const auto otherPointer = other.m_pPointer;
 			m_pPointer = otherPointer ? detail_::static_cast_or_dynamic_cast<pointer>(otherPointer) : nullptr;
+
+			// 仅在转型成功时清空原指针，失败则无副作用
+			if (m_pPointer && otherPointer)
+			{
+				other.m_pPointer = nullptr;
+			}
 		}
 
 		~natRefPointer()
@@ -465,6 +471,13 @@ namespace NatsuLib
 		natRefPointer<std::remove_cv_t<std::remove_reference_t<U>>> Cast() const noexcept
 		{
 			return { *this };
+		}
+
+		// 无安全保证的转型，仅在必须的时候使用
+		template <typename U, std::enable_if_t<std::is_convertible<typename natRefPointer<std::remove_cv_t<std::remove_reference_t<U>>>::pointer, pointer>::value || std::is_base_of<std::remove_cv_t<std::remove_reference_t<U>>, T>::value, int> = 0>
+		natRefPointer<std::remove_cv_t<std::remove_reference_t<U>>> UnsafeCast() const noexcept
+		{
+			return { static_cast<typename natRefPointer<std::remove_cv_t<std::remove_reference_t<U>>>::pointer>(m_pPointer) };
 		}
 
 		template <typename U, std::enable_if_t<std::is_convertible<typename natRefPointer<std::remove_cv_t<std::remove_reference_t<U>>>::pointer, pointer>::value || std::is_base_of<std::remove_cv_t<std::remove_reference_t<U>>, T>::value, int> = 0>
