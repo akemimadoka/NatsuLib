@@ -1563,7 +1563,7 @@ namespace NatsuLib
 	}
 
 	template <typename T>
-	Linq<T> from_values(std::initializer_list<T> const& il)
+	Linq<Valued<T>> from_values(std::initializer_list<T> const& il)
 	{
 		return from_values(std::vector<T>(il.begin(), il.end()));
 	}

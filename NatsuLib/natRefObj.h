@@ -477,7 +477,7 @@ namespace NatsuLib
 		template <typename U, std::enable_if_t<std::is_convertible<typename natRefPointer<std::remove_cv_t<std::remove_reference_t<U>>>::pointer, pointer>::value || std::is_base_of<std::remove_cv_t<std::remove_reference_t<U>>, T>::value, int> = 0>
 		natRefPointer<std::remove_cv_t<std::remove_reference_t<U>>> UnsafeCast() const noexcept
 		{
-			return { static_cast<typename natRefPointer<std::remove_cv_t<std::remove_reference_t<U>>>::pointer>(m_pPointer) };
+			return natRefPointer<std::remove_cv_t<std::remove_reference_t<U>>>{ static_cast<typename natRefPointer<std::remove_cv_t<std::remove_reference_t<U>>>::pointer>(m_pPointer) };
 		}
 
 		template <typename U, std::enable_if_t<std::is_convertible<typename natRefPointer<std::remove_cv_t<std::remove_reference_t<U>>>::pointer, pointer>::value || std::is_base_of<std::remove_cv_t<std::remove_reference_t<U>>, T>::value, int> = 0>

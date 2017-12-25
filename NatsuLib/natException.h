@@ -1,6 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////
+Ôªø////////////////////////////////////////////////////////////////////////////////
 ///	@file	natException.h
-///	@brief	“Ï≥£œ‡πÿÕ∑Œƒº˛
+///	@brief	ÂºÇÂ∏∏Áõ∏ÂÖ≥Â§¥Êñá‰ª∂
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "natType.h"
@@ -37,8 +37,8 @@ namespace NatsuLib
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	NatsuLib“Ï≥£ª˘¿‡
-	///	@note	“Ï≥£”…¥À¿‡≈……˙£¨«ÎŒ π”√ø…ƒ‹≈◊≥ˆ“Ï≥£µƒ¥˙¬Î
+	///	@brief	NatsuLibÂºÇÂ∏∏Âü∫Á±ª
+	///	@note	ÂºÇÂ∏∏Áî±Ê≠§Á±ªÊ¥æÁîüÔºåËØ∑Âãø‰ΩøÁî®ÂèØËÉΩÊäõÂá∫ÂºÇÂ∏∏ÁöÑ‰ª£Á†Å
 	////////////////////////////////////////////////////////////////////////////////
 	class natException
 		: protected detail_::natExceptionStorage, public virtual std::exception
@@ -48,7 +48,7 @@ namespace NatsuLib
 
 		template <typename... Args>
 		natException(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line, nStrView Desc, Args&&... args) noexcept
-			: Storage{ nestedException, std::chrono::system_clock::now(), File, Line, Src, natUtil::FormatString(Desc, std::forward<Args>(args)...) }
+			: Storage{ std::move(nestedException), std::chrono::system_clock::now(), File, Line, Src, natUtil::FormatString(Desc, std::forward<Args>(args)...) }
 #ifdef EnableExceptionStackTrace
 			, m_StackWalker()
 #endif
@@ -90,8 +90,8 @@ namespace NatsuLib
 
 #ifdef _WIN32
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	NatsuLib WinAPIµ˜”√“Ï≥£
-	///	@note	ø…“‘◊‘∂Ø∏Ωº”LastErr–≈œ¢
+	///	@brief	NatsuLib WinAPIË∞ÉÁî®ÂºÇÂ∏∏
+	///	@note	ÂèØ‰ª•Ëá™Âä®ÈôÑÂä†LastErr‰ø°ÊÅØ
 	////////////////////////////////////////////////////////////////////////////////
 	class natWinException
 		: public natException
@@ -113,14 +113,14 @@ namespace NatsuLib
 		natWinException(nStrView Src, nStrView File, nuInt Line, DWORD LastErr, nStrView Desc, Args&&... args) noexcept
 			: natException(Src, File, Line, Desc, std::forward<Args>(args)...), m_LastErr(LastErr), m_ErrMsg()
 		{
-			m_Description.Append(natUtil::FormatString(" (LastErr = {0}, Message = {1})"_nv, m_LastErr, GetErrMsg()));
+			m_Description.Append(natUtil::FormatString(u8" (LastErr = {0}, Message = {1})"_nv, m_LastErr, GetErrMsg()));
 		}
 
 		template <typename... Args>
 		natWinException(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line, DWORD LastErr, nStrView Desc, Args&&... args) noexcept
 			: natException(nestedException, Src, File, Line, Desc, std::forward<Args>(args)...), m_LastErr(LastErr), m_ErrMsg()
 		{
-			m_Description.Append(natUtil::FormatString(" (LastErr = {0}, Message = {1})"_nv, m_LastErr, GetErrMsg()));
+			m_Description.Append(natUtil::FormatString(u8" (LastErr = {0}, Message = {1})"_nv, m_LastErr, GetErrMsg()));
 		}
 
 		~natWinException();
@@ -135,7 +135,7 @@ namespace NatsuLib
 #endif
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	–Ø¥¯ NatErr –≈œ¢µƒ“Ï≥£
+	///	@brief	Êê∫Â∏¶ NatErr ‰ø°ÊÅØÁöÑÂºÇÂ∏∏
 	////////////////////////////////////////////////////////////////////////////////
 	class natErrException
 		: public natException
@@ -145,14 +145,14 @@ namespace NatsuLib
 		natErrException(nStrView Src, nStrView File, nuInt Line, NatErr ErrNo, nStrView Desc, Args&&... args) noexcept
 			: natException(Src, File, Line, Desc, std::forward<Args>(args)...), m_Errno(ErrNo)
 		{
-			m_Description.Append(natUtil::FormatString(" (Errno = {0}, Message = {1})"_nv, m_Errno, GetErrMsg()));
+			m_Description.Append(natUtil::FormatString(u8" (Errno = {0}, Message = {1})"_nv, m_Errno, GetErrMsg()));
 		}
 
 		template <typename... Args>
 		natErrException(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line, NatErr ErrNo, nStrView Desc, Args&&... args) noexcept
 			: natException(nestedException, Src, File, Line, Desc, std::forward<Args>(args)...), m_Errno(ErrNo)
 		{
-			m_Description.Append(natUtil::FormatString(" (Errno = {0}, Message = {1})"_nv, m_Errno, GetErrMsg()));
+			m_Description.Append(natUtil::FormatString(u8" (Errno = {0}, Message = {1})"_nv, m_Errno, GetErrMsg()));
 		}
 
 		~natErrException();
@@ -168,30 +168,30 @@ namespace NatsuLib
 			switch (Errno)
 			{
 			case NatErr_Interrupted:
-				return "Interrupted"_nv;
+				return u8"Interrupted"_nv;
 			case NatErr_OK:
-				return "Success"_nv;
+				return u8"Success"_nv;
 			case NatErr_Unknown:
-				return "Unknown error"_nv;
+				return u8"Unknown error"_nv;
 			case NatErr_IllegalState:
-				return "Illegal state"_nv;
+				return u8"Illegal state"_nv;
 			case NatErr_InvalidArg:
-				return "Invalid argument"_nv;
+				return u8"Invalid argument"_nv;
 			case NatErr_InternalErr:
-				return "Internal error"_nv;
+				return u8"Internal error"_nv;
 			case NatErr_OutOfRange:
-				return "Out of range"_nv;
+				return u8"Out of range"_nv;
 			case NatErr_NotImpl:
-				return "Not implemented"_nv;
+				return u8"Not implemented"_nv;
 			case NatErr_NotSupport:
-				return "Not supported"_nv;
+				return u8"Not supported"_nv;
 			case NatErr_Duplicated:
-				return "Duplicated"_nv;
+				return u8"Duplicated"_nv;
 			case NatErr_NotFound:
-				return "Not found"_nv;
+				return u8"Not found"_nv;
 			default:
 				assert(!"Invalid Errno.");
-				return "No description"_nv;
+				return u8"No description"_nv;
 			}
 		}
 	};
@@ -206,7 +206,7 @@ public:\
 	{\
 	}\
 	ExceptionClass(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line)\
-		: BaseException(nestedException, Src, File, Line, DefaultDescription)\
+		: BaseException(std::move(nestedException), Src, File, Line, DefaultDescription)\
 	{\
 	}\
 	template <typename... Args>\
@@ -216,13 +216,13 @@ public:\
 	}\
 	template <typename... Args>\
 	ExceptionClass(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line, nStrView Desc, Args&&... args)\
-		: BaseException(nestedException, Src, File, Line, Desc, std::forward<Args>(args)...)\
+		: BaseException(std::move(nestedException), Src, File, Line, Desc, std::forward<Args>(args)...)\
 	{\
 	}\
 }
 
-	DeclareException(MemoryAllocFail, natException, "Failed to allocate memory."_nv);
-	DeclareException(InvalidData, natException, "Data is invalid."_nv);
+	DeclareException(MemoryAllocFail, natException, u8"Failed to allocate memory."_nv);
+	DeclareException(InvalidData, natException, u8"Data is invalid."_nv);
 
 	class OutOfRange
 		: public natErrException

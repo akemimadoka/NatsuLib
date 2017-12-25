@@ -5,7 +5,7 @@
 using namespace NatsuLib;
 
 detail_::natExceptionStorage::natExceptionStorage(std::exception_ptr nestedException, std::chrono::system_clock::time_point const& time, nString file, nuInt line, nString src, nString desc)
-	: m_NestedException(nestedException), m_Time(time), m_File(std::move(file)), m_Line(line), m_Source(std::move(src)), m_Description(std::move(desc))
+	: m_NestedException(std::move(nestedException)), m_Time(time), m_File(std::move(file)), m_Line(line), m_Source(std::move(src)), m_Description(std::move(desc))
 {
 }
 
@@ -116,22 +116,22 @@ nStrView natErrException::GetErrMsg() const noexcept
 }
 
 OutOfRange::OutOfRange(nStrView Src, nStrView File, nuInt Line)
-	: BaseException(Src, File, Line, NatErr_OutOfRange, "Out of range."_nv)
+	: BaseException(Src, File, Line, NatErr_OutOfRange, u8"Out of range."_nv)
 {
 }
 
 OutOfRange::OutOfRange(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line)
-	: BaseException(nestedException, Src, File, Line, NatErr_OutOfRange, "Out of range."_nv)
+	: BaseException(nestedException, Src, File, Line, NatErr_OutOfRange, u8"Out of range."_nv)
 {
 }
 
 NotImplementedException::NotImplementedException(nStrView Src, nStrView File, nuInt Line)
-	: BaseException(Src, File, Line, NatErr_NotImpl, "This feature has not implemented yet."_nv)
+	: BaseException(Src, File, Line, NatErr_NotImpl, u8"This feature has not implemented yet."_nv)
 {
 }
 
 NotImplementedException::NotImplementedException(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line)
-	: BaseException(nestedException, Src, File, Line, NatErr_NotImpl, "This feature has not implemented yet."_nv)
+	: BaseException(nestedException, Src, File, Line, NatErr_NotImpl, u8"This feature has not implemented yet."_nv)
 {
 }
 
