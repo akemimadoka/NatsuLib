@@ -251,12 +251,12 @@ namespace NatsuLib
 	{
 	public:
 		constexpr explicit natScope(T CallableObj, Args&&... args)
-			: m_OnlyFail{ false }, m_ShouldCall(true), m_CallableObj(CallableObj), m_Args(std::forward<Args>(args)...)
+			: m_OnlyFail{ false }, m_ShouldCall(true), m_CallableObj(std::move(CallableObj)), m_Args(std::forward<Args>(args)...)
 		{
 		}
 
 		constexpr explicit natScope(OnlyFail_t, T CallableObj, Args&&... args)
-			: m_OnlyFail{ true }, m_ShouldCall(true), m_CallableObj(CallableObj), m_Args(std::forward<Args>(args)...)
+			: m_OnlyFail{ true }, m_ShouldCall(true), m_CallableObj(std::move(CallableObj)), m_Args(std::forward<Args>(args)...)
 		{
 		}
 
@@ -274,11 +274,16 @@ namespace NatsuLib
 			}
 		}
 
+		void SetShouldCall(nBool value) noexcept
+		{
+			m_ShouldCall = value;
+		}
+
 	private:
 		const nBool m_OnlyFail;
 		nBool m_ShouldCall;
 		T m_CallableObj;
-		std::tuple<Args const&...> m_Args;
+		std::tuple<Args &&...> m_Args;
 	};
 	
 	template <typename T, typename ...Args>
