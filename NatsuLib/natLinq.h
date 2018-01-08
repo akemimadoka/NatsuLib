@@ -1455,7 +1455,7 @@ namespace NatsuLib
 				Linq<Value1_t> outers = item.second.first;
 				return outers.select([item](const Value1_t& outer)
 				{
-					return std::make_tuple(item.first, outer, item.second.second);
+					return GroupJoinResult_t{ item.first, outer, item.second.second };
 				});
 			});
 		}
@@ -1477,7 +1477,7 @@ namespace NatsuLib
 				Linq<Value2_t> inners = item.second.second;
 				return inners.select([item](const Value2_t& inner)
 				{
-					return std::make_tuple(item.first, item.second.first, inner);
+					return JoinResult_t{ item.first, item.second.first, inner };
 				});
 			});
 		}
