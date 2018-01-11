@@ -128,7 +128,7 @@ nBool natStackWalker::HasInitialized() noexcept
 }
 #else
 
-#include <malloc.h>
+#include <cstdlib>
 
 natStackWalker::natStackWalker()
 {

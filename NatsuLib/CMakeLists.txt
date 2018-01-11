@@ -3,8 +3,10 @@ project(NatsuLib CXX)
 
 message(STATUS "Operation system is ${CMAKE_SYSTEM}")
 
+set(CMAKE_CXX_STANDARD 17)
+
 if (NOT MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra -Wno-missing-field-initializers -Wno-unused-local-typedefs -Wno-unused-parameter")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-missing-field-initializers -Wno-unused-local-typedefs -Wno-unused-parameter")
 endif()
 
 include_directories(${zlib_INCLUDE_DIRS})

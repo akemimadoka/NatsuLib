@@ -39,7 +39,7 @@ namespace NatsuLib
 			MaxCharSize = 4,	///< @brief	对于此编码，一个有效字符可能占用的最大CharType数
 		};
 
-		static size_t GetCharCount(CharType Char) noexcept
+		static std::size_t GetCharCount(CharType Char) noexcept
 		{
 			const auto unsignedChar = static_cast<std::make_unsigned_t<CharType>>(Char);
 			if (unsignedChar < 0x80)
@@ -49,7 +49,7 @@ namespace NatsuLib
 			if (unsignedChar - 0x80 < 0x40)
 			{
 				// 错误的编码
-				return size_t(-1);
+				return std::size_t(-1);
 			}
 			if (unsignedChar - 0xC0 < 0x20)
 			{
@@ -63,7 +63,7 @@ namespace NatsuLib
 			{
 				return 4;
 			}
-			return size_t(-1);
+			return std::size_t(-1);
 		}
 	};
 
@@ -76,7 +76,7 @@ namespace NatsuLib
 			MaxCharSize = 1,
 		};
 
-		static size_t GetCharCount(CharType /*Char*/) noexcept
+		static std::size_t GetCharCount(CharType /*Char*/) noexcept
 		{
 			return 1;
 		}
@@ -91,7 +91,7 @@ namespace NatsuLib
 			MaxCharSize = 1,
 		};
 
-		static size_t GetCharCount(CharType /*Char*/) noexcept
+		static std::size_t GetCharCount(CharType /*Char*/) noexcept
 		{
 			return 1;
 		}
@@ -107,7 +107,7 @@ namespace NatsuLib
 			MaxCharSize = 4,
 		};
 
-		static size_t GetCharCount(CharType Char) noexcept
+		static std::size_t GetCharCount(CharType Char) noexcept
 		{
 			return StringEncodingTrait<StringType::Utf8>::GetCharCount(Char);
 		}
@@ -122,7 +122,7 @@ namespace NatsuLib
 			MaxCharSize = 1,
 		};
 
-		static size_t GetCharCount(CharType /*Char*/) noexcept
+		static std::size_t GetCharCount(CharType /*Char*/) noexcept
 		{
 			return 1;
 		}
@@ -131,9 +131,9 @@ namespace NatsuLib
 
 	namespace detail_
 	{
-		enum : size_t
+		enum : std::size_t
 		{
-			npos = size_t(-1),
+			npos = std::size_t(-1),
 			MaxAllocaSize = 0x10000,
 		};
 
@@ -152,10 +152,10 @@ namespace NatsuLib
 		}
 
 		template <typename Iter, typename CharType>
-		size_t SearchCharRepeat(Iter srcBegin, Iter srcEnd, CharType searchChar, size_t repeatCount) noexcept
+		std::size_t SearchCharRepeat(Iter srcBegin, Iter srcEnd, CharType searchChar, std::size_t repeatCount) noexcept
 		{
 			assert(repeatCount != 0);
-			assert(static_cast<size_t>(srcEnd - srcBegin) > repeatCount);
+			assert(static_cast<std::size_t>(srcEnd - srcBegin) > repeatCount);
 
 			auto current = srcBegin;
 
@@ -163,7 +163,7 @@ namespace NatsuLib
 			{
 				while (true)
 				{
-					if (srcEnd - current < static_cast<ptrdiff_t>(repeatCount))
+					if (srcEnd - current < static_cast<std::ptrdiff_t>(repeatCount))
 					{
 						return npos;
 					}
@@ -174,12 +174,12 @@ namespace NatsuLib
 					++current;
 				}
 
-				ptrdiff_t matchLen = 1;
+				std::ptrdiff_t matchLen = 1;
 				while (true)
 				{
-					if (static_cast<size_t>(matchLen) >= repeatCount)
+					if (static_cast<std::size_t>(matchLen) >= repeatCount)
 					{
-						return static_cast<size_t>(std::distance(srcBegin, current));
+						return static_cast<std::size_t>(std::distance(srcBegin, current));
 					}
 					if (current[matchLen] != searchChar)
 					{
@@ -194,19 +194,19 @@ namespace NatsuLib
 		}
 
 		template <typename Iter1, typename Iter2>
-		size_t MatchString(Iter1 srcBegin, Iter1 srcEnd, Iter2 patternBegin, Iter2 patternEnd) noexcept;
+		std::size_t MatchString(Iter1 srcBegin, Iter1 srcEnd, Iter2 patternBegin, Iter2 patternEnd) noexcept;
 
 		template <StringType stringType>
-		std::enable_if_t<StringEncodingTrait<stringType>::MaxCharSize == 1, size_t> GetCharCount(const typename StringEncodingTrait<stringType>::CharType* /*str*/, size_t length)
+		std::enable_if_t<StringEncodingTrait<stringType>::MaxCharSize == 1, std::size_t> GetCharCount(const typename StringEncodingTrait<stringType>::CharType* /*str*/, std::size_t length)
 		{
 			return length;
 		}
 
 		template <StringType stringType>
-		std::enable_if_t<(StringEncodingTrait<stringType>::MaxCharSize > 1), size_t> GetCharCount(const typename StringEncodingTrait<stringType>::CharType* str, size_t length)
+		std::enable_if_t<(StringEncodingTrait<stringType>::MaxCharSize > 1), std::size_t> GetCharCount(const typename StringEncodingTrait<stringType>::CharType* str, std::size_t length)
 		{
-			size_t count{};
-			for (size_t i = 0; i < length; )
+			std::size_t count{};
+			for (std::size_t i = 0; i < length; )
 			{
 				const auto currentSize = StringEncodingTrait<stringType>::GetCharCount(str[i]);
 				i += currentSize;
@@ -256,7 +256,7 @@ namespace NatsuLib
 		typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 		typedef const_reverse_iterator reverse_iterator;
 
-		enum : size_t
+		enum : std::size_t
 		{
 			npos = detail_::npos
 		};
@@ -271,12 +271,12 @@ namespace NatsuLib
 		{
 		}
 
-		StringView(nullptr_t, nullptr_t = nullptr) noexcept
+		StringView(std::nullptr_t, std::nullptr_t = nullptr) noexcept
 			: StringView()
 		{
 		}
 
-		StringView(CharIterator begin, size_t length) noexcept
+		StringView(CharIterator begin, std::size_t length) noexcept
 			: StringView(begin, begin + length)
 		{
 		}
@@ -291,7 +291,7 @@ namespace NatsuLib
 		{
 		}
 
-		template <size_t N>
+		template <std::size_t N>
 		StringView(const CharType(&array)[N])
 			: StringView(array, array + N)
 		{
@@ -352,7 +352,7 @@ namespace NatsuLib
 			return const_reverse_iterator{ std::prev(m_StrBegin) };
 		}
 
-		size_t size() const noexcept
+		std::size_t size() const noexcept
 		{
 			return GetSize();
 		}
@@ -367,7 +367,7 @@ namespace NatsuLib
 			return m_StrBegin;
 		}
 
-		const CharType& operator[](size_t pos) const noexcept
+		const CharType& operator[](std::size_t pos) const noexcept
 		{
 			return UncheckGet(pos);
 		}
@@ -412,12 +412,12 @@ namespace NatsuLib
 			return Compare(other) >= 0;
 		}
 
-		size_t GetSize() const noexcept
+		std::size_t GetSize() const noexcept
 		{
 			return m_StrEnd - m_StrBegin;
 		}
 
-		size_t GetCharCount() const noexcept
+		std::size_t GetCharCount() const noexcept
 		{
 			return detail_::GetCharCount<stringType>(m_StrBegin, m_StrEnd - m_StrBegin);
 		}
@@ -429,7 +429,7 @@ namespace NatsuLib
 			swap(m_StrEnd, other.m_StrEnd);
 		}
 
-		const CharType& Get(size_t index) const
+		const CharType& Get(std::size_t index) const
 		{
 			if (index >= GetSize())
 			{
@@ -439,7 +439,7 @@ namespace NatsuLib
 			return UncheckGet(index);
 		}
 
-		const CharType& UncheckGet(size_t pos) const noexcept
+		const CharType& UncheckGet(std::size_t pos) const noexcept
 		{
 			assert(pos < GetSize());
 
@@ -469,7 +469,7 @@ namespace NatsuLib
 			return 0;
 		}
 
-		StringView Slice(ptrdiff_t begin, ptrdiff_t end) const noexcept
+		StringView Slice(std::ptrdiff_t begin, std::ptrdiff_t end) const noexcept
 		{
 			const auto size = GetSize();
 			return { m_StrBegin + ApplyOffset(begin, size), m_StrBegin + ApplyOffset(end, size) };
@@ -481,10 +481,10 @@ namespace NatsuLib
 		template <typename CallableObject>
 		void Split(StringView const& pattern, CallableObject callableObject) const noexcept
 		{
-			size_t pos{};
+			std::size_t pos{};
 			const auto strLen = size();
 
-			for (size_t i = 0; i < strLen; ++i)
+			for (std::size_t i = 0; i < strLen; ++i)
 			{
 				const auto currentchar = m_StrBegin[i];
 				for (auto&& item : pattern)
@@ -511,13 +511,13 @@ namespace NatsuLib
 			m_StrEnd = end;
 		}
 
-		void Assign(nullptr_t, nullptr_t = nullptr) noexcept
+		void Assign(std::nullptr_t, std::nullptr_t = nullptr) noexcept
 		{
 			m_StrBegin = nullptr;
 			m_StrEnd = nullptr;
 		}
 
-		void Assign(CharIterator begin, size_t length) noexcept
+		void Assign(CharIterator begin, std::size_t length) noexcept
 		{
 			Assign(begin, begin + length);
 		}
@@ -532,7 +532,7 @@ namespace NatsuLib
 			Assign(begin, detail_::GetEndOfString(begin));
 		}
 
-		size_t Find(StringView const& pattern, ptrdiff_t nBegin = 0) const noexcept
+		std::size_t Find(StringView const& pattern, std::ptrdiff_t nBegin = 0) const noexcept
 		{
 			const auto length = GetSize();
 			const auto realBegin = ApplyOffset(nBegin, length);
@@ -553,7 +553,7 @@ namespace NatsuLib
 			return pos + realBegin;
 		}
 
-		size_t FindBackward(StringView const& pattern, ptrdiff_t nEnd = -1) const noexcept
+		std::size_t FindBackward(StringView const& pattern, std::ptrdiff_t nEnd = -1) const noexcept
 		{
 			const auto length = GetSize();
 			const auto realEnd = ApplyOffset(nEnd, length);
@@ -574,7 +574,7 @@ namespace NatsuLib
 			return realEnd - pos - patternLength;
 		}
 
-		size_t FindCharRepeat(CharType findChar, size_t repeatCount, ptrdiff_t nBegin = 0) const noexcept
+		std::size_t FindCharRepeat(CharType findChar, std::size_t repeatCount, std::ptrdiff_t nBegin = 0) const noexcept
 		{
 			const auto length = GetSize();
 			const auto realBegin = ApplyOffset(nBegin, length);
@@ -594,7 +594,7 @@ namespace NatsuLib
 			return pos + realBegin;
 		}
 
-		size_t FindCharRepeatBackward(CharType findChar, size_t repeatCount, ptrdiff_t nEnd = 0) const noexcept
+		std::size_t FindCharRepeatBackward(CharType findChar, std::size_t repeatCount, std::ptrdiff_t nEnd = 0) const noexcept
 		{
 			const auto length = GetSize();
 			const auto realEnd = ApplyOffset(nEnd, length);
@@ -614,24 +614,24 @@ namespace NatsuLib
 			return realEnd - pos - repeatCount;
 		}
 
-		size_t Find(CharType findChar, ptrdiff_t nBegin = 0) const noexcept
+		std::size_t Find(CharType findChar, std::ptrdiff_t nBegin = 0) const noexcept
 		{
 			return FindCharRepeat(findChar, 1, nBegin);
 		}
 
-		size_t FindBackward(CharType findChar, ptrdiff_t nEnd = -1) const noexcept
+		std::size_t FindBackward(CharType findChar, std::ptrdiff_t nEnd = -1) const noexcept
 		{
 			return FindCharRepeatBackward(findChar, 1, nEnd);
 		}
 
-		nBool StartWith(CharType findChar, size_t repeatCount = 1) const noexcept
+		nBool StartWith(CharType findChar, std::size_t repeatCount = 1) const noexcept
 		{
 			if (!repeatCount || repeatCount > size())
 			{
 				return false;
 			}
 
-			for (size_t i = 0; i < repeatCount; ++i)
+			for (std::size_t i = 0; i < repeatCount; ++i)
 			{
 				if (m_StrBegin[i] != findChar)
 				{
@@ -647,7 +647,7 @@ namespace NatsuLib
 			return size() >= other.size() && Slice(0, other.size()) == other;
 		}
 
-		nBool EndWith(CharType findChar, size_t repeatCount = 1) const noexcept
+		nBool EndWith(CharType findChar, std::size_t repeatCount = 1) const noexcept
 		{
 			if (!repeatCount || repeatCount > size())
 			{
@@ -655,7 +655,7 @@ namespace NatsuLib
 			}
 
 			const auto startIndex = size() - repeatCount;
-			for (size_t i = 0; i < repeatCount; ++i)
+			for (std::size_t i = 0; i < repeatCount; ++i)
 			{
 				if (m_StrBegin[startIndex + i] != findChar)
 				{
@@ -681,9 +681,9 @@ namespace NatsuLib
 		CharIterator m_StrBegin;
 		CharIterator m_StrEnd;
 
-		static size_t ApplyOffset(ptrdiff_t offset, size_t size) noexcept
+		static std::size_t ApplyOffset(std::ptrdiff_t offset, std::size_t size) noexcept
 		{
-			auto ret = static_cast<size_t>(offset);
+			auto ret = static_cast<std::size_t>(offset);
 			if (offset < 0)
 			{
 				ret += size + 1;
@@ -708,12 +708,12 @@ namespace NatsuLib
 		template <StringType SrcType>
 		struct TransCoder;
 
-		constexpr size_t Grow(size_t size) noexcept
+		constexpr std::size_t Grow(std::size_t size) noexcept
 		{
-			return std::max(size + 1, (size + 1 + ((size + 1) >> 1) + 0x0F) & static_cast<size_t>(-0x10));
+			return std::max(size + 1, (size + 1 + ((size + 1) >> 1) + 0x0F) & static_cast<std::size_t>(-0x10));
 		}
 
-		template <typename CharType, size_t ArrayMaxSize>
+		template <typename CharType, std::size_t ArrayMaxSize>
 		struct StringStorage
 		{
 			constexpr StringStorage() noexcept
@@ -721,13 +721,13 @@ namespace NatsuLib
 			{
 			}
 
-			explicit StringStorage(size_t capacity)
+			explicit StringStorage(std::size_t capacity)
 				: StringStorage{}
 			{
 				Reserve(capacity);
 			}
 
-			StringStorage(const CharType* str, size_t length)
+			StringStorage(const CharType* str, std::size_t length)
 				: StringStorage{}
 			{
 				Assign(str, length);
@@ -745,14 +745,14 @@ namespace NatsuLib
 				Assign(std::move(other));
 			}
 
-			template <size_t OtherArrayMaxSize>
+			template <std::size_t OtherArrayMaxSize>
 			StringStorage(StringStorage<CharType, OtherArrayMaxSize> const& other)
 				: StringStorage{}
 			{
 				Assign(other);
 			}
 
-			template <size_t OtherArrayMaxSize>
+			template <std::size_t OtherArrayMaxSize>
 			StringStorage(StringStorage<CharType, OtherArrayMaxSize>&& other) noexcept
 				: StringStorage{}
 			{
@@ -767,33 +767,33 @@ namespace NatsuLib
 				}
 			}
 
-			template <size_t OtherArrayMaxSize>
+			template <std::size_t OtherArrayMaxSize>
 			StringStorage& operator=(StringStorage<CharType, OtherArrayMaxSize> const& other)
 			{
 				Assign(other);
 				return *this;
 			}
 
-			template <size_t OtherArrayMaxSize>
+			template <std::size_t OtherArrayMaxSize>
 			StringStorage& operator=(StringStorage<CharType, OtherArrayMaxSize>&& other) noexcept
 			{
 				Assign(std::move(other));
 				return *this;
 			}
 
-			void Assign(const CharType* str, size_t length)
+			void Assign(const CharType* str, std::size_t length)
 			{
 				Resize(length);
 				std::memmove(GetData(), str, length * sizeof(CharType));
 			}
 
-			template <size_t OtherArrayMaxSize>
+			template <std::size_t OtherArrayMaxSize>
 			void Assign(StringStorage<CharType, OtherArrayMaxSize> const& other)
 			{
 				Assign(other.GetData(), other.Size);
 			}
 
-			template <size_t OtherArrayMaxSize>
+			template <std::size_t OtherArrayMaxSize>
 			void Assign(StringStorage<CharType, OtherArrayMaxSize>&& other) noexcept
 			{
 				using std::swap;
@@ -825,9 +825,9 @@ namespace NatsuLib
 				return const_cast<CharType*>(static_cast<const StringStorage*>(this)->GetData());
 			}
 
-			void Reserve(size_t newCapacity);
+			void Reserve(std::size_t newCapacity);
 
-			void Resize(size_t newSize)
+			void Resize(std::size_t newSize)
 			{
 				if (newSize >= std::max(ArrayMaxSize, Capacity))
 				{
@@ -846,8 +846,8 @@ namespace NatsuLib
 				assert(Capacity > Size);
 			}
 
-			size_t Size;
-			size_t Capacity;
+			std::size_t Size;
+			std::size_t Capacity;
 			union
 			{
 				CharType Array[ArrayMaxSize];
@@ -875,7 +875,7 @@ namespace NatsuLib
 		typedef std::reverse_iterator<iterator> reverse_iterator;
 		typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
-		enum : size_t
+		enum : std::size_t
 		{
 			npos = detail_::npos,
 			MaxShortStringSize = 31,
@@ -892,7 +892,7 @@ namespace NatsuLib
 		{
 		}
 
-		explicit String(CharType Char, size_t count = 1)
+		explicit String(CharType Char, std::size_t count = 1)
 			: String{}
 		{
 			Assign(Char, count);
@@ -970,24 +970,24 @@ namespace NatsuLib
 		{
 		}
 
-		void Reserve(size_t newCapacity)
+		void Reserve(std::size_t newCapacity)
 		{
 			m_Storage.Reserve(newCapacity);
 		}
 
-		void Resize(size_t newSize)
+		void Resize(std::size_t newSize)
 		{
 			m_Storage.Resize(newSize);
 		}
 
-		iterator ResizeMore(size_t moreSize)
+		iterator ResizeMore(std::size_t moreSize)
 		{
 			const auto oldSize = m_Storage.Size;
 			Resize(oldSize + moreSize);
 			return m_Storage.GetData() + oldSize;
 		}
 
-		void Assign(CharType Char, size_t count = 1)
+		void Assign(CharType Char, std::size_t count = 1)
 		{
 			Resize(count);
 			std::fill_n(m_Storage.GetData(), count, Char);
@@ -1031,7 +1031,7 @@ namespace NatsuLib
 			Assign(src.GetView());
 		}
 
-		void Append(CharType Char, size_t count = 1)
+		void Append(CharType Char, std::size_t count = 1)
 		{
 			std::fill_n(ResizeMore(count), count, Char);
 		}
@@ -1098,7 +1098,7 @@ namespace NatsuLib
 			return m_Storage.GetData() + m_Storage.Size;
 		}
 
-		size_t size() const noexcept
+		std::size_t size() const noexcept
 		{
 			return m_Storage.Size;
 		}
@@ -1108,7 +1108,7 @@ namespace NatsuLib
 			return m_Storage.Size == 0;
 		}
 
-		void pop_front(size_t count = 1) noexcept
+		void pop_front(std::size_t count = 1) noexcept
 		{
 			assert(count <= m_Storage.Size);
 
@@ -1122,20 +1122,20 @@ namespace NatsuLib
 			Resize(m_Storage.Size - count);
 		}
 
-		void pop_back(size_t count = 1) noexcept
+		void pop_back(std::size_t count = 1) noexcept
 		{
 			assert(count <= m_Storage.Size);
 			Resize(m_Storage.Size - count);
 		}
 
-		CharType const& UncheckGet(size_t index) const noexcept
+		CharType const& UncheckGet(std::size_t index) const noexcept
 		{
 			assert(index < m_Storage.Size && "index is out of range.");
 
 			return m_Storage.GetData()[index];
 		}
 
-		CharType const& Get(size_t index) const
+		CharType const& Get(std::size_t index) const
 		{
 			if (index >= m_Storage.Size)
 			{
@@ -1145,12 +1145,12 @@ namespace NatsuLib
 			return UncheckGet(index);
 		}
 
-		CharType& UncheckGet(size_t index) noexcept
+		CharType& UncheckGet(std::size_t index) noexcept
 		{
 			return const_cast<CharType&>(static_cast<const String*>(this)->UncheckGet(index));
 		}
 
-		CharType& Get(size_t index)
+		CharType& Get(std::size_t index)
 		{
 			if (index >= m_Storage.Size)
 			{
@@ -1160,12 +1160,12 @@ namespace NatsuLib
 			return UncheckGet(index);
 		}
 
-		CharType& operator[](size_t index) noexcept
+		CharType& operator[](std::size_t index) noexcept
 		{
 			return UncheckGet(index);
 		}
 
-		CharType const& operator[](size_t index) const noexcept
+		CharType const& operator[](std::size_t index) const noexcept
 		{
 			return UncheckGet(index);
 		}
@@ -1240,6 +1240,53 @@ namespace NatsuLib
 		detail_::StringStorage<CharType, MaxShortStringSize> m_Storage;
 	};
 
+	template <>
+	void String<StringType::Utf8>::TransAppendTo(String<StringType::Utf16>& dst, View const& src);
+	template <>
+	void String<StringType::Utf8>::TransAppendFrom(String& dst, StringView<StringType::Utf16> const& src);
+	template <>
+	void String<StringType::Utf8>::TransAppendTo(String<StringType::Utf32>& dst, View const& src);
+	template <>
+	void String<StringType::Utf8>::TransAppendFrom(String& dst, StringView<StringType::Utf32> const& src);
+
+	template <>
+	void String<StringType::Utf16>::TransAppendTo(String<StringType::Utf16>& dst, View const& src);
+	template <>
+	void String<StringType::Utf16>::TransAppendFrom(String& dst, StringView<StringType::Utf16> const& src);
+	template <>
+	void String<StringType::Utf16>::TransAppendTo(String<StringType::Utf32>& dst, View const& src);
+	template <>
+	void String<StringType::Utf16>::TransAppendFrom(String& dst, StringView<StringType::Utf32> const& src);
+
+	template <>
+	void String<StringType::Utf32>::TransAppendTo(String<StringType::Utf16>& dst, View const& src);
+	template <>
+	void String<StringType::Utf32>::TransAppendFrom(String& dst, StringView<StringType::Utf16> const& src);
+	template <>
+	void String<StringType::Utf32>::TransAppendTo(String<StringType::Utf32>& dst, View const& src);
+	template <>
+	void String<StringType::Utf32>::TransAppendFrom(String& dst, StringView<StringType::Utf32> const& src);
+
+#ifdef _WIN32
+	template <>
+	void String<StringType::Ansi>::TransAppendTo(String<StringType::Utf16>& dst, View const& src);
+	template <>
+	void String<StringType::Ansi>::TransAppendFrom(String& dst, StringView<StringType::Utf16> const& src);
+	template <>
+	void String<StringType::Ansi>::TransAppendTo(String<StringType::Utf32>& dst, View const& src);
+	template <>
+	void String<StringType::Ansi>::TransAppendFrom(String& dst, StringView<StringType::Utf32> const& src);
+
+	template <>
+	void String<StringType::Wide>::TransAppendTo(String<StringType::Utf16>& dst, View const& src);
+	template <>
+	void String<StringType::Wide>::TransAppendFrom(String& dst, StringView<StringType::Utf16> const& src);
+	template <>
+	void String<StringType::Wide>::TransAppendTo(String<StringType::Utf32>& dst, View const& src);
+	template <>
+	void String<StringType::Wide>::TransAppendFrom(String& dst, StringView<StringType::Utf32> const& src);
+#endif
+
 	extern template class String<StringType::Utf8>;
 	extern template class String<StringType::Utf16>;
 	extern template class String<StringType::Utf32>;
@@ -1267,6 +1314,21 @@ namespace NatsuLib
 	typedef String<StringType::Wide> WideString;
 #endif
 
+	template <typename>
+	struct GetUsingStringType;
+
+	template <StringType UsingStringType>
+	struct GetUsingStringType<StringView<UsingStringType>>
+		: std::integral_constant<StringType, UsingStringType>
+	{
+	};
+
+	template <StringType UsingStringType>
+	struct GetUsingStringType<String<UsingStringType>>
+		: std::integral_constant<StringType, UsingStringType>
+	{
+	};
+
 	namespace detail_
 	{
 #ifdef _WIN32
@@ -1281,21 +1343,21 @@ namespace NatsuLib
 		struct EncodingCodePoint<StringType::Utf8>
 		{
 			static EncodingResult Encode(String<StringType::Utf8>& output, nuInt codePoint);
-			static std::pair<EncodingResult, size_t> Decode(StringView<StringType::Utf8> const& input, nuInt& codePoint);
+			static std::pair<EncodingResult, std::size_t> Decode(StringView<StringType::Utf8> const& input, nuInt& codePoint);
 		};
 
 		template <>
 		struct EncodingCodePoint<StringType::Utf16>
 		{
 			static EncodingResult Encode(String<StringType::Utf16>& output, nuInt codePoint);
-			static std::pair<EncodingResult, size_t> Decode(StringView<StringType::Utf16> const& input, nuInt& codePoint);
+			static std::pair<EncodingResult, std::size_t> Decode(StringView<StringType::Utf16> const& input, nuInt& codePoint);
 		};
 
 		template <>
 		struct EncodingCodePoint<StringType::Utf32>
 		{
 			static EncodingResult Encode(String<StringType::Utf32>& output, nuInt codePoint);
-			static std::pair<EncodingResult, size_t> Decode(StringView<StringType::Utf32> const& input, nuInt& codePoint);
+			static std::pair<EncodingResult, std::size_t> Decode(StringView<StringType::Utf32> const& input, nuInt& codePoint);
 		};
 
 #ifdef _WIN32
@@ -1303,14 +1365,14 @@ namespace NatsuLib
 		struct EncodingCodePoint<StringType::Ansi>
 		{
 			static EncodingResult Encode(String<StringType::Ansi>& output, nuInt codePoint);
-			static std::pair<EncodingResult, size_t> Decode(StringView<StringType::Ansi> const& input, nuInt& codePoint);
+			static std::pair<EncodingResult, std::size_t> Decode(StringView<StringType::Ansi> const& input, nuInt& codePoint);
 		};
 
 		template <>
 		struct EncodingCodePoint<StringType::Wide>
 		{
 			static EncodingResult Encode(String<StringType::Wide>& output, nuInt codePoint);
-			static std::pair<EncodingResult, size_t> Decode(StringView<StringType::Wide> const& input, nuInt& codePoint);
+			static std::pair<EncodingResult, std::size_t> Decode(StringView<StringType::Wide> const& input, nuInt& codePoint);
 		};
 #endif
 
@@ -1535,10 +1597,10 @@ namespace NatsuLib
 	{
 		// 修改自 https://www.byvoid.com/blog/string-hash-compare
 		template <typename CharType>
-		size_t BKDRHash(const CharType* strBegin, const CharType* strEnd)
+		std::size_t BKDRHash(const CharType* strBegin, const CharType* strEnd)
 		{
-			constexpr size_t seed = 131; // 31 131 1313 13131 131313 etc..
-			size_t hash = 0;
+			constexpr std::size_t seed = 131; // 31 131 1313 13131 131313 etc..
+			std::size_t hash = 0;
 
 			while (strBegin != strEnd)
 			{
@@ -1561,12 +1623,12 @@ namespace NatsuLib
 			return U8StringView{ Char };
 		}
 
-		NATINLINE U8String operator""_u8s(const U8String::CharType* str, size_t length) noexcept
+		NATINLINE U8String operator""_u8s(const U8String::CharType* str, std::size_t length) noexcept
 		{
 			return U8StringView{ str,length };
 		}
 
-		NATINLINE U16StringView operator""_u16v(const U16StringView::CharType* str, size_t length) noexcept
+		NATINLINE U16StringView operator""_u16v(const U16StringView::CharType* str, std::size_t length) noexcept
 		{
 			return { str,length };
 		}
@@ -1576,12 +1638,12 @@ namespace NatsuLib
 			return U16StringView{ Char };
 		}
 
-		NATINLINE U16String operator""_u16s(const U16String::CharType* str, size_t length) noexcept
+		NATINLINE U16String operator""_u16s(const U16String::CharType* str, std::size_t length) noexcept
 		{
 			return U16StringView{ str,length };
 		}
 
-		NATINLINE U32StringView operator""_u32v(const U32StringView::CharType* str, size_t length) noexcept
+		NATINLINE U32StringView operator""_u32v(const U32StringView::CharType* str, std::size_t length) noexcept
 		{
 			return { str,length };
 		}
@@ -1591,13 +1653,13 @@ namespace NatsuLib
 			return U32StringView{ Char };
 		}
 
-		NATINLINE U32String operator""_u32s(const U32String::CharType* str, size_t length) noexcept
+		NATINLINE U32String operator""_u32s(const U32String::CharType* str, std::size_t length) noexcept
 		{
 			return U32StringView{ str,length };
 		}
 
 #ifdef _WIN32
-		NATINLINE AnsiStringView operator""_av(const AnsiStringView::CharType* str, size_t length) noexcept
+		NATINLINE AnsiStringView operator""_av(const AnsiStringView::CharType* str, std::size_t length) noexcept
 		{
 			return { str,length };
 		}
@@ -1607,12 +1669,12 @@ namespace NatsuLib
 			return AnsiStringView{ Char };
 		}
 
-		NATINLINE AnsiString operator""_as(const AnsiString::CharType* str, size_t length) noexcept
+		NATINLINE AnsiString operator""_as(const AnsiString::CharType* str, std::size_t length) noexcept
 		{
 			return AnsiStringView{ str,length };
 		}
 
-		NATINLINE WideStringView operator""_wv(const WideStringView::CharType* str, size_t length) noexcept
+		NATINLINE WideStringView operator""_wv(const WideStringView::CharType* str, std::size_t length) noexcept
 		{
 			return{ str,length };
 		}
@@ -1622,13 +1684,13 @@ namespace NatsuLib
 			return WideStringView{ Char };
 		}
 
-		NATINLINE WideString operator""_ws(const WideString::CharType* str, size_t length) noexcept
+		NATINLINE WideString operator""_ws(const WideString::CharType* str, std::size_t length) noexcept
 		{
 			return WideStringView{ str,length };
 		}
 #endif
 
-		NATINLINE nStrView operator""_nv(const nU8Char* str, size_t length) noexcept
+		NATINLINE nStrView operator""_nv(const nU8Char* str, std::size_t length) noexcept
 		{
 			return { str, length };
 		}
@@ -1638,7 +1700,7 @@ namespace NatsuLib
 			return nStrView{ Char };
 		}
 
-		NATINLINE nString operator""_ns(const nU8Char* str, size_t length)
+		NATINLINE nString operator""_ns(const nU8Char* str, std::size_t length)
 		{
 			return nStrView{ str, length };
 		}
@@ -1650,7 +1712,7 @@ namespace std
 	template <NatsuLib::StringType stringType>
 	struct hash<NatsuLib::StringView<stringType>>
 	{
-		size_t operator()(NatsuLib::StringView<stringType> const& view) const
+		std::size_t operator()(NatsuLib::StringView<stringType> const& view) const
 		{
 			return NatsuLib::detail_::BKDRHash(view.cbegin(), view.cend());
 		}
@@ -1659,7 +1721,7 @@ namespace std
 	template <NatsuLib::StringType stringType>
 	struct hash<NatsuLib::String<stringType>>
 	{
-		size_t operator()(NatsuLib::String<stringType> const& str) const
+		std::size_t operator()(NatsuLib::String<stringType> const& str) const
 		{
 			return hash<NatsuLib::StringView<stringType>>{}(str.GetView());
 		}
@@ -1673,14 +1735,14 @@ namespace NatsuLib
 	namespace detail_
 	{
 		template <typename Iter1, typename Iter2>
-		size_t MatchString(Iter1 srcBegin, Iter1 srcEnd, Iter2 patternBegin, Iter2 patternEnd) noexcept
+		std::size_t MatchString(Iter1 srcBegin, Iter1 srcEnd, Iter2 patternBegin, Iter2 patternEnd) noexcept
 		{
 			assert(srcBegin != srcEnd);
-			assert(static_cast<size_t>(srcEnd - srcBegin) >= static_cast<size_t>(patternEnd - patternBegin));
+			assert(static_cast<std::size_t>(srcEnd - srcBegin) >= static_cast<std::size_t>(patternEnd - patternBegin));
 
-			const auto patternSize = static_cast<size_t>(std::distance(patternBegin, patternEnd));
+			const auto patternSize = static_cast<std::size_t>(std::distance(patternBegin, patternEnd));
 
-			ptrdiff_t* table{};
+			std::ptrdiff_t* table{};
 			auto shouldDelete = false;
 			const auto tableSize = patternSize - 1;
 			auto scope = make_scope([&table, &shouldDelete]
@@ -1691,14 +1753,14 @@ namespace NatsuLib
 				}
 			});
 
-			if (tableSize >= MaxAllocaSize / sizeof(ptrdiff_t))
+			if (tableSize >= MaxAllocaSize / sizeof(std::ptrdiff_t))
 			{
-				table = new(std::nothrow) ptrdiff_t[tableSize];
+				table = new(std::nothrow) std::ptrdiff_t[tableSize];
 				shouldDelete = true;
 			}
 			else if (tableSize > 0)
 			{
-				table = static_cast<ptrdiff_t*>(alloca(tableSize * sizeof(ptrdiff_t)));
+				table = static_cast<std::ptrdiff_t*>(alloca(tableSize * sizeof(std::ptrdiff_t)));
 				shouldDelete = false;
 			}
 
@@ -1708,7 +1770,7 @@ namespace NatsuLib
 
 				if (patternSize > 2)
 				{
-					ptrdiff_t pos = 1, cand = 0;
+					std::ptrdiff_t pos = 1, cand = 0;
 
 					do
 					{
@@ -1728,7 +1790,7 @@ namespace NatsuLib
 						}
 
 						++pos;
-					} while (static_cast<size_t>(pos) < patternSize - 1);
+					} while (static_cast<std::size_t>(pos) < patternSize - 1);
 				}
 			}
 
@@ -1737,7 +1799,7 @@ namespace NatsuLib
 			{
 				for (;; ++current)
 				{
-					if (std::distance(current, srcEnd) < static_cast<ptrdiff_t>(patternSize))
+					if (std::distance(current, srcEnd) < static_cast<std::ptrdiff_t>(patternSize))
 					{
 						return npos;
 					}
@@ -1747,13 +1809,13 @@ namespace NatsuLib
 					}
 				}
 
-				ptrdiff_t matchLen = 1;
+				std::ptrdiff_t matchLen = 1;
 
 				while (true)
 				{
-					if (static_cast<size_t>(matchLen) >= patternSize)
+					if (static_cast<std::size_t>(matchLen) >= patternSize)
 					{
-						return static_cast<size_t>(current - srcBegin);
+						return static_cast<std::size_t>(current - srcBegin);
 					}
 
 				Fallback:
@@ -1782,8 +1844,8 @@ namespace NatsuLib
 			}
 		}
 
-		template <typename CharType, size_t ArrayMaxSize>
-		void StringStorage<CharType, ArrayMaxSize>::Reserve(size_t newCapacity)
+		template <typename CharType, std::size_t ArrayMaxSize>
+		void StringStorage<CharType, ArrayMaxSize>::Reserve(std::size_t newCapacity)
 		{
 			using std::swap;
 

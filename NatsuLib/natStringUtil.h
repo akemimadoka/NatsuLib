@@ -4,7 +4,7 @@
 #include <sstream>
 #include <tuple>
 #include <iomanip>
-#include <locale>
+#include <cctype>
 #include <typeinfo>
 
 namespace NatsuLib
@@ -369,7 +369,7 @@ namespace NatsuLib
 					++lpStr;
 					while (*lpStr)
 					{
-						if (std::isblank(*lpStr, std::locale{}))
+						if (std::isblank(*lpStr))
 						{
 							++lpStr;
 							continue;
@@ -384,7 +384,7 @@ namespace NatsuLib
 						break;
 					}
 
-					while (std::isblank(*lpStr, std::locale{})) { ++lpStr; }
+					while (std::isblank(*lpStr)) { ++lpStr; }
 					if (*lpStr != '}')
 					{
 						nat_Throw(natException, "Expected '}', got '%c'", *lpStr);

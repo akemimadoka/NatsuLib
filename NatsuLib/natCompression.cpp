@@ -5,6 +5,8 @@
 
 using namespace NatsuLib;
 
+using CurrentUsingRuntimeEncoding = RuntimeEncoding<GetUsingStringType<nString>::value>;
+
 // 在写入时被odr-use了，所以需要提供定义
 constexpr nuInt natZipArchive::Mask32Bit;
 constexpr nuShort natZipArchive::Mask16Bit;
@@ -266,7 +268,7 @@ natRefPointer<natStream> natZipArchive::ZipEntry::createCompressor(natRefPointer
 		});
 	}
 
-	return std::move(compressor);
+	return compressor;
 }
 
 void natZipArchive::ZipEntry::loadExtraFieldAndCompressedData()
@@ -796,7 +798,7 @@ nBool natZipArchive::CentralDirectoryFileHeader::Read(natRefPointer<natBinaryRea
 		{
 			std::vector<nByte> buffer(FilenameLength);
 			stream->ReadBytes(buffer.data(), FilenameLength);
-			Filename.Assign(RuntimeEncoding<nString::UsingStringType>::Encode(buffer.data(), FilenameLength, encoding));
+			Filename.Assign(CurrentUsingRuntimeEncoding::Encode(buffer.data(), FilenameLength, encoding));
 		}
 	}
 
@@ -850,7 +852,7 @@ nBool natZipArchive::CentralDirectoryFileHeader::Read(natRefPointer<natBinaryRea
 			{
 				std::vector<nByte> buffer(FileCommentLength);
 				stream->ReadBytes(buffer.data(), FileCommentLength);
-				FileComment.Assign(RuntimeEncoding<nString::UsingStringType>::Encode(buffer.data(), FileCommentLength, encoding));
+				FileComment.Assign(CurrentUsingRuntimeEncoding::Encode(buffer.data(), FileCommentLength, encoding));
 			}
 		}
 		else
@@ -873,14 +875,14 @@ void natZipArchive::CentralDirectoryFileHeader::Write(natRefPointer<natBinaryWri
 
 	const auto stream = writer->GetUnderlyingStream();
 
-	const auto filenameBytes = RuntimeEncoding<nString::UsingStringType>::Decode(Filename, encoding);
+	const auto filenameBytes = CurrentUsingRuntimeEncoding::Decode(Filename, encoding);
 	if (filenameBytes.size() > std::numeric_limits<nuShort>::max())
 	{
 		nat_Throw(natErrException, NatErr_InternalErr, "Filename is too long."_nv);
 	}
 	FilenameLength = static_cast<nuShort>(filenameBytes.size());
 
-	const auto fileCommentBytes = RuntimeEncoding<nString::UsingStringType>::Decode(FileComment, encoding);
+	const auto fileCommentBytes = CurrentUsingRuntimeEncoding::Decode(FileComment, encoding);
 	if (fileCommentBytes.size() > std::numeric_limits<nuShort>::max())
 	{
 		nat_Throw(natErrException, NatErr_InternalErr, "Filecomment is too long."_nv);
@@ -992,7 +994,7 @@ nBool natZipArchive::LocalFileHeader::Write(natRefPointer<natBinaryWriter> write
 	const auto stream = writer->GetUnderlyingStream();
 	constexpr auto signature = Signature;
 
-	const auto filenameBytes = RuntimeEncoding<nString::UsingStringType>::Decode(fileHeader.Filename, encoding);
+	const auto filenameBytes = CurrentUsingRuntimeEncoding::Decode(fileHeader.Filename, encoding);
 	if (filenameBytes.size() > std::numeric_limits<nuShort>::max())
 	{
 		nat_Throw(natErrException, NatErr_InternalErr, "Filename is too long."_nv);
@@ -1106,7 +1108,7 @@ void natZipArchive::ZipEndOfCentralDirectory::Read(natRefPointer<natBinaryReader
 		{
 			std::vector<nByte> buffer(commentSize);
 			stream->ReadBytes(buffer.data(), commentSize);
-			ArchiveComment.Assign(RuntimeEncoding<nString::UsingStringType>::Encode(buffer.data(), commentSize, encoding));
+			ArchiveComment.Assign(CurrentUsingRuntimeEncoding::Encode(buffer.data(), commentSize, encoding));
 		}
 	}
 }
@@ -1140,7 +1142,7 @@ void natZipArchive::ZipEndOfCentralDirectory::Write(natRefPointer<natBinaryWrite
 		}
 		else
 		{
-			const auto buffer = RuntimeEncoding<nString::UsingStringType>::Decode(archiveComment, encoding);
+			const auto buffer = CurrentUsingRuntimeEncoding::Decode(archiveComment, encoding);
 			writer->WritePod(static_cast<nuShort>(buffer.size()));
 			stream->WriteBytes(buffer.data(), buffer.size());
 		}

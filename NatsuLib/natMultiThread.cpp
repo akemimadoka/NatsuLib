@@ -132,7 +132,7 @@ natThreadPool::natThreadPool(nuInt InitialThreadCount, nuInt MaxThreadCount)
 	{
 		--InitialThreadCount;
 		Index = getNextAvailableIndex();
-		m_Threads[Index] = move(std::make_unique<WorkerThread>(*this, Index));
+		m_Threads[Index] = std::make_unique<WorkerThread>(*this, Index);
 	}
 }
 
@@ -170,7 +170,7 @@ std::future<natThreadPool::WorkToken> natThreadPool::QueueWork(WorkFunc workFunc
 		std::promise<WorkToken> dummyPromise;
 		auto ret = dummyPromise.get_future();
 		dummyPromise.set_value(WorkToken(availableIndex, move(result)));
-		return move(ret);
+		return ret;
 	}
 
 	if (Index != std::numeric_limits<nuInt>::max())
@@ -179,13 +179,13 @@ std::future<natThreadPool::WorkToken> natThreadPool::QueueWork(WorkFunc workFunc
 		std::promise<WorkToken> dummyPromise;
 		auto ret = dummyPromise.get_future();
 		dummyPromise.set_value(WorkToken(Index, move(result)));
-		return move(ret);
+		return ret;
 	}
 
 	auto work = make_tuple(workFunc, param, std::promise<WorkToken>());
 	auto ret = std::get<2>(work).get_future();
 	m_WorkQueue.emplace(move(work));
-	return move(ret);
+	return ret;
 }
 
 natThread::ThreadIdType natThreadPool::GetThreadId(nuInt Index) const

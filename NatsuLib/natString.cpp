@@ -4,23 +4,26 @@
 
 using namespace NatsuLib;
 
-template class StringView<StringType::Utf8>;
-template class StringView<StringType::Utf16>;
-template class StringView<StringType::Utf32>;
+namespace NatsuLib
+{
+	template class StringView<StringType::Utf8>;
+	template class StringView<StringType::Utf16>;
+	template class StringView<StringType::Utf32>;
 
 #ifdef _WIN32
-template class StringView<StringType::Ansi>;
-template class StringView<StringType::Wide>;
+	template class StringView<StringType::Ansi>;
+	template class StringView<StringType::Wide>;
 #endif
 
-template class String<StringType::Utf8>;
-template class String<StringType::Utf16>;
-template class String<StringType::Utf32>;
+	template class String<StringType::Utf8>;
+	template class String<StringType::Utf16>;
+	template class String<StringType::Utf32>;
 
 #ifdef _WIN32
-template class String<StringType::Ansi>;
-template class String<StringType::Wide>;
+	template class String<StringType::Ansi>;
+	template class String<StringType::Wide>;
 #endif
+}
 
 #define SET_REPLACEMENT_CHARACTER(codepoint) do { (codepoint) = 0xFFFD; } while (false)
 #define DECODE_ERROR(resultCode, result, codepoint) { (result) = EncodingResult::resultCode; SET_REPLACEMENT_CHARACTER(codepoint); break; }
@@ -405,7 +408,7 @@ namespace NatsuLib
 			}
 			catch (...)
 			{
-				return EncodingResult::Reject;	// Òì³£±»ÍÌ
+				return EncodingResult::Reject;	// ï¿½ì³£ï¿½ï¿½ï¿½ï¿½
 			}
 
 			return EncodingResult::Accept;
@@ -413,13 +416,13 @@ namespace NatsuLib
 
 		std::pair<EncodingResult, size_t> EncodingCodePoint<StringType::Ansi>::Decode(StringView<StringType::Ansi> const& input, nuInt& codePoint)
 		{
-			codePoint = static_cast<nuInt>(*input.begin());	// ÎÒÃÇÎÞ·¨¼ÙÉèAnsiµÄ×Ö·û´®µÄÒ»¸öÓÐÐ§×Ö·ûÕ¼ÓÃµÄ×Ö½ÚÊý
+			codePoint = static_cast<nuInt>(*input.begin());	// ï¿½ï¿½ï¿½ï¿½ï¿½Þ·ï¿½ï¿½ï¿½ï¿½ï¿½Ansiï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ð§ï¿½Ö·ï¿½Õ¼ï¿½Ãµï¿½ï¿½Ö½ï¿½ï¿½ï¿½
 			return { EncodingResult::Accept, 1 };
 		}
 
 		EncodingResult EncodingCodePoint<StringType::Wide>::Encode(String<StringType::Wide>& output, nuInt codePoint)
 		{
-			// ¼ÙÉè Windows Æ½Ì¨ÏÂµÄ¿í×Ö·û×Ö·û´®×ÜÎªUTF-16
+			// ï¿½ï¿½ï¿½ï¿½ Windows Æ½Ì¨ï¿½ÂµÄ¿ï¿½ï¿½Ö·ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ÎªUTF-16
 			return EncodingCodePoint<StringType::Utf16>::Encode(reinterpret_cast<String<StringType::Utf16>&>(output), codePoint);
 		}
 
