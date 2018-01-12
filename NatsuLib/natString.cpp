@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "natString.h"
 #include "natUtil.h"
 
@@ -408,7 +408,7 @@ namespace NatsuLib
 			}
 			catch (...)
 			{
-				return EncodingResult::Reject;	// �쳣����
+				return EncodingResult::Reject;	// 异常被吞
 			}
 
 			return EncodingResult::Accept;
@@ -416,13 +416,13 @@ namespace NatsuLib
 
 		std::pair<EncodingResult, size_t> EncodingCodePoint<StringType::Ansi>::Decode(StringView<StringType::Ansi> const& input, nuInt& codePoint)
 		{
-			codePoint = static_cast<nuInt>(*input.begin());	// �����޷�����Ansi���ַ�����һ����Ч�ַ�ռ�õ��ֽ���
+			codePoint = static_cast<nuInt>(*input.begin());	// 我们无法假设Ansi的字符串的一个有效字符占用的字节数
 			return { EncodingResult::Accept, 1 };
 		}
 
 		EncodingResult EncodingCodePoint<StringType::Wide>::Encode(String<StringType::Wide>& output, nuInt codePoint)
 		{
-			// ���� Windows ƽ̨�µĿ��ַ��ַ�����ΪUTF-16
+			// 假设 Windows 平台下的宽字符字符串总为UTF-16
 			return EncodingCodePoint<StringType::Utf16>::Encode(reinterpret_cast<String<StringType::Utf16>&>(output), codePoint);
 		}
 

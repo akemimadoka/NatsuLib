@@ -346,13 +346,13 @@ namespace NatsuLib
 							ss << std::setfill(*lpStr++);
 						}
 
-						if (!std::isdigit(*lpStr, std::locale{}))
+						if (!std::isdigit(*lpStr))
 						{
 							nat_Throw(natException, "Unknown token '%c'"_nv, *lpStr);
 						}
 
 						nuInt tmpWidth = 0;
-						while (std::isdigit(*lpStr, std::locale{}))
+						while (std::isdigit(*lpStr))
 						{
 							tmpWidth = tmpWidth * 10 + (*lpStr++ - '0');
 						}
@@ -375,7 +375,7 @@ namespace NatsuLib
 							continue;
 						}
 
-						if (std::isdigit(*lpStr, std::locale{}))
+						if (std::isdigit(*lpStr))
 						{
 							tmpIndex = tmpIndex * 10 + (*lpStr++ - '0');
 							continue;
