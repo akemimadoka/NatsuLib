@@ -6,6 +6,7 @@
 #include "natMisc.h"
 #include "natException.h"
 #include <memory>
+#include <utility>
 #include <vector>
 #include <set>
 #include <map>
@@ -26,13 +27,39 @@ namespace NatsuLib
 	///	@remark	用于 Linq 的模板参数
 	////////////////////////////////////////////////////////////////////////////////
 	template <typename T>
-	class Valued
+	struct Valued
 	{
 		explicit Valued() = delete;
 	};
 
 	namespace detail_
 	{
+		template <typename T, typename OriginT>
+		struct IsValuedImpl
+			: std::false_type
+		{
+			using InnerType = OriginT;
+		};
+
+		template <typename T, typename U>
+		struct IsValuedImpl<Valued<T>, U>
+			: std::true_type
+		{
+			using InnerType = T;
+		};
+
+		template <typename T>
+		struct IsValued
+			: IsValuedImpl<std::remove_cv_t<std::remove_reference_t<T>>, T>
+		{
+		};
+
+		template <typename Base, typename T>
+		using Max = std::conditional_t<std::is_base_of_v<Base, T>, T, Base>;
+
+		template <typename Base, typename T>
+		using Min = std::conditional_t<std::is_base_of_v<Base, T>, Base, T>;
+
 		template <typename T, typename U = T, typename = void>
 		struct Addable
 			: std::false_type
@@ -248,18 +275,23 @@ namespace NatsuLib
 		};
 
 		template <typename T>
-		using deref_t = std::decay_t<decltype(*std::declval<T>())>;
-
-		template <typename T>
 		class CommonIterator final
 		{
+		public:
+			typedef std::input_iterator_tag iterator_category;
+			typedef typename IsValued<T>::InnerType value_type;
+			typedef std::ptrdiff_t difference_type;
+			typedef std::conditional_t<IsValued<T>::value, value_type, std::add_lvalue_reference_t<value_type>> reference;
+			typedef std::add_pointer_t<value_type> pointer;
+
+		private:
 			struct IteratorInterface
 			{
 				virtual ~IteratorInterface() = default;
 
-				virtual std::shared_ptr<IteratorInterface> Clone() const = 0;
+				virtual std::unique_ptr<IteratorInterface> Clone() const = 0;
 				virtual void MoveNext() = 0;
-				virtual T& Deref() const = 0;
+				virtual reference Deref() const = 0;
 				virtual nBool Equals(IteratorInterface const& other) const = 0;
 			};
 
@@ -268,14 +300,14 @@ namespace NatsuLib
 			{
 				Iter_t m_Iterator;
 			public:
-				explicit IteratorImpl(Iter_t const& iterator)
-					: m_Iterator(iterator)
+				explicit IteratorImpl(Iter_t iterator)
+					: m_Iterator(std::move(iterator))
 				{
 				}
 
-				std::shared_ptr<IteratorInterface> Clone() const override
+				std::unique_ptr<IteratorInterface> Clone() const override
 				{
-					return std::static_pointer_cast<IteratorInterface>(std::make_shared<IteratorImpl>(m_Iterator));
+					return std::make_unique<IteratorImpl>(m_Iterator);
 				}
 
 				void MoveNext() override
@@ -283,14 +315,19 @@ namespace NatsuLib
 					++m_Iterator;
 				}
 
-				T& Deref() const override
+				reference Deref() const override
 				{
 					return *m_Iterator;
 				}
 
 				nBool Equals(IteratorInterface const& other) const override
 				{
-					return m_Iterator == dynamic_cast<IteratorImpl const&>(other).m_Iterator;
+					if (const auto realOther = dynamic_cast<IteratorImpl const*>(std::addressof(other)))
+					{
+						return m_Iterator == realOther->m_Iterator;
+					}
+
+					return false;
 				}
 
 				Iter_t GetIterator() const noexcept
@@ -301,18 +338,13 @@ namespace NatsuLib
 
 			typedef CommonIterator Self_t;
 
-			std::shared_ptr<IteratorInterface> m_Iterator;
+			std::unique_ptr<IteratorInterface> m_Iterator;
 
 		public:
-			typedef std::forward_iterator_tag iterator_category;
-			typedef std::remove_reference_t<T> value_type;
-			typedef std::ptrdiff_t difference_type;
-			typedef std::add_lvalue_reference_t<value_type> reference;
-			typedef std::add_pointer_t<value_type> pointer;
-
-			template <typename Iter_t>
-			CommonIterator(Iter_t const& iterator)
-				: m_Iterator(std::make_shared<IteratorImpl<Iter_t>>(iterator))
+			// 要包装的迭代器的 difference_type 不能比 std::ptrdiff_t 还大，否则可能出现问题
+			template <typename Iter_t, std::enable_if_t<sizeof(typename std::iterator_traits<Iter_t>::difference_type) <= sizeof(difference_type), int> = 0>
+			CommonIterator(Iter_t iterator)
+				: m_Iterator(std::make_unique<IteratorImpl<Iter_t>>(std::move(iterator)))
 			{
 			}
 
@@ -321,122 +353,33 @@ namespace NatsuLib
 			{
 			}
 
-			template <typename Iter_t>
-			Iter_t GetOriginalIterator() const
+			CommonIterator(Self_t&& other) noexcept
+				: m_Iterator(std::move(other.m_Iterator))
 			{
-				auto iter = std::dynamic_pointer_cast<IteratorImpl<Iter_t>>(m_Iterator);
-				if (iter)
-				{
-					return iter->GetIterator();
-				}
-
-				nat_Throw(natErrException, NatErr_InvalidArg, "Iter_t is not the type of original iterator.");
 			}
 
-			Self_t& operator++()
+			Self_t& operator=(Self_t const& other)
 			{
-				m_Iterator->MoveNext();
-
+				m_Iterator = other.m_Iterator->Clone();
 				return *this;
 			}
 
-			decltype(auto) operator*() const
+			Self_t& operator=(Self_t&& other) noexcept
 			{
-				return m_Iterator->Deref();
-			}
-
-			nBool operator==(CommonIterator const& other) const
-			{
-				return m_Iterator->Equals(*other.m_Iterator);
-			}
-
-			nBool operator!=(CommonIterator const& other) const
-			{
-				return !(*this == other);
-			}
-		};
-
-		template <typename T>
-		class CommonIterator<Valued<T>> final
-		{
-			struct IteratorInterface
-			{
-				virtual ~IteratorInterface() = default;
-
-				virtual std::shared_ptr<IteratorInterface> Clone() const = 0;
-				virtual void MoveNext() = 0;
-				virtual T Deref() const = 0;
-				virtual nBool Equals(IteratorInterface const& other) const = 0;
-			};
-
-			template <typename Iter_t>
-			class IteratorImpl final : public IteratorInterface
-			{
-				Iter_t m_Iterator;
-			public:
-				explicit IteratorImpl(Iter_t const& iterator)
-					: m_Iterator(iterator)
-				{
-				}
-
-				std::shared_ptr<IteratorInterface> Clone() const override
-				{
-					return std::static_pointer_cast<IteratorInterface>(std::make_shared<IteratorImpl>(m_Iterator));
-				}
-
-				void MoveNext() override
-				{
-					++m_Iterator;
-				}
-
-				T Deref() const override
-				{
-					return *m_Iterator;
-				}
-
-				nBool Equals(IteratorInterface const& other) const override
-				{
-					return m_Iterator == dynamic_cast<IteratorImpl const&>(other).m_Iterator;
-				}
-
-				Iter_t GetIterator() const noexcept
-				{
-					return m_Iterator;
-				}
-			};
-
-			typedef CommonIterator Self_t;
-
-			std::shared_ptr<IteratorInterface> m_Iterator;
-
-		public:
-			typedef std::forward_iterator_tag iterator_category;
-			typedef std::remove_reference_t<T> value_type;
-			typedef std::ptrdiff_t difference_type;
-			typedef value_type reference;
-			typedef std::add_pointer_t<value_type> pointer;
-
-			template <typename Iter_t>
-			CommonIterator(Iter_t const& iterator)
-				: m_Iterator(std::make_shared<IteratorImpl<Iter_t>>(iterator))
-			{
-			}
-
-			CommonIterator(Self_t const& other)
-				: m_Iterator(other.m_Iterator->Clone())
-			{
+				m_Iterator = std::move(other.m_Iterator);
+				return *this;
 			}
 
 			template <typename Iter_t>
 			Iter_t GetOriginalIterator() const
 			{
-				auto iter = std::dynamic_pointer_cast<IteratorImpl<Iter_t>>(m_Iterator);
+				auto iter = dynamic_cast<IteratorImpl<Iter_t>*>(m_Iterator.get());
 				if (iter)
 				{
 					return iter->GetIterator();
 				}
 
-				nat_Throw(natErrException, NatErr_InvalidArg, "Iter_t is not the type of original iterator.");
+				nat_Throw(natErrException, NatErr_InvalidArg, "Original iterator is not a Iter_t.");
 			}
 
 			Self_t& operator++()
@@ -489,6 +432,13 @@ namespace NatsuLib
 				return *this;
 			}
 
+			template <typename IterCate = iterator_category, std::enable_if_t<std::is_base_of_v<std::random_access_iterator_tag, IterCate>, int> = 0>
+			Self_t& operator+=(difference_type diff) & noexcept(noexcept(m_Iterator += diff))
+			{
+				m_Iterator += diff;
+				return *this;
+			}
+
 			decltype(auto) operator*() const
 			{
 				return *m_Iterator;
@@ -504,9 +454,10 @@ namespace NatsuLib
 				return !(*this == other);
 			}
 
-			difference_type operator-(Self_t const& other) const
+			template <typename IterCate = iterator_category, std::enable_if_t<std::is_base_of_v<std::random_access_iterator_tag, IterCate>, int> = 0>
+			difference_type operator-(Self_t const& other) const noexcept(noexcept(m_Iterator - other.m_Iterator))
 			{
-				return std::distance(other.m_Iterator, m_Iterator);
+				return m_Iterator - other.m_Iterator;
 			}
 		};
 
@@ -515,8 +466,8 @@ namespace NatsuLib
 		{
 			typedef EmptyIterator<T> Self_t;
 		public:
-			typedef std::forward_iterator_tag iterator_category;
-			typedef std::remove_reference_t<T> value_type;
+			typedef std::input_iterator_tag iterator_category;
+			typedef std::remove_cv_t<std::remove_reference_t<T>> value_type;
 			typedef std::ptrdiff_t difference_type;
 			typedef std::add_lvalue_reference_t<value_type> reference;
 			typedef std::add_pointer_t<value_type> pointer;
@@ -552,40 +503,48 @@ namespace NatsuLib
 
 		public:
 			typedef typename std::iterator_traits<Iter_t>::iterator_category iterator_category;
-			typedef typename std::iterator_traits<Iter_t>::value_type value_type;
+			typedef std::invoke_result_t<CallableObj_t, typename std::iterator_traits<Iter_t>::reference> value_type;
 			typedef typename std::iterator_traits<Iter_t>::difference_type difference_type;
-			typedef typename std::iterator_traits<Iter_t>::reference reference;
-			typedef typename std::iterator_traits<Iter_t>::pointer pointer;
+			typedef value_type reference;
+			typedef std::add_pointer_t<value_type> pointer;
 
-			SelectIterator(Iter_t const& iterator, CallableObj_t const& callableObj)
-				: m_Iterator(iterator), m_CallableObj(callableObj)
+			SelectIterator(Iter_t iterator, CallableObj_t callableObj) noexcept(std::is_nothrow_move_constructible_v<Iter_t> && std::is_nothrow_move_constructible_v<CallableObj_t>)
+				: m_Iterator(std::move(iterator)), m_CallableObj(std::move(callableObj))
 			{
 			}
 
-			Self_t& operator++() &
+			Self_t& operator++() & noexcept(noexcept(++m_Iterator))
 			{
 				++m_Iterator;
 				return *this;
 			}
 
-			decltype(auto) operator*() const
+			decltype(auto) operator*() const noexcept(noexcept(m_CallableObj(*m_Iterator)))
 			{
 				return m_CallableObj(*m_Iterator);
 			}
 
-			nBool operator==(Self_t const& other) const
+			template <typename IterCate = iterator_category, std::enable_if_t<std::is_base_of_v<std::random_access_iterator_tag, IterCate>, int> = 0>
+			Self_t& operator+=(difference_type diff) & noexcept(noexcept(m_Iterator += diff))
+			{
+				m_Iterator += diff;
+				return *this;
+			}
+
+			nBool operator==(Self_t const& other) const noexcept(noexcept(m_Iterator == other.m_Iterator))
 			{
 				return m_Iterator == other.m_Iterator/* && m_CallableObj == other.m_CallableObj*/;
 			}
 
-			nBool operator!=(Self_t const& other) const
+			nBool operator!=(Self_t const& other) const noexcept(noexcept(std::declval<Self_t>() == other))
 			{
 				return !(*this == other);
 			}
 
-			difference_type operator-(Self_t const& other) const
+			template <typename IterCate = iterator_category, std::enable_if_t<std::is_base_of_v<std::random_access_iterator_tag, IterCate>, int> = 0>
+			difference_type operator-(Self_t const& other) const noexcept(noexcept(m_Iterator - other.m_Iterator))
 			{
-				return std::distance(other.m_Iterator, m_Iterator);
+				return m_Iterator - other.m_Iterator;
 			}
 		};
 
@@ -597,14 +556,18 @@ namespace NatsuLib
 			Iter_t m_Iterator, m_End;
 			CallableObj_t m_CallableObj;
 		public:
-			typedef std::forward_iterator_tag iterator_category;
+			typedef Min<std::forward_iterator_tag, typename std::iterator_traits<Iter_t>::iterator_category> iterator_category;
 			typedef typename std::iterator_traits<Iter_t>::value_type value_type;
 			typedef typename std::iterator_traits<Iter_t>::difference_type difference_type;
 			typedef typename std::iterator_traits<Iter_t>::reference reference;
 			typedef typename std::iterator_traits<Iter_t>::pointer pointer;
 
-			WhereIterator(Iter_t const& iterator, Iter_t const& end, CallableObj_t const& callableObj)
-				: m_Iterator(iterator), m_End(end), m_CallableObj(callableObj)
+			WhereIterator(Iter_t iterator, Iter_t end, CallableObj_t callableObj)
+				noexcept(std::is_nothrow_move_constructible_v<Iter_t> &&
+					std::is_nothrow_move_constructible_v<CallableObj_t> &&
+					noexcept(m_Iterator != m_End && !m_CallableObj(*m_Iterator)) &&
+					noexcept(++m_Iterator))
+				: m_Iterator(std::move(iterator)), m_End(std::move(end)), m_CallableObj(std::move(callableObj))
 			{
 				while (m_Iterator != m_End && !m_CallableObj(*m_Iterator))
 				{
@@ -612,7 +575,9 @@ namespace NatsuLib
 				}
 			}
 
-			Self_t& operator++() &
+			Self_t& operator++() & noexcept(
+				noexcept(m_Iterator != m_End && !m_CallableObj(*m_Iterator)) &&
+				noexcept(++m_Iterator))
 			{
 				++m_Iterator;
 				while (m_Iterator != m_End && !m_CallableObj(*m_Iterator))
@@ -623,17 +588,17 @@ namespace NatsuLib
 				return *this;
 			}
 
-			decltype(auto) operator*() const
+			decltype(auto) operator*() const noexcept(noexcept(*m_Iterator))
 			{
 				return *m_Iterator;
 			}
 
-			nBool operator==(Self_t const& other) const
+			nBool operator==(Self_t const& other) const noexcept(noexcept(m_Iterator == other.m_Iterator))
 			{
 				return m_Iterator == other.m_Iterator && m_End == other.m_End/* && m_CallableObj == other.m_CallableObj*/;
 			}
 
-			nBool operator!=(Self_t const& other) const
+			nBool operator!=(Self_t const& other) const noexcept(noexcept(std::declval<Self_t>() == other))
 			{
 				return !(*this == other);
 			}
@@ -654,39 +619,50 @@ namespace NatsuLib
 			typedef typename std::iterator_traits<Iter_t>::pointer pointer;
 
 			template <typename CallableObj_t>
-			SkipWhileIterator(Iter_t const& iterator, Iter_t const& end, CallableObj_t const& callableObj)
-				: m_Iterator(iterator)
+			SkipWhileIterator(Iter_t iterator, Iter_t const& end, CallableObj_t&& callableObj)
+				noexcept(std::is_nothrow_move_constructible_v<Iter_t> &&
+					noexcept(m_Iterator != end && std::forward<CallableObj_t>(callableObj)(*m_Iterator)) &&
+					noexcept(++m_Iterator))
+				: m_Iterator(std::move(iterator))
 			{
-				while (m_Iterator != end && callableObj(*m_Iterator))
+				while (m_Iterator != end && std::forward<CallableObj_t>(callableObj)(*m_Iterator))
 				{
 					++m_Iterator;
 				}
 			}
 
-			Self_t& operator++() &
+			Self_t& operator++() & noexcept(noexcept(++m_Iterator))
 			{
 				++m_Iterator;
 				return *this;
 			}
 
-			decltype(auto) operator*() const
+			template <typename IterCate = iterator_category, std::enable_if_t<std::is_base_of_v<std::random_access_iterator_tag, IterCate>, int> = 0>
+			Self_t& operator+=(difference_type diff) & noexcept(noexcept(m_Iterator += diff))
+			{
+				m_Iterator += diff;
+				return *this;
+			}
+
+			decltype(auto) operator*() const noexcept(noexcept(*m_Iterator))
 			{
 				return *m_Iterator;
 			}
 
-			nBool operator==(Self_t const& other) const
+			nBool operator==(Self_t const& other) const noexcept(noexcept(m_Iterator == other.m_Iterator))
 			{
 				return m_Iterator == other.m_Iterator;
 			}
 
-			nBool operator!=(Self_t const& other) const
+			nBool operator!=(Self_t const& other) const noexcept(noexcept(std::declval<Self_t>() == other))
 			{
 				return !(*this == other);
 			}
 
-			difference_type operator-(Self_t const& other) const
+			template <typename IterCate = iterator_category, std::enable_if_t<std::is_base_of_v<std::random_access_iterator_tag, IterCate>, int> = 0>
+			difference_type operator-(Self_t const& other) const noexcept(noexcept(m_Iterator - other.m_Iterator))
 			{
-				return std::distance(other.m_Iterator, m_Iterator);
+				return m_Iterator - other.m_Iterator;
 			}
 		};
 
@@ -694,49 +670,76 @@ namespace NatsuLib
 		class TakeIterator final
 		{
 			typedef TakeIterator<Iter_t> Self_t;
-
-			Iter_t m_Iterator, m_Target, m_End;
 		public:
-			typedef std::forward_iterator_tag iterator_category;
+			typedef typename std::iterator_traits<Iter_t>::iterator_category iterator_category;
 			typedef typename std::iterator_traits<Iter_t>::value_type value_type;
 			typedef typename std::iterator_traits<Iter_t>::difference_type difference_type;
 			typedef typename std::iterator_traits<Iter_t>::reference reference;
 			typedef typename std::iterator_traits<Iter_t>::pointer pointer;
 
-			TakeIterator(Iter_t const& iterator, Iter_t const& end, difference_type count)
-				: m_Iterator(iterator), m_End(end)
-			{
-				/*if (std::distance(m_Iterator, m_End) < count)
-				{
-					nat_Throw(OutOfRange, "Out of range."_nv);
-				}*/
+			typedef std::make_unsigned_t<difference_type> size_type;
 
-				m_Target = std::next(m_Iterator, count);
+		private:
+			Iter_t m_Iterator, m_End;
+			size_type m_TakeCount;
+
+		public:
+			TakeIterator(Iter_t const& iterator, Iter_t const& end, size_type count) noexcept(std::is_nothrow_copy_constructible_v<Iter_t>)
+				: m_Iterator(count ? iterator : end), m_End(end), m_TakeCount{ count }
+			{
 			}
 
-			Self_t& operator++() &
+			Self_t& operator++() & noexcept(noexcept(++m_Iterator) && noexcept(m_Iterator = m_End))
 			{
-				if (++m_Iterator == m_Target)
+				if (!m_TakeCount)
 				{
 					m_Iterator = m_End;
 				}
-				
+				else
+				{
+					++m_Iterator;
+					--m_TakeCount;
+				}
+
 				return *this;
 			}
 
-			decltype(auto) operator*() const
+			template <typename IterCate = iterator_category, std::enable_if_t<std::is_base_of_v<std::random_access_iterator_tag, IterCate>, int> = 0>
+			Self_t& operator+=(difference_type diff) & noexcept(noexcept(m_Iterator = m_End) && noexcept(m_Iterator += diff))
+			{
+				if (m_TakeCount < diff)
+				{
+					m_Iterator = m_End;
+					m_TakeCount = 0;
+				}
+				else
+				{
+					m_Iterator += diff;
+					m_TakeCount -= diff;
+				}
+
+				return *this;
+			}
+
+			decltype(auto) operator*() const noexcept(noexcept(*m_Iterator))
 			{
 				return *m_Iterator;
 			}
 
-			nBool operator==(Self_t const& other) const
+			nBool operator==(Self_t const& other) const noexcept(noexcept(m_Iterator == other.m_Iterator))
 			{
-				return m_Iterator == other.m_Iterator && m_Target == other.m_Target && m_End == other.m_End;
+				return m_Iterator == other.m_Iterator && m_TakeCount == other.m_TakeCount && m_End == other.m_End;
 			}
 
-			nBool operator!=(Self_t const& other) const
+			nBool operator!=(Self_t const& other) const noexcept(noexcept(std::declval<Self_t>() == other))
 			{
 				return !(*this == other);
+			}
+
+			template <typename IterCate = iterator_category, std::enable_if_t<std::is_base_of_v<std::random_access_iterator_tag, IterCate>, int> = 0>
+			difference_type operator-(Self_t const& other) const noexcept(noexcept(m_Iterator - other.m_Iterator))
+			{
+				return m_Iterator - other.m_Iterator;
 			}
 		};
 
@@ -748,14 +751,16 @@ namespace NatsuLib
 			Iter_t m_Iterator, m_End;
 			CallableObj_t m_CallableObj;
 		public:
-			typedef std::forward_iterator_tag iterator_category;
+			typedef Min<std::forward_iterator_tag, typename std::iterator_traits<Iter_t>::iterator_category> iterator_category;
 			typedef typename std::iterator_traits<Iter_t>::value_type value_type;
 			typedef typename std::iterator_traits<Iter_t>::difference_type difference_type;
 			typedef typename std::iterator_traits<Iter_t>::reference reference;
 			typedef typename std::iterator_traits<Iter_t>::pointer pointer;
 
-			TakeWhileIterator(Iter_t const& iterator, Iter_t const& end, CallableObj_t const& callableObj)
-				: m_Iterator(iterator), m_End(end), m_CallableObj(callableObj)
+			TakeWhileIterator(Iter_t iterator, Iter_t end, CallableObj_t callableObj)
+				noexcept(std::is_nothrow_move_constructible_v<Iter_t> && std::is_nothrow_move_constructible_v<CallableObj_t> &&
+					noexcept(m_Iterator != m_End && !m_CallableObj(*m_Iterator)) && noexcept(m_Iterator = m_End))
+				: m_Iterator(std::move(iterator)), m_End(std::move(end)), m_CallableObj(std::move(callableObj))
 			{
 				if (m_Iterator != m_End && !m_CallableObj(*m_Iterator))
 				{
@@ -763,7 +768,7 @@ namespace NatsuLib
 				}
 			}
 
-			Self_t& operator++() &
+			Self_t& operator++() & noexcept(noexcept(!m_CallableObj(*++m_Iterator)) && noexcept(m_Iterator = m_End))
 			{
 				if (!m_CallableObj(*++m_Iterator))
 				{
@@ -773,17 +778,17 @@ namespace NatsuLib
 				return *this;
 			}
 
-			decltype(auto) operator*() const
+			decltype(auto) operator*() const noexcept(noexcept(*m_Iterator))
 			{
 				return *m_Iterator;
 			}
 
-			nBool operator==(Self_t const& other) const
+			nBool operator==(Self_t const& other) const noexcept(noexcept(m_Iterator == other.m_Iterator))
 			{
 				return m_Iterator == other.m_Iterator && m_End == other.m_End/* && m_CallableObj == other.m_CallableObj*/;
 			}
 
-			nBool operator!=(Self_t const& other) const
+			nBool operator!=(Self_t const& other) const noexcept(noexcept(std::declval<Self_t>() == other))
 			{
 				return !(*this == other);
 			}
@@ -810,37 +815,71 @@ namespace NatsuLib
 			typedef typename std::iterator_traits<Iter2_t>::reference reference2;
 			typedef typename std::iterator_traits<Iter2_t>::pointer pointer2;
 
-			typedef std::forward_iterator_tag iterator_category;
+			typedef Min<iterator_category1, iterator_category2> iterator_category;
 			typedef std::common_type_t<value_type1, value_type2> value_type;
 			typedef std::common_type_t<difference_type1, difference_type2> difference_type;
 			typedef std::common_type_t<reference1, reference2> reference;
 			typedef std::common_type_t<pointer1, pointer2> pointer;
 
-			ConcatIterator(Iter1_t const& current1, Iter1_t const& end1, Iter2_t const& current2, Iter2_t const& end2)
-				: m_Current1(current1), m_End1(end1), m_Current2(current2), m_End2(end2)
+			ConcatIterator(Iter1_t current1, Iter1_t end1, Iter2_t current2, Iter2_t end2) noexcept(std::is_nothrow_move_constructible_v<Iter1_t> && std::is_nothrow_move_constructible_v<Iter2_t>)
+				: m_Current1(std::move(current1)), m_End1(std::move(end1)), m_Current2(std::move(current2)), m_End2(std::move(end2))
 			{
 			}
 
-			Self_t& operator++() &
+			Self_t& operator++() & noexcept(noexcept(m_Current1 != m_End1) && noexcept(++m_Current1) && noexcept(++m_Current2))
 			{
-				++(m_Current1 != m_End1 ? m_Current1 : m_Current2);
+				if (m_Current1 != m_End1)
+				{
+					++m_Current1;
+				}
+				else
+				{
+					++m_Current2;
+				}
 
 				return *this;
 			}
 
-			decltype(auto) operator*() const
+			template <typename IterCate = iterator_category, std::enable_if_t<std::is_base_of_v<std::random_access_iterator_tag, IterCate>, int> = 0>
+			Self_t& operator+=(difference_type diff) & noexcept(
+				noexcept(m_End1 - m_Current1) &&
+				noexcept(m_Current1 += diff) &&
+				noexcept(m_Current1 += std::declval<difference_type1>()) &&
+				noexcept(m_Current2 += diff - std::declval<difference_type1>()))
+			{
+				const auto diff1 = m_End1 - m_Current1;
+				if (diff1 < diff)
+				{
+					m_Current1 += diff1;
+					m_Current2 += diff - diff1;
+				}
+				else
+				{
+					m_Current1 += diff;
+				}
+
+				return *this;
+			}
+
+			decltype(auto) operator*() const noexcept(noexcept(m_Current1 != m_End1 ? *m_Current1 : *m_Current2))
 			{
 				return m_Current1 != m_End1 ? *m_Current1 : *m_Current2;
 			}
 
-			nBool operator==(Self_t const& other) const
+			nBool operator==(Self_t const& other) const noexcept(noexcept(m_Current1 == other.m_Current1 && m_Current2 == other.m_Current2))
 			{
 				return m_Current1 == other.m_Current1 && m_End1 == other.m_End1 && m_Current2 == other.m_Current2 && m_End2 == other.m_End2;
 			}
 
-			nBool operator!=(Self_t const& other) const
+			nBool operator!=(Self_t const& other) const noexcept(noexcept(std::declval<Self_t>() == other))
 			{
 				return !(*this == other);
+			}
+
+			template <typename IterCate = iterator_category, std::enable_if_t<std::is_base_of_v<std::random_access_iterator_tag, IterCate>, int> = 0>
+			difference_type operator-(Self_t const& other) const noexcept(noexcept(m_Current1 == m_End1 ? m_Current2 - other.m_Current2 : m_Current1 - other.m_Current1))
+			{
+				return m_Current1 == m_End1 ? m_Current2 - other.m_Current2 : m_Current1 - other.m_Current1;
 			}
 		};
 
@@ -848,51 +887,54 @@ namespace NatsuLib
 		class ReverseIterator final
 		{
 		public:
-			typedef std::forward_iterator_tag iterator_category;
-			typedef typename std::iterator_traits<Iter_t>::value_type value_type;
-			typedef typename std::iterator_traits<Iter_t>::difference_type difference_type;
-			typedef typename std::iterator_traits<Iter_t>::reference reference;
-			typedef typename std::iterator_traits<Iter_t>::pointer pointer;
+			typedef std::vector<typename std::iterator_traits<Iter_t>::value_type> BufferVector;
+			typedef typename BufferVector::reverse_iterator RealIter;
+
+			typedef typename std::iterator_traits<RealIter>::iterator_category iterator_category;
+			typedef typename std::iterator_traits<RealIter>::value_type value_type;
+			typedef typename std::iterator_traits<RealIter>::difference_type difference_type;
+			typedef typename std::iterator_traits<RealIter>::reference reference;
+			typedef typename std::iterator_traits<RealIter>::pointer pointer;
 
 		private:
 			typedef ReverseIterator<Iter_t> Self_t;
 
-			std::vector<value_type> m_Buffer;
+			BufferVector m_Buffer;
 			Iter_t m_OriginBegin, m_OriginEnd;
-			typename std::vector<value_type>::reverse_iterator m_Current, m_End;
+			RealIter m_Current, m_End;
 			
 		public:
-			ReverseIterator(Iter_t begin, Iter_t end)
-				: m_Buffer(begin, end), m_OriginBegin(begin), m_OriginEnd(end), m_Current(std::rbegin(m_Buffer)), m_End(std::rend(m_Buffer))
+			ReverseIterator(Iter_t begin, Iter_t end) noexcept(std::is_nothrow_constructible_v<BufferVector, Iter_t, Iter_t> && std::is_nothrow_move_constructible_v<Iter_t>)
+				: m_Buffer(begin, end), m_OriginBegin(std::move(begin)), m_OriginEnd(std::move(end)), m_Current(std::rbegin(m_Buffer)), m_End(std::rend(m_Buffer))
 			{
 			}
 
-			Self_t& operator++() &
+			Self_t& operator++() & noexcept(noexcept(++m_Current))
 			{
 				++m_Current;
 				return *this;
 			}
 
-			decltype(auto) operator*() const
+			decltype(auto) operator*() const noexcept(noexcept(*m_Current))
 			{
 				return *m_Current;
 			}
 
-			nBool operator==(Self_t const& other) const
+			nBool operator==(Self_t const& other) const noexcept(noexcept(m_OriginBegin == other.m_OriginBegin && std::distance(m_Current, m_End)))
 			{
 				return m_OriginBegin == other.m_OriginBegin &&
 					m_OriginEnd == other.m_OriginEnd &&
 					std::distance(m_Current, m_End) == std::distance(other.m_Current, other.m_End);
 			}
 
-			nBool operator!=(Self_t const& other) const
+			nBool operator!=(Self_t const& other) const noexcept(noexcept(std::declval<Self_t>() == other))
 			{
 				return !(*this == other);
 			}
 		};
 
 		template <typename Iter_t>
-		class ReverseIterator<Iter_t, 
+		class ReverseIterator<Iter_t,
 			std::enable_if_t<
 				std::is_base_of<
 					std::bidirectional_iterator_tag,
@@ -901,39 +943,55 @@ namespace NatsuLib
 		{
 			typedef ReverseIterator<Iter_t> Self_t;
 
-			Iter_t m_Current, m_End;
+			typedef std::reverse_iterator<Iter_t> RealIter;
+
+			RealIter m_Current;
 
 		public:
-			typedef std::forward_iterator_tag iterator_category;
-			typedef typename std::iterator_traits<Iter_t>::value_type value_type;
-			typedef typename std::iterator_traits<Iter_t>::difference_type difference_type;
-			typedef typename std::iterator_traits<Iter_t>::reference reference;
-			typedef typename std::iterator_traits<Iter_t>::pointer pointer;
+			typedef typename std::iterator_traits<RealIter>::iterator_category iterator_category;
+			typedef typename std::iterator_traits<RealIter>::value_type value_type;
+			typedef typename std::iterator_traits<RealIter>::difference_type difference_type;
+			typedef typename std::iterator_traits<RealIter>::reference reference;
+			typedef typename std::iterator_traits<RealIter>::pointer pointer;
 
-			ReverseIterator(Iter_t begin, Iter_t end)
-				: m_Current{ std::prev(end) }, m_End{ std::prev(begin) }
+			// 与另一形式保持一致，但不使用第二个参数
+			ReverseIterator(Iter_t const& cur, Iter_t const&) noexcept(std::is_nothrow_constructible_v<RealIter, Iter_t const&>)
+				: m_Current{ cur }
 			{
 			}
 
-			Self_t& operator++() &
+			Self_t& operator++() & noexcept(noexcept(++m_Current))
 			{
-				--m_Current;
+				++m_Current;
 				return *this;
 			}
 
-			decltype(auto) operator*() const
+			template <typename IterCate = iterator_category, std::enable_if_t<std::is_base_of_v<std::random_access_iterator_tag, IterCate>, int> = 0>
+			Self_t& operator+=(difference_type diff) & noexcept(noexcept(m_Current += diff))
+			{
+				m_Current += diff;
+				return *this;
+			}
+
+			decltype(auto) operator*() const noexcept(noexcept(*m_Current))
 			{
 				return *m_Current;
 			}
 
-			nBool operator==(Self_t const& other) const
+			nBool operator==(Self_t const& other) const noexcept(noexcept(m_Current == other.m_Current))
 			{
-				return m_Current == other.m_Current && m_End == other.m_End;
+				return m_Current == other.m_Current;
 			}
 
-			nBool operator!=(Self_t const& other) const
+			nBool operator!=(Self_t const& other) const noexcept(noexcept(std::declval<Self_t>() == other))
 			{
 				return !(*this == other);
+			}
+
+			template <typename IterCate = iterator_category, std::enable_if_t<std::is_base_of_v<std::random_access_iterator_tag, IterCate>, int> = 0>
+			difference_type operator-(Self_t const& other) const noexcept(noexcept(m_Current - other.m_Current))
+			{
+				return m_Current - other.m_Current;
 			}
 		};
 
@@ -957,55 +1015,81 @@ namespace NatsuLib
 			typedef typename std::iterator_traits<Iter2_t>::reference reference2;
 			typedef typename std::iterator_traits<Iter2_t>::pointer pointer2;
 
-			typedef std::pair<value_type1, value_type2> Element_t;
+			typedef std::pair<reference1, reference2> Element_t;
 
-			typedef std::forward_iterator_tag iterator_category;
+			typedef Min<iterator_category1, iterator_category2> iterator_category;
 			typedef Element_t value_type;
-			typedef std::ptrdiff_t difference_type;
-			typedef Element_t& reference;
+			typedef std::common_type_t<difference_type1, difference_type2> difference_type;
+			typedef Element_t reference;
 			typedef Element_t* pointer;
 
-			ZipIterator(Iter1_t const& current1, Iter1_t const& end1, Iter2_t const& current2, Iter2_t const& end2)
-				: m_Current1(current1), m_End1(end1), m_Current2(current2), m_End2(end2)
+			ZipIterator(Iter1_t current1, Iter1_t end1, Iter2_t current2, Iter2_t end2) noexcept(std::is_nothrow_move_constructible_v<Iter1_t> && std::is_nothrow_move_constructible_v<Iter2_t>)
+				: m_Current1(std::move(current1)), m_End1(std::move(end1)), m_Current2(std::move(current2)), m_End2(std::move(end2))
 			{
 			}
 
-			Self_t operator++() &
+			// TODO: 类似这样可能同时对两个对象进行操作无法实现强异常安全
+			Self_t& operator++() & noexcept(noexcept(m_Current1 != m_End1) && noexcept(++m_Current1) && noexcept(m_Current2 != m_End2) && noexcept(++m_Current2))
 			{
-				if (m_Current1 != m_End1 && m_Current2 != m_End2)
+				if (m_Current1 != m_End1)
 				{
 					++m_Current1;
+				}
+
+				if (m_Current2 != m_End2)
+				{
 					++m_Current2;
 				}
 
 				return *this;
 			}
 
-			Element_t operator*() const
+			template <typename IterCate = iterator_category, std::enable_if_t<std::is_base_of_v<std::random_access_iterator_tag, IterCate>, int> = 0>
+			Self_t& operator+=(difference_type diff) & noexcept(noexcept(m_Current1 += diff) && noexcept(m_Current2 += diff))
+			{
+				m_Current1 += diff;
+				m_Current2 += diff;
+
+				return *this;
+			}
+
+			Element_t operator*() const noexcept(std::is_nothrow_constructible_v<Element_t, decltype(*m_Current1), decltype(*m_Current2)>)
 			{
 				return Element_t(*m_Current1, *m_Current2);
 			}
 
-			nBool operator==(Self_t const& other) const
+			nBool operator==(Self_t const& other) const noexcept(noexcept(m_Current1 == other.m_Current1 && m_Current2 == other.m_Current2))
 			{
 				return m_Current1 == other.m_Current1 && m_End1 == other.m_End1 && m_Current2 == other.m_Current2 && m_End2 == other.m_End2;
 			}
 
-			nBool operator!=(Self_t const& other) const
+			nBool operator!=(Self_t const& other) const noexcept(noexcept(std::declval<Self_t>() == other))
 			{
 				return !(*this == other);
 			}
+
+			template <typename IterCate = iterator_category, std::enable_if_t<std::is_base_of_v<std::random_access_iterator_tag, IterCate>, int> = 0>
+			difference_type operator-(Self_t const& other) const
+				noexcept(noexcept(std::max(static_cast<difference_type>(m_Current1 - other.m_Current1),
+					static_cast<difference_type>(m_Current2 - other.m_Current2))))
+			{
+				return std::max(static_cast<difference_type>(m_Current1 - other.m_Current1),
+					static_cast<difference_type>(m_Current2 - other.m_Current2));
+			}
 		};
 	}
+
+	template <typename Iter_t>
+	class LinqEnumerable;
 
 	template <typename T>
 	class Linq;
 
 	template <typename Container>
-	Linq<decltype(*std::begin(std::declval<Container>()))> from_values(Container container);
+	LinqEnumerable<detail_::StorageIterator<Container>> from_container(Container container);
 
 	template <typename T>
-	Linq<T> from_empty();
+	LinqEnumerable<detail_::EmptyIterator<T>> from_empty();
 
 	template <typename Iter_t>
 	class LinqEnumerable
@@ -1013,11 +1097,11 @@ namespace NatsuLib
 		typedef std::decay_t<decltype(*std::declval<Iter_t>())> Element_t;
 
 	public:
-		typedef typename std::iterator_traits<Iter_t>::iterator_category iterator_category;
+		typedef Iter_t iterator;
 		typedef typename std::iterator_traits<Iter_t>::value_type value_type;
 		typedef typename std::iterator_traits<Iter_t>::difference_type difference_type;
 		typedef typename std::iterator_traits<Iter_t>::reference reference;
-		typedef typename std::iterator_traits<Iter_t>::pointer pointer;
+		typedef std::make_unsigned_t<difference_type> size_type;
 
 		typedef LinqEnumerable<Iter_t> Self_t;
 
@@ -1027,7 +1111,7 @@ namespace NatsuLib
 
 	public:
 		constexpr LinqEnumerable(Iter_t begin, Iter_t end)
-			: m_Range(begin, end)
+			: m_Range(std::move(begin), std::move(end))
 		{
 		}
 
@@ -1054,7 +1138,7 @@ namespace NatsuLib
 			return m_Range.end();
 		}
 
-		size_t size() const
+		size_type size() const
 		{
 			if (!m_Size)
 			{
@@ -1064,7 +1148,7 @@ namespace NatsuLib
 			return m_Size.value();
 		}
 
-		size_t count() const
+		size_type count() const
 		{
 			return size();
 		}
@@ -1137,35 +1221,35 @@ namespace NatsuLib
 			return std::find(m_Range.begin(), m_Range.end(), item);
 		}
 
-		Element_t& element_at(difference_type index)
+		decltype(auto) element_at(difference_type index)
 		{
 			return *std::next(m_Range.begin(), index);
 		}
 
-		Element_t const& element_at(difference_type index) const
+		decltype(auto) element_at(difference_type index) const
 		{
 			return *std::next(m_Range.begin(), index);
 		}
 
-		Linq<Element_t> distinct() const
+		auto distinct() const
 		{
 			std::set<Element_t> tmpSet(m_Range.begin(), m_Range.end());
-			return from_values(std::move(tmpSet));
+			return from_container(std::move(tmpSet));
 		}
 
 		template <typename Iter2_t>
-		Linq<Element_t> except(LinqEnumerable<Iter2_t> const& other) const
+		auto except(LinqEnumerable<Iter2_t> const& other) const
 		{
 			std::set<Element_t> tmpSet(m_Range.begin(), m_Range.end());
 			for (auto&& item : other)
 			{
 				tmpSet.erase(item);
 			}
-			return from_values(std::move(tmpSet));
+			return from_container(std::move(tmpSet));
 		}
 
 		template <typename Iter2_t>
-		Linq<Element_t> intersect(LinqEnumerable<Iter2_t> const& other) const
+		auto intersect(LinqEnumerable<Iter2_t> const& other) const
 		{
 			std::set<Element_t> tmpSet(m_Range.begin(), m_Range.end()), tmpSet2(other.begin(), other.end()), result;
 			for (auto&& item : tmpSet2)
@@ -1177,11 +1261,11 @@ namespace NatsuLib
 					tmpSet.erase(iter);
 				}
 			}
-			return from_values(std::move(result));
+			return from_container(std::move(result));
 		}
 
 		template <typename Iter2_t>
-		Linq<Element_t> union_with(LinqEnumerable<Iter2_t> const& other) const
+		auto union_with(LinqEnumerable<Iter2_t> const& other) const
 		{
 			return concat(other).distinct();
 		}
@@ -1222,7 +1306,7 @@ namespace NatsuLib
 			return aggregateImpl(callableObj, std::is_default_constructible<Element_t>{});
 		}
 
-		Element_t first() const
+		decltype(auto) first() const
 		{
 			if (empty())
 			{
@@ -1233,7 +1317,7 @@ namespace NatsuLib
 		}
 
 		template <typename CallableObj>
-		Element_t first(CallableObj const& callableObj) const
+		decltype(auto) first(CallableObj const& callableObj) const
 		{
 			if (empty())
 			{
@@ -1251,28 +1335,29 @@ namespace NatsuLib
 			nat_Throw(natErrException, NatErr_OutOfRange, "No matching element found."_nv);
 		}
 
-		Element_t first_or_default(Element_t defItem) const
+		template <typename T>
+		auto first_or_default(T&& defItem) const -> std::conditional_t<std::is_convertible_v<decltype(defItem), reference>, reference, value_type>
 		{
-			return empty() ? defItem : *begin();
+			return empty() ? std::forward<T>(defItem) : *begin();
 		}
 
-		template <typename CallableObj>
-		Element_t first_or_default(Element_t defItem, CallableObj const& callableObj) const
+		template <typename T, typename CallableObj>
+		auto first_or_default(T&& defItem, CallableObj&& callableObj) const -> std::conditional_t<std::is_convertible_v<decltype(defItem), reference>, reference, value_type>
 		{
 			if (empty())
 			{
-				return defItem;
+				return std::forward<T>(defItem);
 			}
 
 			for (auto&& item : *this)
 			{
-				if (!!callableObj(item))
+				if (!!std::forward<CallableObj>(callableObj)(item))
 				{
 					return item;
 				}
 			}
 
-			return defItem;
+			return std::forward<T>(defItem);
 		}
 
 		template <typename Result_t, typename CallableObj>
@@ -1291,11 +1376,13 @@ namespace NatsuLib
 			return select(callableObj).aggregate(true, [](nBool a, nBool b) { return a && b; });
 		}
 
+		// FIXME: 可能是错误的实现
 		nBool any() const
 		{
 			return !empty();
 		}
 
+		// FIXME: 可能是错误的实现
 		template <typename CallableObj>
 		nBool any(CallableObj const& callableObj) const
 		{
@@ -1353,10 +1440,10 @@ namespace NatsuLib
 			std::vector<std::pair<Key_t, Linq<Element_t>>> result;
 			for (auto&& item : tmpMap)
 			{
-				result.emplace_back(std::make_pair<Key_t, Linq<Element_t>>(item.first, from_values(std::move(item.second))));
+				result.emplace_back(std::make_pair<Key_t, Linq<Element_t>>(item.first, from_container(std::move(item.second))));
 			}
 
-			return from_values(std::move(result));
+			return from_container(std::move(result));
 		}
 
 		template <typename Iter2_t, typename CallableObj1, typename CallableObj2>
@@ -1401,7 +1488,7 @@ namespace NatsuLib
 					{
 						outers.emplace_back(iter->second);
 					}
-					result.emplace_back(std::make_tuple(key1, from_values(std::move(outers)), from_empty<Value2_t>()));
+					result.emplace_back(std::make_tuple(key1, from_container(std::move(outers)), from_empty<Value2_t>()));
 					lower1 = upper1;
 				}
 				else if (key1 > key2)
@@ -1412,7 +1499,7 @@ namespace NatsuLib
 					{
 						inners.emplace_back(iter->second);
 					}
-					result.emplace_back(std::make_tuple(key2, from_empty<Value1_t>(), from_values(std::move(inners))));
+					result.emplace_back(std::make_tuple(key2, from_empty<Value1_t>(), from_container(std::move(inners))));
 					lower2 = upper2;
 				}
 				else
@@ -1429,13 +1516,13 @@ namespace NatsuLib
 					{
 						inners.emplace_back(iter->second);
 					}
-					result.emplace_back(std::make_tuple(key1, from_values(std::move(outers)), from_values(std::move(inners))));
+					result.emplace_back(std::make_tuple(key1, from_container(std::move(outers)), from_container(std::move(inners))));
 					lower1 = upper1;
 					lower2 = upper2;
 				}
 			}
 
-			return from_values(std::move(result));
+			return from_container(std::move(result));
 		}
 
 		template <typename Iter2_t, typename CallableObj1, typename CallableObj2>
@@ -1543,48 +1630,41 @@ namespace NatsuLib
 	};
 
 	template <typename Container>
-	auto from_pointertocontainer(std::shared_ptr<Container> const& pContainer)
+	LinqEnumerable<detail_::StorageIterator<Container>> from_pointertocontainer(std::shared_ptr<Container> const& pContainer)
 	{
 		return LinqEnumerable<detail_::StorageIterator<Container>>(detail_::StorageIterator<Container>(pContainer, std::begin(*pContainer)),
 			detail_::StorageIterator<Container>(pContainer, std::end(*pContainer)));
 	}
 
 	template <typename Container>
-	Linq<decltype(*std::begin(std::declval<Container>()))> from_values(Container container)
+	LinqEnumerable<detail_::StorageIterator<Container>> from_container(Container container)
 	{
 		auto pContainer = std::make_shared<Container>(std::move(container));
 		return from_pointertocontainer(pContainer);
 	}
 
 	template <typename T, size_t size>
-	Linq<T> from_values(T (&array)[size])
+	auto from_values(T (&array)[size])
 	{
 		return from_values(std::vector<T>(array, array + size));
 	}
 
 	template <typename T>
-	Linq<Valued<T>> from_values(std::initializer_list<T> const& il)
+	auto from_values(std::initializer_list<T> const& il)
 	{
-		return from_values(std::vector<T>(il.begin(), il.end()));
+		return from_container(std::vector<T>(il.begin(), il.end()));
 	}
 
 	template <typename T>
-	Linq<T> from_empty()
+	LinqEnumerable<detail_::EmptyIterator<T>> from_empty()
 	{
 		return LinqEnumerable<detail_::EmptyIterator<T>>(detail_::EmptyIterator<T>(), detail_::EmptyIterator<T>());
 	}
 
-	template <typename Arg, typename... Args, std::enable_if_t<std::conjunction<std::is_same<Arg, Args>...>::value, nBool> = true>
-	auto from_values(Arg&& value, Args&&... values)
-	{
-		std::vector<std::remove_reference_t<std::remove_cv_t<Arg>>> tmpVec { std::forward<Arg>(value), std::forward<Args>(values)... };
-		return from_values(std::move(tmpVec));
-	}
-
 	template <typename Iter_t>
-	LinqEnumerable<Iter_t> from(Iter_t const& begin, Iter_t const& end)
+	auto from(Iter_t&& begin, Iter_t&& end)
 	{
-		return LinqEnumerable<Iter_t>(begin, end);
+		return LinqEnumerable<std::remove_cv_t<std::remove_reference_t<Iter_t>>>(std::forward<Iter_t>(begin), std::forward<Iter_t>(end));
 	}
 
 	template <typename Container>
@@ -1594,7 +1674,7 @@ namespace NatsuLib
 	}
 
 	template <typename Iter_t>
-	LinqEnumerable<Iter_t> from(Range<Iter_t> const& range)
+	auto from(Range<Iter_t> const& range)
 	{
 		return from(range.begin(), range.end());
 	}

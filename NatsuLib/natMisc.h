@@ -558,11 +558,11 @@ namespace NatsuLib
 	class Range final
 	{
 	public:
-		typedef typename std::iterator_traits<Iter>::iterator_category iterator_category;
+		typedef Iter iterator;
 		typedef typename std::iterator_traits<Iter>::value_type value_type;
 		typedef typename std::iterator_traits<Iter>::difference_type difference_type;
 		typedef typename std::iterator_traits<Iter>::reference reference;
-		typedef typename std::iterator_traits<Iter>::pointer pointer;
+		typedef std::make_unsigned_t<difference_type> size_type;
 
 		constexpr Range(Iter begin, Iter end)
 			: m_IterBegin(begin), m_IterEnd(end)
@@ -571,7 +571,7 @@ namespace NatsuLib
 		}
 
 		template <typename R>
-		constexpr explicit Range(R&& range)
+		constexpr explicit Range(R const& range)
 			: m_IterBegin(std::begin(range)), m_IterEnd(std::end(range))
 		{
 			//assert(size() >= 0);
@@ -613,9 +613,9 @@ namespace NatsuLib
 			return m_IterBegin == m_IterEnd;
 		}
 
-		constexpr difference_type size() const
+		constexpr size_type size() const
 		{
-			return std::distance(m_IterBegin, m_IterEnd);
+			return static_cast<size_type>(std::distance(m_IterBegin, m_IterEnd));
 		}
 
 		Range& pop_front()

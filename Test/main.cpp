@@ -1,4 +1,4 @@
-#include <iostream>
+ï»¿#include <iostream>
 #include <sstream>
 
 #include <natUtil.h>
@@ -55,7 +55,7 @@ int main()
 	try
 	{
 #ifdef _WIN32
-		logger.LogMsg("{1} {0}"_nv, u8"²âÊÔÖÐÎÄ"_nv, 123);
+		logger.LogMsg("{1} {0}"_nv, u8"æµ‹è¯•ä¸­æ–‡"_nv, 123);
 		std::cout << "baka"_nv << std::endl;
 		std::wcout << "baka"_nv << std::endl;
 		logger.LogMsg("%s", "baka"_nv);

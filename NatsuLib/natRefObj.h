@@ -114,18 +114,31 @@ namespace NatsuLib
 				return m_RefCount.fetch_sub(1, std::memory_order_relaxed) == 1;
 			}
 
-		protected:
 			template <typename... Args>
-			constexpr RefCountBase(Args&&... args) noexcept
+			constexpr RefCountBase(Args&&... args) //noexcept(std::is_nothrow_constructible_v<BaseClass, decltype(args)...>)
 				: BaseClass(std::forward<Args>(args)...), m_RefCount(1)
 			{
 			}
-			constexpr RefCountBase(RefCountBase const&) noexcept
-				: RefCountBase()
+
+			constexpr RefCountBase(RefCountBase const& other) //noexcept(std::is_nothrow_copy_constructible_v<BaseClass>)
+				: BaseClass(static_cast<BaseClass const&>(other)), m_RefCount(1)
 			{
 			}
-			RefCountBase& operator=(RefCountBase const&) noexcept
+
+			RefCountBase& operator=(RefCountBase const& other) //noexcept(std::is_nothrow_copy_assignable_v<BaseClass>)
 			{
+				static_cast<BaseClass&>(*this) = static_cast<BaseClass const&>(other);
+				return *this;
+			}
+
+			constexpr RefCountBase(RefCountBase&& other) //noexcept(std::is_nothrow_move_constructible_v<BaseClass>)
+				: BaseClass(static_cast<BaseClass&&>(other)), m_RefCount(1)
+			{
+			}
+
+			RefCountBase& operator=(RefCountBase&& other) //noexcept(std::is_nothrow_move_assignable_v<BaseClass>)
+			{
+				static_cast<BaseClass&>(*this) = static_cast<BaseClass&&>(other);
 				return *this;
 			}
 
@@ -144,7 +157,7 @@ namespace NatsuLib
 		{
 		public:
 			constexpr explicit WeakRefView(std::add_pointer_t<Owner> owner) noexcept
-				: m_Mutex{}, m_Owner{ owner }
+				: m_Owner{ owner }
 			{
 			}
 
@@ -242,13 +255,13 @@ namespace NatsuLib
 		typedef natWeakRefPointer<T> WeakRefPointer;
 
 		template <typename... Args>
-		constexpr natRefObjImpl(Args&&... args)
+		constexpr natRefObjImpl(Args&&... args) //noexcept(std::is_nothrow_constructible_v<natRefObjImpl, SpecifySelfDeleter_t, SelfDeleter, decltype(args)...>)
 			: natRefObjImpl(SpecifySelfDeleter, {}, std::forward<Args>(args)...)
 		{
 		}
 
 		template <typename... Args>
-		constexpr natRefObjImpl(SpecifySelfDeleter_t, SelfDeleter deleter, Args&&... args) noexcept
+		constexpr natRefObjImpl(SpecifySelfDeleter_t, SelfDeleter deleter, Args&&... args) //noexcept(std::is_nothrow_constructible_v<RefCountBase, decltype(args)...>)
 			: RefCountBase(std::forward<Args>(args)...), m_View{ nullptr }, m_Deleter{ std::move(deleter) }
 		{
 #ifdef TraceRefObj
@@ -256,12 +269,25 @@ namespace NatsuLib
 #endif
 		}
 
-		constexpr natRefObjImpl(natRefObjImpl const&) noexcept
-			: m_View{ nullptr }
+		constexpr natRefObjImpl(natRefObjImpl const& other) noexcept(std::is_nothrow_copy_constructible_v<RefCountBase>)
+			: RefCountBase(static_cast<RefCountBase const&>(other)), m_View{ nullptr }
 		{
 		}
-		natRefObjImpl& operator=(natRefObjImpl const&) noexcept
+
+		natRefObjImpl& operator=(natRefObjImpl const& other) noexcept(std::is_nothrow_copy_assignable_v<RefCountBase>)
 		{
+			static_cast<RefCountBase&>(*this) = static_cast<RefCountBase const&>(other);
+			return *this;
+		}
+
+		constexpr natRefObjImpl(natRefObjImpl&& other) noexcept(std::is_nothrow_move_constructible_v<RefCountBase>)
+			: RefCountBase(static_cast<RefCountBase&&>(other)), m_View{ nullptr }
+		{
+		}
+
+		natRefObjImpl& operator=(natRefObjImpl&& other) noexcept(std::is_nothrow_move_assignable_v<RefCountBase>)
+		{
+			static_cast<RefCountBase&>(*this) = static_cast<RefCountBase&&>(other);
 			return *this;
 		}
 
@@ -463,7 +489,7 @@ namespace NatsuLib
 		{
 			if (m_pPointer)
 			{
-				static_cast<const volatile natRefObj*>(m_pPointer)->Release();
+				static_cast<void>(static_cast<const volatile natRefObj*>(m_pPointer)->Release());
 			}
 		}
 
@@ -593,10 +619,10 @@ namespace NatsuLib
 		{
 			if (m_pPointer)
 			{
-				static_cast<const volatile natRefObj*>(m_pPointer)->Release();
+				static_cast<void>(static_cast<const volatile natRefObj*>(m_pPointer)->Release());
 				m_pPointer = nullptr;
 			}
-			
+
 			return *this;
 		}
 
