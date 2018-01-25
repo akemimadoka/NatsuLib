@@ -112,12 +112,12 @@ namespace NatsuLib
 				Init();
 			}
 
-			void Init() noexcept
+			constexpr void Init() noexcept
 			{
 				Uninit(std::is_destructible<T>{});
 			}
 
-			void Uninit(std::true_type) noexcept
+			constexpr void Uninit(std::true_type) noexcept
 			{
 				if (m_Constructed)
 				{
@@ -126,12 +126,12 @@ namespace NatsuLib
 				}
 			}
 
-			void Uninit(std::false_type) noexcept
+			constexpr void Uninit(std::false_type) noexcept
 			{
 				m_Constructed = false;
 			}
 
-			void Init(defaultconstruct_t) noexcept(std::is_nothrow_default_constructible<T>::value)
+			constexpr void Init(defaultconstruct_t) noexcept(std::is_nothrow_default_constructible<T>::value)
 			{
 				Init();
 
@@ -139,7 +139,7 @@ namespace NatsuLib
 				m_Constructed = true;
 			}
 
-			void Init(const T& obj) noexcept(std::is_nothrow_copy_constructible<T>::value)
+			constexpr void Init(const T& obj) noexcept(std::is_nothrow_copy_constructible<T>::value)
 			{
 				Init();
 
@@ -147,7 +147,7 @@ namespace NatsuLib
 				m_Constructed = true;
 			}
 
-			void Init(T&& obj) noexcept(std::is_nothrow_move_constructible<T>::value)
+			constexpr void Init(T&& obj) noexcept(std::is_nothrow_move_constructible<T>::value)
 			{
 				Init();
 
@@ -156,7 +156,7 @@ namespace NatsuLib
 			}
 
 			template <typename... Args>
-			void Init(Args&&... args) noexcept(std::is_nothrow_constructible<T, Args&&...>::value)
+			constexpr void Init(Args&&... args) noexcept(std::is_nothrow_constructible<T, Args&&...>::value)
 			{
 				Init();
 
@@ -164,7 +164,7 @@ namespace NatsuLib
 				m_Constructed = true;
 			}
 
-			T const& Get() const&
+			constexpr T const& Get() const&
 			{
 				if (!m_Constructed)
 				{
@@ -173,12 +173,12 @@ namespace NatsuLib
 				return Get(std::nothrow);
 			}
 
-			T const& Get(std::nothrow_t) const&
+			constexpr T const& Get(std::nothrow_t) const&
 			{
 				return *reinterpret_cast<const T*>(m_Storage);
 			}
 
-			T& Get() &
+			constexpr T& Get() &
 			{
 				if (!m_Constructed)
 				{
@@ -187,12 +187,12 @@ namespace NatsuLib
 				return Get(std::nothrow);
 			}
 
-			T& Get(std::nothrow_t) &
+			constexpr T& Get(std::nothrow_t) &
 			{
 				return *reinterpret_cast<T*>(m_Storage);
 			}
 
-			T const&& Get() const&&
+			constexpr T const&& Get() const&&
 			{
 				if (!m_Constructed)
 				{
@@ -201,12 +201,12 @@ namespace NatsuLib
 				return std::move(Get(std::nothrow));
 			}
 
-			T const&& Get(std::nothrow_t) const&&
+			constexpr T const&& Get(std::nothrow_t) const&&
 			{
 				return std::move(*reinterpret_cast<const T*>(m_Storage));
 			}
 
-			T&& Get() &&
+			constexpr T&& Get() &&
 			{
 				if (!m_Constructed)
 				{
@@ -215,7 +215,7 @@ namespace NatsuLib
 				return std::move(Get(std::nothrow));
 			}
 
-			T&& Get(std::nothrow_t) &&
+			constexpr T&& Get(std::nothrow_t) &&
 			{
 				return std::move(*reinterpret_cast<T*>(m_Storage));
 			}
@@ -376,7 +376,7 @@ namespace NatsuLib
 			{
 				if (other.m_Value.Constructed())
 				{
-					m_Value.Get() = other.m_Value.Get();
+					m_Value.Get() = std::move(other.m_Value.Get());
 				}
 				else
 				{
@@ -387,7 +387,7 @@ namespace NatsuLib
 			{
 				if (other.m_Value.Constructed())
 				{
-					m_Value.Init(other.m_Value.Get());
+					m_Value.Init(std::move(other.m_Value.Get()));
 				}
 			}
 			
@@ -409,42 +409,42 @@ namespace NatsuLib
 			return *this;
 		}
 
-		const T* operator->() const
+		constexpr const T* operator->() const
 		{
 			assert(has_value() && "There is no available value.");
 
 			return &m_Value.Get();
 		}
 
-		T* operator->()
+		constexpr T* operator->()
 		{
 			assert(has_value() && "There is no available value.");
 
 			return &m_Value.Get();
 		}
 
-		T const& operator*() const&
+		constexpr T const& operator*() const&
 		{
 			assert(has_value() && "There is no available value.");
 
 			return m_Value.Get();
 		}
 
-		T& operator*() &
+		constexpr T& operator*() &
 		{
 			assert(has_value() && "There is no available value.");
 
 			return m_Value.Get();
 		}
 
-		T const&& operator*() const&&
+		constexpr T const&& operator*() const&&
 		{
 			assert(has_value() && "There is no available value.");
 
 			return std::move(m_Value.Get());
 		}
 
-		T&& operator*() &&
+		constexpr T&& operator*() &&
 		{
 			assert(has_value() && "There is no available value.");
 
@@ -461,7 +461,7 @@ namespace NatsuLib
 			return m_Value.Constructed();
 		}
 
-		T const& value() const&
+		constexpr T const& value() const&
 		{
 			if (!has_value())
 			{
@@ -471,7 +471,7 @@ namespace NatsuLib
 			return m_Value.Get();
 		}
 
-		T& value() &
+		constexpr T& value() &
 		{
 			if (!has_value())
 			{
@@ -481,7 +481,7 @@ namespace NatsuLib
 			return m_Value.Get();
 		}
 
-		T const&& value() const&&
+		constexpr T const&& value() const&&
 		{
 			if (!has_value())
 			{
@@ -491,7 +491,7 @@ namespace NatsuLib
 			return std::move(m_Value.Get());
 		}
 
-		T&& value() &&
+		constexpr T&& value() &&
 		{
 			if (!has_value())
 			{
@@ -508,7 +508,7 @@ namespace NatsuLib
 		}
 
 		template <typename U>
-		T value_or(U&& default_value) &&
+		constexpr T value_or(U&& default_value) &&
 		{
 			return has_value() ? std::move(m_Value.Get()) : static_cast<T>(std::forward<U>(default_value));
 		}
@@ -565,10 +565,13 @@ namespace NatsuLib
 		typedef std::make_unsigned_t<difference_type> size_type;
 
 		constexpr Range(Iter begin, Iter end)
-			: m_IterBegin(begin), m_IterEnd(end)
+			: m_IterBegin(std::move(begin)), m_IterEnd(std::move(end))
 		{
 			//assert(size() >= 0);
 		}
+
+		constexpr Range(Range const&) = default;
+		constexpr Range(Range&&) = default;
 
 		template <typename R>
 		constexpr explicit Range(R const& range)
@@ -674,14 +677,6 @@ namespace NatsuLib
 		}
 
 	private:
-		void Init(Iter begin, Iter end)
-		{
-			//assert(std::distance(begin, end) >= 0);
-
-			m_IterBegin = std::move(begin);
-			m_IterEnd = std::move(end);
-		}
-
 		Iter m_IterBegin, m_IterEnd;
 	};
 
@@ -698,7 +693,7 @@ namespace NatsuLib
 			typedef typename std::iterator_traits<Iter>::pointer pointer;
 
 			constexpr explicit natRange_ptrIterator(Iter iter)
-				: m_Iter(iter)
+				: m_Iter(std::move(iter))
 			{
 			}
 

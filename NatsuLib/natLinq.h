@@ -10,6 +10,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <optional>
 
 #ifdef _MSC_VER
 #	pragma push_macro("max")
@@ -53,6 +54,13 @@ namespace NatsuLib
 			: IsValuedImpl<std::remove_cv_t<std::remove_reference_t<T>>, T>
 		{
 		};
+
+		struct EndIteratorTagType
+		{
+			constexpr EndIteratorTagType() = default;
+		};
+
+		constexpr EndIteratorTagType EndIteratorTag{};
 
 		template <typename Base, typename T>
 		using Max = std::conditional_t<std::is_base_of_v<Base, T>, T, Base>;
@@ -180,111 +188,72 @@ namespace NatsuLib
 		{
 		};
 
-		template <typename T, typename Result_t, bool Test = std::conjunction<Addable<Result_t, typename T::Element_t>, Dividable<Result_t>>::value>
-		struct GetAverage
+		// 以 EndIterator 为比较目标来判定是否到达迭代结尾
+		template <typename Iter>
+		class EndIterator
 		{
-			[[noreturn]] static void Get(T const& /*self*/)
+		public:
+			typedef typename std::iterator_traits<Iter>::iterator_category iterator_category;
+			typedef typename std::iterator_traits<Iter>::value_type value_type;
+			typedef typename std::iterator_traits<Iter>::difference_type difference_type;
+			typedef typename std::iterator_traits<Iter>::reference reference;
+			typedef typename std::iterator_traits<Iter>::pointer pointer;
+
+			constexpr explicit EndIterator(Iter end) noexcept(std::is_nothrow_move_constructible_v<Iter>)
+				: m_End{ std::move(end) }
 			{
-				nat_Throw(natException, "Cannot apply such operation to this type."_nv);
 			}
+
+			[[noreturn]] EndIterator& operator++() &
+			{
+				nat_Throw(natErrException, NatErr_NotSupport, "Try to iterate an end iterator."_nv);
+			}
+
+			template <typename IterCate = iterator_category, std::enable_if_t<std::is_base_of_v<std::random_access_iterator_tag, IterCate>, int> = 0>
+			[[noreturn]] EndIterator& operator+=(difference_type) &
+			{
+				nat_Throw(natErrException, NatErr_NotSupport, "Try to iterate an end iterator."_nv);
+			}
+
+			[[noreturn]] reference operator*() const
+			{
+				nat_Throw(natErrException, NatErr_NotSupport, "Try to deref an end iterator."_nv);
+			}
+
+			// 不应该作为比较依据，应由要比较的迭代器实现
+			// 或者提供统一接口让 EndIterator 来比较，这样可以防止反向比较时出现问题
+			nBool operator==(EndIterator const& other) const noexcept(noexcept(m_End == other.m_End))
+			{
+				return m_End == other.m_End;
+			}
+
+			nBool operator!=(EndIterator const& other) const noexcept(noexcept(std::declval<EndIterator>() == other))
+			{
+				return !(*this == other);
+			}
+
+			template <typename IterCate = iterator_category, std::enable_if_t<std::is_base_of_v<std::random_access_iterator_tag, IterCate>, int> = 0>
+			difference_type operator-(EndIterator const& other) const noexcept(noexcept(m_End - other.m_End))
+			{
+				return m_End - other.m_End;
+			}
+
+		private:
+			Iter m_End;
 		};
 
-		template <typename T, typename Result_t>
-		struct GetAverage<T, Result_t, true>
-		{
-			static Result_t Get(T const& self)
-			{
-				Result_t result{};
-				return self.aggregate(result, [](Result_t const& res, typename T::Element_t const& item)
-				{
-					return res + item;
-				}) / static_cast<Result_t>(self.m_Range.size());
-			}
-		};
-
-		template <typename T, bool Test = CanGreater<typename T::Element_t>::value>
-		struct GetMax
-		{
-			[[noreturn]] static void Get(T const& /*self*/)
-			{
-				nat_Throw(natException, "Cannot apply such operation to this type."_nv);
-			}
-		};
-
-		template <typename T>
-		struct GetMax<T, true>
-		{
-			static typename T::Element_t Get(T const& self)
-			{
-				return self.aggregate([](const typename T::Element_t& a, const typename T::Element_t& b) { return a > b ? a : b; });
-			}
-		};
-
-		template <typename T, bool Test = CanLesser<typename T::Element_t>::value>
-		struct GetMin
-		{
-			[[noreturn]] static void Get(T const& /*self*/)
-			{
-				nat_Throw(natException, "Cannot apply such operation to this type."_nv);
-			}
-		};
-
-		template <typename T>
-		struct GetMin<T, true>
-		{
-			static typename T::Element_t Get(T const& self)
-			{
-				return self.aggregate([](const typename T::Element_t& a, const typename T::Element_t& b) { return a < b ? a : b; });
-			}
-		};
-
-		template <typename T, bool Test = Addable<typename T::Element_t>::value>
-		struct GetSum
-		{
-			[[noreturn]] static void Get(T const& /*self*/)
-			{
-				nat_Throw(natException, "Cannot apply such operation to this type."_nv);
-			}
-		};
-
-		template <typename T>
-		struct GetSum<T, true>
-		{
-			static typename T::Element_t Get(T const& self)
-			{
-				return self.aggregate(std::plus<typename T::Element_t>{});
-			}
-		};
-
-		template <typename T, bool Test = Multipliable<typename T::Element_t>::value>
-		struct GetProduct
-		{
-			[[noreturn]] static void Get(T const& /*self*/)
-			{
-				nat_Throw(natException, "Cannot apply such operation to this type."_nv);
-			}
-		};
-
-		template <typename T>
-		struct GetProduct<T, true>
-		{
-			static typename T::Element_t Get(T const& self)
-			{
-				return self.aggregate(0, [](const typename T::Element_t& a, const typename T::Element_t& b) { return a * b; });
-			}
-		};
-
-		template <typename T>
+		template <typename T, typename Category = std::input_iterator_tag>
 		class CommonIterator final
 		{
 		public:
-			typedef std::input_iterator_tag iterator_category;
+			typedef Category iterator_category;
 			typedef typename IsValued<T>::InnerType value_type;
 			typedef std::ptrdiff_t difference_type;
 			typedef std::conditional_t<IsValued<T>::value, value_type, std::add_lvalue_reference_t<value_type>> reference;
 			typedef std::add_pointer_t<value_type> pointer;
 
 		private:
+			// TODO: 针对可能的不同 Category 提供不同的接口
 			struct IteratorInterface
 			{
 				virtual ~IteratorInterface() = default;
@@ -493,13 +462,14 @@ namespace NatsuLib
 			}
 		};
 
+		// TODO: 尝试从 CallableObj_t 的类型入手使 end 迭代器不需要拥有 callableObj，需要将 LinqEnumerable 改造成 begin end 迭代器可以是不同类型的
 		template <typename Iter_t, typename CallableObj_t>
 		class SelectIterator final
 		{
 			typedef SelectIterator<Iter_t, CallableObj_t> Self_t;
 
 			Iter_t m_Iterator;
-			CallableObj_t m_CallableObj;
+			std::optional<CallableObj_t> m_CallableObj;
 
 		public:
 			typedef typename std::iterator_traits<Iter_t>::iterator_category iterator_category;
@@ -513,15 +483,21 @@ namespace NatsuLib
 			{
 			}
 
+			SelectIterator(Iter_t iterator, EndIteratorTagType) noexcept(std::is_nothrow_move_constructible_v<Iter_t>)
+				: m_Iterator(std::move(iterator))
+			{
+			}
+
 			Self_t& operator++() & noexcept(noexcept(++m_Iterator))
 			{
 				++m_Iterator;
 				return *this;
 			}
 
-			decltype(auto) operator*() const noexcept(noexcept(m_CallableObj(*m_Iterator)))
+			// 因为解引用 end 迭代器是 ub，所以不判断是否有 value
+			decltype(auto) operator*() const noexcept(noexcept(m_CallableObj.value()(*m_Iterator)))
 			{
-				return m_CallableObj(*m_Iterator);
+				return m_CallableObj.value()(*m_Iterator);
 			}
 
 			template <typename IterCate = iterator_category, std::enable_if_t<std::is_base_of_v<std::random_access_iterator_tag, IterCate>, int> = 0>
@@ -554,7 +530,7 @@ namespace NatsuLib
 			typedef WhereIterator<Iter_t, CallableObj_t> Self_t;
 
 			Iter_t m_Iterator, m_End;
-			CallableObj_t m_CallableObj;
+			std::optional<CallableObj_t> m_CallableObj;
 		public:
 			typedef Min<std::forward_iterator_tag, typename std::iterator_traits<Iter_t>::iterator_category> iterator_category;
 			typedef typename std::iterator_traits<Iter_t>::value_type value_type;
@@ -565,22 +541,29 @@ namespace NatsuLib
 			WhereIterator(Iter_t iterator, Iter_t end, CallableObj_t callableObj)
 				noexcept(std::is_nothrow_move_constructible_v<Iter_t> &&
 					std::is_nothrow_move_constructible_v<CallableObj_t> &&
-					noexcept(m_Iterator != m_End && !m_CallableObj(*m_Iterator)) &&
+					noexcept(m_Iterator != m_End && !callableObj(*m_Iterator)) &&
 					noexcept(++m_Iterator))
 				: m_Iterator(std::move(iterator)), m_End(std::move(end)), m_CallableObj(std::move(callableObj))
 			{
-				while (m_Iterator != m_End && !m_CallableObj(*m_Iterator))
+				auto&& cond = m_CallableObj.value();
+				while (m_Iterator != m_End && !cond(*m_Iterator))
 				{
 					++m_Iterator;
 				}
 			}
 
+			explicit WhereIterator(Iter_t end)
+				: m_Iterator(end), m_End(std::move(end))
+			{
+			}
+
 			Self_t& operator++() & noexcept(
-				noexcept(m_Iterator != m_End && !m_CallableObj(*m_Iterator)) &&
+				noexcept(m_Iterator != m_End && !m_CallableObj.value()(*m_Iterator)) &&
 				noexcept(++m_Iterator))
 			{
 				++m_Iterator;
-				while (m_Iterator != m_End && !m_CallableObj(*m_Iterator))
+				auto&& cond = m_CallableObj.value();
+				while (m_Iterator != m_End && !cond(*m_Iterator))
 				{
 					++m_Iterator;
 				}
@@ -629,6 +612,11 @@ namespace NatsuLib
 				{
 					++m_Iterator;
 				}
+			}
+
+			explicit SkipWhileIterator(Iter_t end) noexcept(std::is_nothrow_move_constructible_v<Iter_t>)
+				: m_Iterator(std::move(end))
+			{
 			}
 
 			Self_t& operator++() & noexcept(noexcept(++m_Iterator))
@@ -728,7 +716,7 @@ namespace NatsuLib
 
 			nBool operator==(Self_t const& other) const noexcept(noexcept(m_Iterator == other.m_Iterator))
 			{
-				return m_Iterator == other.m_Iterator && m_TakeCount == other.m_TakeCount && m_End == other.m_End;
+				return m_Iterator == other.m_Iterator && m_End == other.m_End;
 			}
 
 			nBool operator!=(Self_t const& other) const noexcept(noexcept(std::declval<Self_t>() == other))
@@ -749,7 +737,7 @@ namespace NatsuLib
 			typedef TakeWhileIterator<Iter_t, CallableObj_t> Self_t;
 
 			Iter_t m_Iterator, m_End;
-			CallableObj_t m_CallableObj;
+			std::optional<CallableObj_t> m_CallableObj;
 		public:
 			typedef Min<std::forward_iterator_tag, typename std::iterator_traits<Iter_t>::iterator_category> iterator_category;
 			typedef typename std::iterator_traits<Iter_t>::value_type value_type;
@@ -759,18 +747,25 @@ namespace NatsuLib
 
 			TakeWhileIterator(Iter_t iterator, Iter_t end, CallableObj_t callableObj)
 				noexcept(std::is_nothrow_move_constructible_v<Iter_t> && std::is_nothrow_move_constructible_v<CallableObj_t> &&
-					noexcept(m_Iterator != m_End && !m_CallableObj(*m_Iterator)) && noexcept(m_Iterator = m_End))
+					noexcept(m_Iterator != m_End && !callableObj(*m_Iterator)) && noexcept(m_Iterator = m_End))
 				: m_Iterator(std::move(iterator)), m_End(std::move(end)), m_CallableObj(std::move(callableObj))
 			{
-				if (m_Iterator != m_End && !m_CallableObj(*m_Iterator))
+				auto&& cond = m_CallableObj.value();
+				if (m_Iterator != m_End && !cond(*m_Iterator))
 				{
 					m_Iterator = m_End;
 				}
 			}
 
-			Self_t& operator++() & noexcept(noexcept(!m_CallableObj(*++m_Iterator)) && noexcept(m_Iterator = m_End))
+			explicit TakeWhileIterator(Iter_t end) noexcept(std::is_nothrow_move_constructible_v<Iter_t>)
+				: m_Iterator(end), m_End(std::move(end))
 			{
-				if (!m_CallableObj(*++m_Iterator))
+			}
+
+			Self_t& operator++() & noexcept(noexcept(!m_CallableObj.value()(*++m_Iterator)) && noexcept(m_Iterator = m_End))
+			{
+				auto&& cond = m_CallableObj.value();
+				if (!cond(*++m_Iterator))
 				{
 					m_Iterator = m_End;
 				}
@@ -785,7 +780,7 @@ namespace NatsuLib
 
 			nBool operator==(Self_t const& other) const noexcept(noexcept(m_Iterator == other.m_Iterator))
 			{
-				return m_Iterator == other.m_Iterator && m_End == other.m_End/* && m_CallableObj == other.m_CallableObj*/;
+				return m_Iterator == other.m_Iterator && m_End == other.m_End;
 			}
 
 			nBool operator!=(Self_t const& other) const noexcept(noexcept(std::declval<Self_t>() == other))
@@ -1115,18 +1110,8 @@ namespace NatsuLib
 		{
 		}
 
-		constexpr LinqEnumerable(LinqEnumerable const& other)
-			: m_Range(other.begin(), other.end())
-		{
-		}
-
-		LinqEnumerable& operator=(LinqEnumerable const& other)
-		{
-			m_Range = other.m_Range;
-			m_Size = other.m_Size;
-
-			return *this;
-		}
+		constexpr LinqEnumerable(LinqEnumerable const& other) = default;
+		constexpr LinqEnumerable(LinqEnumerable&& other) noexcept(std::is_nothrow_move_constructible_v<Range<Iter_t>>) = default;
 
 		constexpr Iter_t begin() const
 		{
@@ -1159,10 +1144,10 @@ namespace NatsuLib
 		}
 
 		template <typename CallableObj>
-		LinqEnumerable<detail_::SelectIterator<Iter_t, CallableObj>> select(CallableObj const& callableObj) const
+		LinqEnumerable<detail_::SelectIterator<Iter_t, CallableObj>> select(CallableObj&& callableObj) const
 		{
-			return LinqEnumerable<detail_::SelectIterator<Iter_t, CallableObj>>(detail_::SelectIterator<Iter_t, CallableObj>(m_Range.begin(), callableObj),
-				detail_::SelectIterator<Iter_t, CallableObj>(m_Range.end(), callableObj));
+			return LinqEnumerable<detail_::SelectIterator<Iter_t, CallableObj>>(detail_::SelectIterator<Iter_t, CallableObj>(m_Range.begin(), std::forward<CallableObj>(callableObj)),
+				detail_::SelectIterator<Iter_t, CallableObj>(m_Range.end(), detail_::EndIteratorTag));
 		}
 
 		template <typename T>
@@ -1175,10 +1160,10 @@ namespace NatsuLib
 		}
 
 		template <typename CallableObj>
-		LinqEnumerable<detail_::WhereIterator<Iter_t, CallableObj>> where(CallableObj const& callableObj) const
+		LinqEnumerable<detail_::WhereIterator<Iter_t, CallableObj>> where(CallableObj&& callableObj) const
 		{
-			return LinqEnumerable<detail_::WhereIterator<Iter_t, CallableObj>>(detail_::WhereIterator<Iter_t, CallableObj>(m_Range.begin(), m_Range.end(), callableObj),
-				detail_::WhereIterator<Iter_t, CallableObj>(m_Range.end(), m_Range.end(), callableObj));
+			return LinqEnumerable<detail_::WhereIterator<Iter_t, CallableObj>>(detail_::WhereIterator<Iter_t, CallableObj>(m_Range.begin(), m_Range.end(), std::forward<CallableObj>(callableObj)),
+				detail_::WhereIterator<Iter_t, CallableObj>(m_Range.end()));
 		}
 
 		LinqEnumerable skip(difference_type count)
@@ -1189,10 +1174,10 @@ namespace NatsuLib
 		}
 
 		template <typename CallableObj>
-		LinqEnumerable<detail_::SkipWhileIterator<Iter_t>> skip_while(CallableObj const& callableObj) const
+		LinqEnumerable<detail_::SkipWhileIterator<Iter_t>> skip_while(CallableObj&& callableObj) const
 		{
-			return LinqEnumerable<detail_::SkipWhileIterator<Iter_t>>(detail_::SkipWhileIterator<Iter_t>(m_Range.begin(), m_Range.end(), callableObj),
-				detail_::SkipWhileIterator<Iter_t>(m_Range.end(), m_Range.end(), callableObj));
+			return LinqEnumerable<detail_::SkipWhileIterator<Iter_t>>(detail_::SkipWhileIterator<Iter_t>(m_Range.begin(), m_Range.end(), std::forward<CallableObj>(callableObj)),
+				detail_::SkipWhileIterator<Iter_t>(m_Range.end()));
 		}
 
 		LinqEnumerable<detail_::TakeIterator<Iter_t>> take(difference_type count)
@@ -1202,10 +1187,10 @@ namespace NatsuLib
 		}
 
 		template <typename CallableObj>
-		LinqEnumerable<detail_::TakeWhileIterator<Iter_t, CallableObj>> take_while(CallableObj const& callableObj) const
+		LinqEnumerable<detail_::TakeWhileIterator<Iter_t, CallableObj>> take_while(CallableObj&& callableObj) const
 		{
-			return LinqEnumerable<detail_::TakeWhileIterator<Iter_t, CallableObj>>(detail_::TakeWhileIterator<Iter_t, CallableObj>(m_Range.begin(), m_Range.end(), callableObj),
-				detail_::TakeWhileIterator<Iter_t, CallableObj>(m_Range.end(), m_Range.end(), callableObj));
+			return LinqEnumerable<detail_::TakeWhileIterator<Iter_t, CallableObj>>(detail_::TakeWhileIterator<Iter_t, CallableObj>(m_Range.begin(), m_Range.end(), std::forward<CallableObj>(callableObj)),
+				detail_::TakeWhileIterator<Iter_t, CallableObj>(m_Range.end()));
 		}
 
 		template <typename Iter2_t>
@@ -1270,40 +1255,33 @@ namespace NatsuLib
 			return concat(other).distinct();
 		}
 
-	private:
-		template <typename CallableObj>
-		Element_t aggregateImpl(CallableObj const& callableObj, std::true_type) const
-		{
-			return aggregate(Element_t{}, callableObj);
-		}
-
-		template <typename CallableObj>
-		Element_t aggregateImpl(CallableObj const& callableObj, std::false_type) const
-		{
-			if (m_Range.empty())
-			{
-				nat_Throw(natException, "Range is empty and there is no default constructor for this type."_nv);
-			}
-
-			auto iter = m_Range.begin();
-			Element_t result = *iter;
-			while (++iter != m_Range.end())
-			{
-				result = callableObj(result, *iter);
-			}
-			return result;
-		}
-
-	public:
 		Element_t aggregate() const
 		{
 			return sum();
 		}
 
 		template <typename CallableObj>
-		Element_t aggregate(CallableObj const& callableObj) const
+		Element_t aggregate(CallableObj&& callableObj) const
 		{
-			return aggregateImpl(callableObj, std::is_default_constructible<Element_t>{});
+			if constexpr (std::is_default_constructible_v<Element_t>)
+			{
+				return aggregate(Element_t{}, std::forward<CallableObj>(callableObj));
+			}
+			else
+			{
+				if (m_Range.empty())
+				{
+					nat_Throw(natException, "Range is empty and there is no default constructor for this type."_nv);
+				}
+
+				auto iter = m_Range.begin();
+				Element_t result = *iter;
+				while (++iter != m_Range.end())
+				{
+					result = std::forward<CallableObj>(callableObj)(std::move(result), *iter);
+				}
+				return result;
+			}
 		}
 
 		decltype(auto) first() const
@@ -1317,7 +1295,7 @@ namespace NatsuLib
 		}
 
 		template <typename CallableObj>
-		decltype(auto) first(CallableObj const& callableObj) const
+		decltype(auto) first(CallableObj&& callableObj) const
 		{
 			if (empty())
 			{
@@ -1326,7 +1304,8 @@ namespace NatsuLib
 
 			for (auto&& item : *this)
 			{
-				if (!!callableObj(item))
+				// 不能转发 item，因为可能移动，若移动则可能返回的是移动后的值
+				if (!!std::forward<CallableObj>(callableObj)(item))
 				{
 					return item;
 				}
@@ -1361,19 +1340,19 @@ namespace NatsuLib
 		}
 
 		template <typename Result_t, typename CallableObj>
-		Result_t aggregate(Result_t result, CallableObj const& callableObj) const
+		Result_t aggregate(Result_t result, CallableObj&& callableObj) const
 		{
 			for (auto&& item : *this)
 			{
-				result = callableObj(result, item);
+				result = std::forward<CallableObj>(callableObj)(std::move(result), item);
 			}
 			return result;
 		}
 
 		template <typename CallableObj>
-		nBool all(CallableObj const& callableObj) const
+		nBool all(CallableObj&& callableObj) const
 		{
-			return select(callableObj).aggregate(true, [](nBool a, nBool b) { return a && b; });
+			return select(std::forward<CallableObj>(callableObj)).aggregate(true, [](nBool a, nBool b) { return a && b; });
 		}
 
 		// FIXME: 可能是错误的实现
@@ -1384,56 +1363,95 @@ namespace NatsuLib
 
 		// FIXME: 可能是错误的实现
 		template <typename CallableObj>
-		nBool any(CallableObj const& callableObj) const
+		nBool any(CallableObj&& callableObj) const
 		{
-			return !where(callableObj).empty();
+			return !where(std::forward<CallableObj>(callableObj)).empty();
 		}
 
 		template <typename Result_t = Element_t>
 		auto average() const
 		{
-			return detail_::GetAverage<Self_t, Result_t>::Get(*this);
+			if constexpr (std::conjunction<detail_::Addable<Result_t, Element_t>, detail_::Dividable<Result_t>>::value)
+			{
+				Result_t result{};
+				return aggregate(result, [](Result_t const& res, Element_t const& item)
+				{
+					return res + item;
+				}) / static_cast<Result_t>(m_Range.size());
+			}
+			else
+			{
+				nat_Throw(natException, "Cannot apply such operation to this type."_nv);
+			}
 		}
 
 		auto max() const
 		{
-			return detail_::GetMax<Self_t>::Get(*this);
+			if constexpr (detail_::CanGreater<Element_t>::value)
+			{
+				return aggregate([](const Element_t& a, const Element_t& b) { return a > b ? a : b; });
+			}
+			else
+			{
+				nat_Throw(natException, "Cannot apply such operation to this type."_nv);
+			}
 		}
 
 		auto min() const
 		{
-			return detail_::GetMin<Self_t>::Get(*this);
+			if constexpr (detail_::CanLesser<Element_t>::value)
+			{
+				return aggregate([](const Element_t& a, const Element_t& b) { return a < b ? a : b; });
+			}
+			else
+			{
+				nat_Throw(natException, "Cannot apply such operation to this type."_nv);
+			}
 		}
 
 		auto sum() const
 		{
-			return detail_::GetSum<Self_t>::Get(*this);
+			if constexpr (detail_::Addable<Element_t>::value)
+			{
+				return aggregate(std::plus<Element_t>{});
+			}
+			else
+			{
+				nat_Throw(natException, "Cannot apply such operation to this type."_nv);
+			}
 		}
 
 		auto product() const
 		{
-			return detail_::GetProduct<Self_t>::Get(*this);
+			if constexpr (detail_::Multipliable<Element_t>::value)
+			{
+				return aggregate(static_cast<Element_t>(1), [](const Element_t& a, const Element_t& b) { return a * b; });
+			}
+			else
+			{
+				nat_Throw(natException, "Cannot apply such operation to this type."_nv);
+			}
 		}
 
 		template <typename CallableObj>
-		auto select_many(CallableObj const& callableObj) const
+		auto select_many(CallableObj&& callableObj) const
 		{
-			typedef decltype(callableObj(std::declval<Element_t>())) Collection_t;
+			typedef decltype(std::forward<CallableObj>(callableObj)(std::declval<Element_t>())) Collection_t;
 			typedef decltype(*std::begin(std::declval<Collection_t>())) Value_t;
-			return select(callableObj).aggregate(from_empty<Value_t>(), [](Linq<Value_t> const& a, Collection_t const& b)
+			return select(std::forward<CallableObj>(callableObj)).aggregate(from_empty<Value_t>(), [](Linq<Value_t> const& a, Collection_t const& b)
 			{
 				return a.concat(b);
 			});
 		}
 
 		template <typename CallableObj>
-		auto group_by(CallableObj const& keySelector) const
+		auto group_by(CallableObj&& keySelector) const
 		{
-			typedef decltype(keySelector(std::declval<Element_t>())) Key_t;
+			typedef decltype(std::forward<CallableObj>(keySelector)(std::declval<Element_t>())) Key_t;
 			std::map<Key_t, std::vector<Element_t>> tmpMap;
 			for (auto&& item : *this)
 			{
-				auto&& key = keySelector(item);
+				auto&& key = std::forward<CallableObj>(keySelector)(item);
 				tmpMap[key].emplace_back(item);
 			}
 
@@ -1447,10 +1465,10 @@ namespace NatsuLib
 		}
 
 		template <typename Iter2_t, typename CallableObj1, typename CallableObj2>
-		auto full_join(LinqEnumerable<Iter2_t> const& e, CallableObj1 const& keySelector1, CallableObj2 const& keySelector2) const
+		auto full_join(LinqEnumerable<Iter2_t> const& e, CallableObj1&& keySelector1, CallableObj2&& keySelector2) const
 		{
-			typedef std::remove_reference_t<decltype(keySelector1(std::declval<Element_t>()))> Key1_t;
-			typedef std::remove_reference_t<decltype(keySelector2(std::declval<Element_t>()))> Key2_t;
+			typedef std::remove_reference_t<decltype(std::forward<CallableObj1>(keySelector1)(std::declval<Element_t>()))> Key1_t;
+			typedef std::remove_reference_t<decltype(std::forward<CallableObj2>(keySelector2)(std::declval<Element_t>()))> Key2_t;
 			static_assert(std::is_same<Key1_t, Key2_t>::value, "Key1_t and Key2_t should be same.");
 			typedef std::common_type_t<Key1_t, Key2_t> Key_t;
 			typedef std::remove_cv_t<std::remove_reference_t<decltype(*std::declval<Iter_t>())>> Value1_t;
@@ -1462,12 +1480,12 @@ namespace NatsuLib
 
 			for (auto&& item : *this)
 			{
-				map1.insert(std::make_pair(keySelector1(item), item));
+				map1.insert(std::make_pair(std::forward<CallableObj1>(keySelector1)(item), item));
 			}
 
 			for (auto&& item : e)
 			{
-				map2.insert(std::make_pair(keySelector2(item), item));
+				map2.insert(std::make_pair(std::forward<CallableObj2>(keySelector2)(item), item));
 			}
 
 			std::vector<FullJoinResult_t> result;
@@ -1526,10 +1544,10 @@ namespace NatsuLib
 		}
 
 		template <typename Iter2_t, typename CallableObj1, typename CallableObj2>
-		auto group_join(LinqEnumerable<Iter2_t> const& e, CallableObj1 const& keySelector1, CallableObj2 const& keySelector2) const
+		auto group_join(LinqEnumerable<Iter2_t> const& e, CallableObj1&& keySelector1, CallableObj2&& keySelector2) const
 		{
-			typedef std::remove_reference_t<decltype(keySelector1(std::declval<Element_t>()))> Key1_t;
-			typedef std::remove_reference_t<decltype(keySelector2(std::declval<Element_t>()))> Key2_t;
+			typedef std::remove_reference_t<decltype(std::forward<CallableObj1>(keySelector1)(std::declval<Element_t>()))> Key1_t;
+			typedef std::remove_reference_t<decltype(std::forward<CallableObj2>(keySelector2)(std::declval<Element_t>()))> Key2_t;
 			static_assert(std::is_same<Key1_t, Key2_t>::value, "Key1_t and Key2_t should be same.");
 			typedef std::common_type_t<Key1_t, Key2_t> Key_t;
 			typedef std::remove_cv_t<std::remove_reference_t<decltype(*std::declval<Iter_t>())>> Value1_t;
@@ -1537,10 +1555,10 @@ namespace NatsuLib
 			typedef std::tuple<Key_t, Linq<Element_t>, Linq<Element_t>> FullJoinResult_t;
 			typedef std::tuple<Key_t, Value1_t, Linq<Value2_t>> GroupJoinResult_t;
 
-			return full_join(e, keySelector1, keySelector2).select_many([](const FullJoinResult_t& item)
+			return full_join(e, std::forward<CallableObj1>(keySelector1), std::forward<CallableObj2>(keySelector2)).select_many([](const FullJoinResult_t& item)
 			{
 				Linq<Value1_t> outers = item.second.first;
-				return outers.select([item](const Value1_t& outer)
+				return outers.select([&item](const Value1_t& outer)
 				{
 					return GroupJoinResult_t{ item.first, outer, item.second.second };
 				});
@@ -1548,10 +1566,10 @@ namespace NatsuLib
 		}
 
 		template <typename Iter2_t, typename CallableObj1, typename CallableObj2>
-		auto join(LinqEnumerable<Iter2_t> const& e, CallableObj1 const& keySelector1, CallableObj2 const& keySelector2) const
+		auto join(LinqEnumerable<Iter2_t> const& e, CallableObj1&& keySelector1, CallableObj2&& keySelector2) const
 		{
-			typedef std::remove_reference_t<decltype(keySelector1(std::declval<Element_t>()))> Key1_t;
-			typedef std::remove_reference_t<decltype(keySelector2(std::declval<Element_t>()))> Key2_t;
+			typedef std::remove_reference_t<decltype(std::forward<CallableObj1>(keySelector1)(std::declval<Element_t>()))> Key1_t;
+			typedef std::remove_reference_t<decltype(std::forward<CallableObj2>(keySelector2)(std::declval<Element_t>()))> Key2_t;
 			static_assert(std::is_same<Key1_t, Key2_t>::value, "Key1_t and Key2_t should be same.");
 			typedef std::common_type_t<Key1_t, Key2_t> Key_t;
 			typedef std::remove_cv_t<std::remove_reference_t<decltype(*std::declval<Iter_t>())>> Value1_t;
@@ -1559,10 +1577,10 @@ namespace NatsuLib
 			typedef std::tuple<Key_t, Value1_t, Linq<Value2_t>> GroupJoinResult_t;
 			typedef std::tuple<Key_t, Value1_t, Value2_t> JoinResult_t;
 
-			return group_join(e, keySelector1, keySelector2).select_many([](const GroupJoinResult_t& item)
+			return group_join(e, std::forward<CallableObj1>(keySelector1), std::forward<CallableObj2>(keySelector2)).select_many([](const GroupJoinResult_t& item)
 			{
 				Linq<Value2_t> inners = item.second.second;
-				return inners.select([item](const Value2_t& inner)
+				return inners.select([&item](const Value2_t& inner)
 				{
 					return JoinResult_t{ item.first, item.second.first, inner };
 				});
@@ -1570,29 +1588,29 @@ namespace NatsuLib
 		}
 
 		template <typename CallableObj>
-		auto first_order_by(CallableObj const& keySelector) const
+		auto first_order_by(CallableObj&& keySelector) const
 		{
-			typedef std::remove_reference_t<decltype(keySelector(std::declval<Element_t>()))> Key_t;
+			typedef std::remove_reference_t<decltype(std::forward<CallableObj>(keySelector)(std::declval<Element_t>()))> Key_t;
 
-			return group_by(keySelector).select([](std::pair<Key_t, Linq<Element_t>> const& p)
+			return group_by(std::forward<CallableObj>(keySelector)).select([](std::pair<Key_t, Linq<Element_t>> const& p)
 			{
 				return p.second;
 			});
 		}
 
 		template <typename CallableObj>
-		auto then_order_by(CallableObj const& keySelector) const
+		auto then_order_by(CallableObj&& keySelector) const
 		{
-			return select_many([keySelector](Element_t const& values)
+			return select_many([&keySelector](Element_t const& values)
 			{
-				return values.first_order_by(keySelector);
+				return values.first_order_by(std::forward<CallableObj>(keySelector));
 			});
 		}
 
 		template <typename CallableObj>
-		auto order_by(CallableObj const& keySelector) const
+		auto order_by(CallableObj&& keySelector) const
 		{
-			return first_order_by(keySelector).select_many([](const Linq<Element_t>& values) { return values; });
+			return first_order_by(std::forward<CallableObj>(keySelector)).select_many([](const Linq<Element_t>& values) { return values; });
 		}
 
 		template <typename Iter2_t>
