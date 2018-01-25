@@ -573,6 +573,9 @@ namespace NatsuLib
 		constexpr Range(Range const&) = default;
 		constexpr Range(Range&&) = default;
 
+		Range& operator=(Range const&) = default;
+		Range& operator=(Range &&) = default;
+
 		template <typename R>
 		constexpr explicit Range(R const& range)
 			: m_IterBegin(std::begin(range)), m_IterEnd(std::end(range))

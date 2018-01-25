@@ -220,6 +220,10 @@ namespace NatsuLib
 				nat_Throw(natErrException, NatErr_NotSupport, "Try to deref an end iterator."_nv);
 			}
 
+		private:
+			Iter m_End;
+
+		public:
 			// 不应该作为比较依据，应由要比较的迭代器实现
 			// 或者提供统一接口让 EndIterator 来比较，这样可以防止反向比较时出现问题
 			nBool operator==(EndIterator const& other) const noexcept(noexcept(m_End == other.m_End))
@@ -237,9 +241,6 @@ namespace NatsuLib
 			{
 				return m_End - other.m_End;
 			}
-
-		private:
-			Iter m_End;
 		};
 
 		template <typename T, typename Category = std::input_iterator_tag>
@@ -1111,7 +1112,10 @@ namespace NatsuLib
 		}
 
 		constexpr LinqEnumerable(LinqEnumerable const& other) = default;
-		constexpr LinqEnumerable(LinqEnumerable&& other) noexcept(std::is_nothrow_move_constructible_v<Range<Iter_t>>) = default;
+		constexpr LinqEnumerable(LinqEnumerable&& other) = default;
+
+		LinqEnumerable& operator=(LinqEnumerable const& other) = default;
+		LinqEnumerable& operator=(LinqEnumerable && other) = default;
 
 		constexpr Iter_t begin() const
 		{
