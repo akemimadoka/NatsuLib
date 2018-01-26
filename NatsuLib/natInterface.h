@@ -5,8 +5,6 @@ namespace NatsuLib
 {
 	struct Interface
 	{
-		virtual ~Interface() = 0
-		{
-		}
+		virtual ~Interface() = 0;
 	};
 }

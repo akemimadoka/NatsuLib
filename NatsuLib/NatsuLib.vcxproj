@@ -234,6 +234,7 @@
     <ClCompile Include="natEnvironment.cpp" />
     <ClCompile Include="natEvent.cpp" />
     <ClCompile Include="natException.cpp" />
+    <ClCompile Include="natInterface.cpp" />
     <ClCompile Include="natLocalFileScheme.cpp" />
     <ClCompile Include="natLog.cpp" />
     <ClCompile Include="natMisc.cpp" />

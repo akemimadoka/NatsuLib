@@ -6,7 +6,7 @@ message(STATUS "Operation system is ${CMAKE_SYSTEM}")
 set(CMAKE_CXX_STANDARD 17)
 
 if (NOT MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-missing-field-initializers -Wno-unused-local-typedefs -Wno-unused-parameter")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-missing-field-initializers -Wno-unused")
 endif()
 
 include_directories(${zlib_INCLUDE_DIRS})
@@ -32,6 +32,7 @@ set(SOURCE_FILES
     natEvent.h
     natException.cpp
     natException.h
+    natInterface.cpp
     natInterface.h
     natLinq.h
     natLocalFileScheme.cpp
