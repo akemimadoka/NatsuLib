@@ -966,10 +966,6 @@ namespace NatsuLib
 			Assign(View{ str });
 		}
 
-		~String()
-		{
-		}
-
 		void Reserve(std::size_t newCapacity)
 		{
 			m_Storage.Reserve(newCapacity);
@@ -1029,6 +1025,11 @@ namespace NatsuLib
 		void Assign(String<srcType> const& src)
 		{
 			Assign(src.GetView());
+		}
+
+		void Assign(String && src)
+		{
+			m_Storage.Assign(std::move(src.m_Storage));
 		}
 
 		void Append(CharType Char, std::size_t count = 1)
