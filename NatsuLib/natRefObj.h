@@ -885,7 +885,7 @@ namespace NatsuLib
 
 		explicit operator nBool() const noexcept
 		{
-			return m_View;
+			return !IsExpired();
 		}
 
 		// Workaround
@@ -917,18 +917,18 @@ namespace NatsuLib
 			return std::exchange(m_View, nullptr);
 		}
 	};
-}
 
-template <typename T>
-NATINLINE void swap(NatsuLib::natRefPointer<T>& lhs, NatsuLib::natRefPointer<T>& rhs) noexcept
-{
-	lhs.swap(rhs);
-}
+	template <typename T>
+	NATINLINE void swap(NatsuLib::natRefPointer<T>& lhs, NatsuLib::natRefPointer<T>& rhs) noexcept
+	{
+		lhs.swap(rhs);
+	}
 
-template <typename T>
-NATINLINE void swap(NatsuLib::natWeakRefPointer<T>& lhs, NatsuLib::natWeakRefPointer<T>& rhs) noexcept
-{
-	lhs.swap(rhs);
+	template <typename T>
+	NATINLINE void swap(NatsuLib::natWeakRefPointer<T>& lhs, NatsuLib::natWeakRefPointer<T>& rhs) noexcept
+	{
+		lhs.swap(rhs);
+	}
 }
 
 namespace std
