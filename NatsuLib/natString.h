@@ -271,17 +271,17 @@ namespace NatsuLib
 		{
 		}
 
-		StringView(std::nullptr_t, std::nullptr_t = nullptr) noexcept
+		constexpr StringView(std::nullptr_t, std::nullptr_t = nullptr) noexcept
 			: StringView()
 		{
 		}
 
-		StringView(CharIterator begin, std::size_t length) noexcept
+		constexpr StringView(CharIterator begin, std::size_t length) noexcept
 			: StringView(begin, begin + length)
 		{
 		}
 
-		StringView(std::initializer_list<CharType> il) noexcept
+		constexpr StringView(std::initializer_list<CharType> il) noexcept
 			: StringView(il.begin(), il.end())
 		{
 		}
@@ -292,17 +292,13 @@ namespace NatsuLib
 		}
 
 		template <std::size_t N>
-		StringView(const CharType(&array)[N])
+		constexpr StringView(const CharType(&array)[N])
 			: StringView(array, array + N)
 		{
 		}
 
-		~StringView()
-		{
-		}
-
 		///	@brief	字符串视图是否为空
-		nBool IsEmpty() const noexcept
+		constexpr nBool IsEmpty() const noexcept
 		{
 			return m_StrBegin == m_StrEnd;
 		}
@@ -312,22 +308,22 @@ namespace NatsuLib
 			m_StrBegin = m_StrEnd;
 		}
 
-		const_iterator begin() const noexcept
+		constexpr const_iterator begin() const noexcept
 		{
 			return m_StrBegin;
 		}
 
-		const_iterator end() const noexcept
+		constexpr const_iterator end() const noexcept
 		{
 			return m_StrEnd;
 		}
 
-		const_iterator cbegin() const noexcept
+		constexpr const_iterator cbegin() const noexcept
 		{
 			return m_StrBegin;
 		}
 
-		const_iterator cend() const noexcept
+		constexpr const_iterator cend() const noexcept
 		{
 			return m_StrEnd;
 		}
@@ -352,22 +348,22 @@ namespace NatsuLib
 			return const_reverse_iterator{ std::prev(m_StrBegin) };
 		}
 
-		std::size_t size() const noexcept
+		constexpr std::size_t size() const noexcept
 		{
 			return GetSize();
 		}
 
-		nBool empty() const noexcept
+		constexpr nBool empty() const noexcept
 		{
 			return m_StrBegin == m_StrEnd;
 		}
 
-		CharIterator data() const noexcept
+		constexpr CharIterator data() const noexcept
 		{
 			return m_StrBegin;
 		}
 
-		const CharType& operator[](std::size_t pos) const noexcept
+		constexpr const CharType& operator[](std::size_t pos) const noexcept
 		{
 			return UncheckGet(pos);
 		}
@@ -412,7 +408,7 @@ namespace NatsuLib
 			return Compare(other) >= 0;
 		}
 
-		std::size_t GetSize() const noexcept
+		constexpr std::size_t GetSize() const noexcept
 		{
 			return m_StrEnd - m_StrBegin;
 		}
@@ -439,7 +435,7 @@ namespace NatsuLib
 			return UncheckGet(index);
 		}
 
-		const CharType& UncheckGet(std::size_t pos) const noexcept
+		constexpr const CharType& UncheckGet(std::size_t pos) const noexcept
 		{
 			assert(pos < GetSize());
 
@@ -469,7 +465,7 @@ namespace NatsuLib
 			return 0;
 		}
 
-		StringView Slice(std::ptrdiff_t begin, std::ptrdiff_t end) const noexcept
+		constexpr StringView Slice(std::ptrdiff_t begin, std::ptrdiff_t end) const noexcept
 		{
 			const auto size = GetSize();
 			return { m_StrBegin + ApplyOffset(begin, size), m_StrBegin + ApplyOffset(end, size) };
@@ -1614,7 +1610,7 @@ namespace NatsuLib
 
 	inline namespace StringLiterals
 	{
-		NATINLINE U8StringView operator""_u8v(const U8StringView::CharType* str, std::size_t length) noexcept
+		constexpr U8StringView operator""_u8v(const U8StringView::CharType* str, std::size_t length) noexcept
 		{
 			return { str,length };
 		}
@@ -1629,7 +1625,7 @@ namespace NatsuLib
 			return U8StringView{ str,length };
 		}
 
-		NATINLINE U16StringView operator""_u16v(const U16StringView::CharType* str, std::size_t length) noexcept
+		constexpr U16StringView operator""_u16v(const U16StringView::CharType* str, std::size_t length) noexcept
 		{
 			return { str,length };
 		}
@@ -1644,7 +1640,7 @@ namespace NatsuLib
 			return U16StringView{ str,length };
 		}
 
-		NATINLINE U32StringView operator""_u32v(const U32StringView::CharType* str, std::size_t length) noexcept
+		constexpr U32StringView operator""_u32v(const U32StringView::CharType* str, std::size_t length) noexcept
 		{
 			return { str,length };
 		}
@@ -1660,7 +1656,7 @@ namespace NatsuLib
 		}
 
 #ifdef _WIN32
-		NATINLINE AnsiStringView operator""_av(const AnsiStringView::CharType* str, std::size_t length) noexcept
+		constexpr AnsiStringView operator""_av(const AnsiStringView::CharType* str, std::size_t length) noexcept
 		{
 			return { str,length };
 		}
@@ -1675,7 +1671,7 @@ namespace NatsuLib
 			return AnsiStringView{ str,length };
 		}
 
-		NATINLINE WideStringView operator""_wv(const WideStringView::CharType* str, std::size_t length) noexcept
+		constexpr WideStringView operator""_wv(const WideStringView::CharType* str, std::size_t length) noexcept
 		{
 			return{ str,length };
 		}
@@ -1691,7 +1687,7 @@ namespace NatsuLib
 		}
 #endif
 
-		NATINLINE nStrView operator""_nv(const nU8Char* str, std::size_t length) noexcept
+		constexpr nStrView operator""_nv(const nU8Char* str, std::size_t length) noexcept
 		{
 			return { str, length };
 		}
