@@ -6,15 +6,6 @@ using namespace NatsuLib;
 
 namespace NatsuLib
 {
-	template class StringView<StringType::Utf8>;
-	template class StringView<StringType::Utf16>;
-	template class StringView<StringType::Utf32>;
-
-#ifdef _WIN32
-	template class StringView<StringType::Ansi>;
-	template class StringView<StringType::Wide>;
-#endif
-
 	template class String<StringType::Utf8>;
 	template class String<StringType::Utf16>;
 	template class String<StringType::Utf32>;

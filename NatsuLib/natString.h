@@ -690,15 +690,6 @@ namespace NatsuLib
 		}
 	};
 
-	extern template class StringView<StringType::Utf8>;
-	extern template class StringView<StringType::Utf16>;
-	extern template class StringView<StringType::Utf32>;
-
-#ifdef _WIN32
-	extern template class StringView<StringType::Ansi>;
-	extern template class StringView<StringType::Wide>;
-#endif
-
 	namespace detail_
 	{
 		template <StringType SrcType>
