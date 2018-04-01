@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "natStream.h"
 #include "natText.h"
 
@@ -64,7 +64,7 @@ namespace NatsuLib
 		size_t m_BufferSize;
 		size_t m_CurrentPos, m_EndPos;
 
-		// Çå¿Õ»º³åÇø²¢ÖØÉèÎ»ÖÃ£¬¿ÉÑ¡±£ÁôÎ²²¿µÄ²¿·ÖÊı¾İ
+		// æ¸…ç©ºç¼“å†²åŒºå¹¶é‡è®¾ä½ç½®ï¼Œå¯é€‰ä¿ç•™å°¾éƒ¨çš„éƒ¨åˆ†æ•°æ®
 		void ReadBuffer(size_t size, size_t reserved = 0)
 		{
 			if (!size)
