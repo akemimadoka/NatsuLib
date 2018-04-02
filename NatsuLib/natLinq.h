@@ -1683,10 +1683,14 @@ namespace NatsuLib
 		return LinqEnumerable<detail_::EmptyIterator<T>>(detail_::EmptyIterator<T>(), detail_::EmptyIterator<T>());
 	}
 
-	template <typename Iter_t>
-	auto from(Iter_t&& begin, Iter_t&& end)
+	template <typename Iter_t, typename Iter2_t, std::enable_if_t<
+		std::is_same_v<
+			std::decay_t<Iter_t>,
+			std::decay_t<Iter_t>
+		>, int> = 0>
+	auto from(Iter_t begin, Iter2_t end)
 	{
-		return LinqEnumerable<std::remove_cv_t<std::remove_reference_t<Iter_t>>>(std::forward<Iter_t>(begin), std::forward<Iter_t>(end));
+		return LinqEnumerable<std::decay_t<Iter_t>>(std::move(begin), std::move(end));
 	}
 
 	template <typename Container>
