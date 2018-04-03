@@ -59,6 +59,9 @@ namespace NatsuLib
 		struct defaultconstruct_t { constexpr defaultconstruct_t() = default; };
 		constexpr defaultconstruct_t defaultconstruct{};
 
+		struct in_place_t { constexpr in_place_t() = default; };
+		constexpr in_place_t in_place;
+
 		[[noreturn]] void NotConstructed();
 		[[noreturn]] void ValueNotAvailable();
 
@@ -108,7 +111,7 @@ namespace NatsuLib
 			}
 
 			template <typename... Args>
-			constexpr explicit CommonStorage(Args&&... args) noexcept(noexcept(std::declval<CommonStorage<T>>().Init(std::forward<Args>(args)...)))
+			constexpr explicit CommonStorage(in_place_t, Args&&... args) noexcept(noexcept(std::declval<CommonStorage<T>>().Init(std::forward<Args>(args)...)))
 				: m_Constructed(false), m_Storage{}
 			{
 				Init(std::forward<Args>(args)...);
@@ -305,6 +308,9 @@ namespace NatsuLib
 	using detail_::defaultconstruct_t;
 	using detail_::defaultconstruct;
 
+	using detail_::in_place_t;
+	using detail_::in_place;
+
 	////////////////////////////////////////////////////////////////////////////////
 	///	@brief	可空类型
 	///	@note	由于std::optional进入C++17，此类已无必要继续使用，为了兼容性而保留
@@ -342,7 +348,7 @@ namespace NatsuLib
 		{
 		}
 		template <typename... Args>
-		constexpr Optional(Args&&... args)
+		constexpr Optional(in_place_t, Args&&... args)
 			: m_Value(std::forward<Args>(args)...)
 		{
 		}
