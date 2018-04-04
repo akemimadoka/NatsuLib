@@ -108,6 +108,11 @@ Uri& Uri::operator=(Uri&& other) noexcept
 	return *this;
 }
 
+nBool Uri::operator==(Uri const& other) const noexcept
+{
+	return m_UriInfo.UriString == other.m_UriInfo.UriString;
+}
+
 nStrView Uri::GetScheme() const noexcept
 {
 	return m_UriInfo.Scheme;

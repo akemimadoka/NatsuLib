@@ -25,6 +25,8 @@ namespace NatsuLib
 		Uri& operator=(Uri const& other);
 		Uri& operator=(Uri&& other) noexcept;
 
+		nBool operator==(Uri const& other) const noexcept;
+
 		nStrView GetScheme() const noexcept;
 		nStrView GetUser() const noexcept;
 		nStrView GetPassword() const noexcept;
