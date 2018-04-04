@@ -680,9 +680,10 @@ namespace NatsuLib
 
 			Self_t& operator++() & noexcept(noexcept(++m_Iterator) && noexcept(m_Iterator = m_End))
 			{
-				if (!m_TakeCount)
+				if (m_TakeCount <= 1)
 				{
 					m_Iterator = m_End;
+					m_TakeCount = 0;
 				}
 				else
 				{
@@ -1170,7 +1171,7 @@ namespace NatsuLib
 				detail_::WhereIterator<Iter_t, CallableObj>(m_Range.end()));
 		}
 
-		LinqEnumerable skip(difference_type count)
+		LinqEnumerable skip(difference_type count) const
 		{
 			LinqEnumerable ret(*this);
 			ret.m_Range.pop_front(count);
@@ -1184,7 +1185,7 @@ namespace NatsuLib
 				detail_::SkipWhileIterator<Iter_t>(m_Range.end()));
 		}
 
-		LinqEnumerable<detail_::TakeIterator<Iter_t>> take(difference_type count)
+		LinqEnumerable<detail_::TakeIterator<Iter_t>> take(difference_type count) const
 		{
 			return LinqEnumerable<detail_::TakeIterator<Iter_t>>(detail_::TakeIterator<Iter_t>(m_Range.begin(), m_Range.end(), count),
 				detail_::TakeIterator<Iter_t>(m_Range.end(), m_Range.end(), count));

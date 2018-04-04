@@ -95,6 +95,11 @@ int main()
 			}
 			logger.LogMsg("%d"_nv, from_values({ 2, 4, 6, 3, 2 }).where([](int i) { return i >= 4; }).count());
 			logger.LogMsg("%d"_nv, from(arr).aggregate(std::plus<int>{}));
+			for (auto&& item : from(arr).take(3))
+			{
+				std::cout << item;
+			}
+			std::cout << std::endl;
 		}
 
 		{
