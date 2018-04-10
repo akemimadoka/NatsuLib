@@ -45,10 +45,17 @@
 namespace NatsuLib
 {
 	template <typename Enum>
-	constexpr std::enable_if_t<std::is_enum_v<Enum>, nBool> HasFlags(Enum test, Enum flags) noexcept
+	constexpr std::enable_if_t<std::is_enum_v<Enum>, nBool> HasAnyFlags(Enum test, Enum flags) noexcept
 	{
 		using UnderlyingType = std::underlying_type_t<Enum>;
 		return (static_cast<UnderlyingType>(test) & static_cast<UnderlyingType>(flags)) != UnderlyingType{};
+	}
+
+	template <typename Enum>
+	constexpr std::enable_if_t<std::is_enum_v<Enum>, nBool> HasAllFlags(Enum test, Enum flags) noexcept
+	{
+		using UnderlyingType = std::underlying_type_t<Enum>;
+		return (static_cast<UnderlyingType>(test) & static_cast<UnderlyingType>(flags)) == static_cast<UnderlyingType>(flags);
 	}
 
 	namespace detail_
