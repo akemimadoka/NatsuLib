@@ -195,6 +195,7 @@
     <ClInclude Include="natEnvironment.h" />
     <ClInclude Include="natEvent.h" />
     <ClInclude Include="natException.h" />
+    <ClInclude Include="natInfixOperator.h" />
     <ClInclude Include="natInterface.h" />
     <ClInclude Include="natLinq.h" />
     <ClInclude Include="natLocalFileScheme.h" />

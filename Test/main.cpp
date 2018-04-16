@@ -18,6 +18,7 @@
 #include <natRelationalOperator.h>
 #include <natProperty.h>
 #include <natContainer.h>
+#include <natInfixOperator.h>
 #include <forward_list>
 
 using namespace NatsuLib;
@@ -37,6 +38,28 @@ REQUIRES(void, std::conjunction<Models<Incrementable(T)>>::value) increment(T& x
 }
 
 HasMemberTrait(foo);
+
+struct AddOp
+{
+	template <typename T, typename U>
+	static constexpr decltype(auto) Apply(T&& lhs, U&& rhs) noexcept(noexcept(std::forward<T>(lhs) + std::forward<U>(rhs)))
+	{
+		return std::forward<T>(lhs) + std::forward<U>(rhs);
+	}
+};
+
+constexpr InfixOp<AddOp> Add{};
+
+struct MulOp
+{
+	template <typename T, typename U>
+	static constexpr decltype(auto) Apply(T&& lhs, U&& rhs) noexcept(noexcept(std::forward<T>(lhs) * std::forward<U>(rhs)))
+	{
+		return std::forward<T>(lhs) * std::forward<U>(rhs);
+	}
+};
+
+constexpr InfixOp<MulOp> Mul{};
 
 int main()
 {
@@ -70,7 +93,12 @@ int main()
 		{
 			logger.LogMsg("%s%d"_nv, "end"_nv, i);
 		}, t);
-		
+
+		{
+			constexpr auto add = 1 <Add> 2 <Mul> 3;
+			static_assert(add == 9);
+		}
+
 		{
 			"test 2333"_nv.Split(" 2"_nv, [&logger](nStrView const& str)
 			{
