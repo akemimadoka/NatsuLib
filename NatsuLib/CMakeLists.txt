@@ -32,6 +32,7 @@ set(SOURCE_FILES
     natEvent.h
     natException.cpp
     natException.h
+    natInfixOperator.h
     natInterface.cpp
     natInterface.h
     natLinq.h
