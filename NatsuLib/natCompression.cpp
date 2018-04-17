@@ -7,10 +7,6 @@ using namespace NatsuLib;
 
 using CurrentUsingRuntimeEncoding = RuntimeEncoding<GetUsingStringType<nString>::value>;
 
-// 在写入时被odr-use了，所以需要提供定义
-constexpr nuInt natZipArchive::Mask32Bit;
-constexpr nuShort natZipArchive::Mask16Bit;
-
 natZipArchive::ZipEntry::~ZipEntry()
 {
 }

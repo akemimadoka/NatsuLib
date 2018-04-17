@@ -15,9 +15,8 @@ natRefPointer<IRequest> LocalFileScheme::CreateRequest(Uri const& uri)
 
 natRefPointer<IResponse> LocalFileRequest::GetResponse()
 {
-	nString realPath;
 	const auto host = m_Uri.GetHost();
-	realPath = host.empty() ? nString{ m_Uri.GetPath() } : natUtil::FormatString("{0}/{1}", m_Uri.GetHost(), m_Uri.GetPath());
+	const auto realPath = host.empty() ? nString{ m_Uri.GetPath() } : natUtil::FormatString("{0}/{1}", m_Uri.GetHost(), m_Uri.GetPath());
 
 	return make_ref<LocalFileResponse>(make_ref<natFileStream>(realPath, m_Readable, m_Writable
 #ifdef _WIN32

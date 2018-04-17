@@ -571,6 +571,40 @@ namespace NatsuLib
 		detail_::CommonStorage<T> m_Value;
 	};
 
+	///	@brief	柯里化
+	template <typename Callable, typename... Args>
+	class Currier
+	{
+	public:
+		constexpr explicit Currier(Callable&& callableObj, std::tuple<Args&&...>&& argsTuple) noexcept
+			: m_CallableObj{ std::forward<Callable>(callableObj) }, m_ArgsTuple{ std::move(argsTuple) }
+		{
+		}
+
+		template <typename Arg>
+		constexpr decltype(auto) operator()(Arg&& arg) const noexcept(!std::is_invocable_v<Callable&&, Args&&..., Arg&&> || std::is_nothrow_invocable_v<Callable&&, Args&&..., Arg&&>)
+		{
+			if constexpr (std::is_invocable_v<Callable&&, Args&&..., Arg&&>)
+			{
+				return std::apply(m_CallableObj, std::tuple_cat(std::move(m_ArgsTuple), std::tuple<Arg&&>(std::forward<Arg>(arg))));
+			}
+			else
+			{
+				return Currier<Callable&&, Args&&..., Arg&&>{ static_cast<Callable&&>(m_CallableObj), std::tuple_cat(std::move(m_ArgsTuple), std::tuple<Arg&&>(std::forward<Arg>(arg))) };
+			}
+		}
+
+	private:
+		Callable && m_CallableObj;
+		std::tuple<Args&&...> m_ArgsTuple;
+	};
+
+	template <typename Callable>
+	constexpr auto MakeCurrier(Callable&& callableObj) noexcept
+	{
+		return Currier<Callable&&>{ std::forward<Callable>(callableObj), std::tuple<>{} };
+	}
+
 	////////////////////////////////////////////////////////////////////////////////
 	///	@brief	范围
 	////////////////////////////////////////////////////////////////////////////////

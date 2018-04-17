@@ -14,7 +14,6 @@ enum : nuInt
 #else
 	2u
 #endif
-	,
 };
 
 std::wstring natUtil::MultibyteToUnicode(ncStr Str, nInt StrLength, nuInt CodePage)
@@ -24,19 +23,19 @@ std::wstring natUtil::MultibyteToUnicode(ncStr Str, nInt StrLength, nuInt CodePa
 		return {};
 	}
 
-	auto Num = MultiByteToWideChar(CodePage, MB_ERR_INVALID_CHARS, Str, StrLength * sizeof(nChar), nullptr, 0);
-	if (Num == 0)
+	const auto num = MultiByteToWideChar(CodePage, MB_ERR_INVALID_CHARS, Str, StrLength * sizeof(nChar), nullptr, 0);
+	if (num == 0)
 	{
 		nat_Throw(natWinException, "MultiByteToWideChar failed."_nv);
 	}
 
-	std::wstring ret(static_cast<size_t>(Num), 0);
-	if (!MultiByteToWideChar(CodePage, MB_ERR_INVALID_CHARS, Str, StrLength * sizeof(nChar), &ret.front(), Num))
+	std::wstring ret(static_cast<size_t>(num), 0);
+	if (!MultiByteToWideChar(CodePage, MB_ERR_INVALID_CHARS, Str, StrLength * sizeof(nChar), &ret.front(), num))
 	{
 		nat_Throw(natWinException, "MultiByteToWideChar failed."_nv);
 	}
 
-	return move(ret);
+	return ret;
 }
 
 std::string natUtil::WidecharToMultibyte(ncWStr Str, nInt StrLength, nuInt CodePage)
@@ -47,24 +46,23 @@ std::string natUtil::WidecharToMultibyte(ncWStr Str, nInt StrLength, nuInt CodeP
 	}
 
 	const DWORD flags = CodePage == CP_UTF8 || CodePage == 54936 ? WC_ERR_INVALID_CHARS : 0;
-	DWORD lastError;
 	SetLastError(ERROR_SUCCESS); // Workaround: wtf?
-	auto Num = WideCharToMultiByte(CodePage, flags, Str, StrLength, nullptr, 0, nullptr, FALSE);
-	lastError = GetLastError();
-	if (Num == 0 || lastError)
+	auto num = WideCharToMultiByte(CodePage, flags, Str, StrLength, nullptr, 0, nullptr, FALSE);
+	auto lastError = GetLastError();
+	if (num == 0 || lastError)
 	{
 		nat_Throw(natWinException, lastError, "WideCharToMultiByte failed."_nv);
 	}
 
-	std::string ret(static_cast<size_t>(Num), 0);
-	Num = WideCharToMultiByte(CodePage, flags, Str, StrLength, &ret.front(), Num * sizeof(nChar), nullptr, FALSE);
+	std::string ret(static_cast<size_t>(num), 0);
+	num = WideCharToMultiByte(CodePage, flags, Str, StrLength, &ret.front(), num * sizeof(nChar), nullptr, FALSE);
 	lastError = GetLastError();
-	if (Num == 0 || lastError)
+	if (num == 0 || lastError)
 	{
 		nat_Throw(natWinException, lastError, "WideCharToMultiByte failed."_nv);
 	}
 
-	return move(ret);
+	return ret;
 }
 
 nString natUtil::GetResourceString(DWORD ResourceID, HINSTANCE hInstance)
@@ -95,16 +93,16 @@ nString natUtil::GetResourceString(DWORD ResourceID, HINSTANCE hInstance)
 std::vector<nByte> natUtil::GetResourceData(DWORD ResourceID, LPCTSTR lpType, HINSTANCE hInstance)
 {
 	const auto hRsrc = FindResource(hInstance, MAKEINTRESOURCE(ResourceID), lpType);
-	if (hRsrc != NULL)
+	if (hRsrc)
 	{
 		const auto dwSize = SizeofResource(hInstance, hRsrc);
-		if (dwSize != 0ul)
+		if (dwSize)
 		{
 			const auto hGlobal = LoadResource(hInstance, hRsrc);
-			if (hGlobal != NULL)
+			if (hGlobal)
 			{
 				const auto pBuffer = static_cast<nData>(LockResource(hGlobal));
-				if (pBuffer != nullptr)
+				if (pBuffer)
 				{
 					return std::vector<nByte>(pBuffer, pBuffer + dwSize);
 				}

@@ -16,7 +16,7 @@
 #endif
 #include <limits>
 #include <vector>
-#include <atomic>
+#include <mutex>
 
 #ifdef _MSC_VER
 #	pragma push_macro("max")
@@ -68,25 +68,23 @@ namespace NatsuLib
 #endif
 	public:
 #ifdef _WIN32
-		static nBool HasInitialized() noexcept;
-
 		explicit natStackWalker(nStrView userSearchPath = nullptr);
 
-		void CaptureStack(size_t skipFrames = 0, nStrView unknownSymbolName = nullptr, nStrView unknownFileName = nullptr) noexcept;
+		void CaptureStack(std::size_t skipFrames = 0, nStrView unknownSymbolName = nullptr, nStrView unknownFileName = nullptr) noexcept;
 #else
 		natStackWalker();
 
-		void CaptureStack(size_t captureFrames = CaptureFrames, nStrView unknownSymbolInfo = nullptr) noexcept;
+		void CaptureStack(std::size_t captureFrames = CaptureFrames, nStrView unknownSymbolInfo = nullptr) noexcept;
 #endif
 		~natStackWalker();
 
 		void Clear() noexcept;
-		size_t GetFrameCount() const noexcept;
-		Symbol const& GetSymbol(size_t frame) const;
+		std::size_t GetFrameCount() const noexcept;
+		Symbol const& GetSymbol(std::size_t frame) const;
 
 	private:
 #ifdef _WIN32
-		static std::atomic<nBool> s_Initialized;
+		static std::once_flag s_OnceFlag;
 		std::vector<Symbol> m_StackSymbols;
 #else
 		std::vector<Symbol> m_StackSymbols;

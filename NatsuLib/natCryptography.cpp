@@ -9,18 +9,18 @@ namespace NatsuLib
 {
 	namespace detail_
 	{
-		constexpr NATINLINE nuInt Crc32One(const nuInt* crc32Table, nuInt c, nuInt b) noexcept
+		constexpr nuInt Crc32One(const nuInt* crc32Table, nuInt c, nuInt b) noexcept
 		{
 			return ((crc32Table[((c ^ b) & 0xff)]) ^ (c >> 8));
 		}
 
-		constexpr NATINLINE nuInt DecryptByte(const nuInt* pKeys) noexcept
+		constexpr nuInt DecryptByte(const nuInt* pKeys) noexcept
 		{
 			const auto temp = (pKeys[2] & 0xffff) | 2;
 			return ((temp * (temp ^ 1)) >> 8) & 0xff;
 		}
 
-		constexpr NATINLINE void UpdateKeys(nuInt* pKeys, const nuInt* crc32Table, nuInt c) noexcept
+		constexpr void UpdateKeys(nuInt* pKeys, const nuInt* crc32Table, nuInt c) noexcept
 		{
 			pKeys[0] = Crc32One(crc32Table, pKeys[0], c);
 			pKeys[1] += pKeys[0] & 0xff;
@@ -29,7 +29,7 @@ namespace NatsuLib
 			pKeys[2] = Crc32One(crc32Table, pKeys[2], pKeys[1] >> 24);
 		}
 
-		constexpr NATINLINE void InitKeys(ncData password, size_t passwordLength, nuInt* pKeys, const nuInt* crc32Table) noexcept
+		constexpr void InitKeys(ncData password, size_t passwordLength, nuInt* pKeys, const nuInt* crc32Table) noexcept
 		{
 			pKeys[0] = 305419896u;
 			pKeys[1] = 591751049u;
@@ -44,13 +44,13 @@ namespace NatsuLib
 			}
 		}
 
-		constexpr NATINLINE nuInt DecodeOne(nuInt* pKeys, const nuInt* crc32Table, nuInt c) noexcept
+		constexpr nuInt DecodeOne(nuInt* pKeys, const nuInt* crc32Table, nuInt c) noexcept
 		{
 			UpdateKeys(pKeys, crc32Table, c ^= DecryptByte(pKeys));
 			return c;
 		}
 
-		constexpr NATINLINE nuInt EncodeOne(nuInt* pKeys, const nuInt* crc32Table, nuInt c) noexcept
+		constexpr nuInt EncodeOne(nuInt* pKeys, const nuInt* crc32Table, nuInt c) noexcept
 		{
 			const auto t = DecryptByte(pKeys) ^ c;
 			UpdateKeys(pKeys, crc32Table, c);

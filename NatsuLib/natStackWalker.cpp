@@ -9,44 +9,30 @@
 using namespace NatsuLib;
 
 #ifdef _WIN32
-std::atomic<nBool> natStackWalker::s_Initialized { false };
-
-namespace
-{
-	natScope<std::function<void()>> StackWalkerUninitializer{ []
-	{
-		if (natStackWalker::HasInitialized())
-		{
-			SymCleanup(GetCurrentProcess());
-		}
-	} };
-}
+std::once_flag natStackWalker::s_OnceFlag{};
 
 natStackWalker::natStackWalker(nStrView userSearchPath)
 {
-	if (!s_Initialized.load(std::memory_order_acquire))
+	std::call_once(s_OnceFlag, [&userSearchPath]
 	{
 		SymSetOptions(SYMOPT_LOAD_LINES);
-		if (!SymInitialize(GetCurrentProcess(),
-#ifdef UNICODE
-			userSearchPath.empty() ? AnsiString{userSearchPath}.data() : nullptr
-#else
-			userSearchPath.data()
-#endif
-			, TRUE))
+		if (!SymInitialize(GetCurrentProcess(), userSearchPath.empty() ? nullptr : AnsiString{ userSearchPath }.data(), TRUE))
 		{
 			nat_Throw(natWinException, "SymInitialize failed."_nv);
 		}
 
-		s_Initialized.store(true, std::memory_order_release);
-	}
+		std::atexit([]
+		{
+			SymCleanup(GetCurrentProcess());
+		});
+	});
 }
 
 natStackWalker::~natStackWalker()
 {
 }
 
-void natStackWalker::CaptureStack(size_t skipFrames, nStrView unknownSymbolName, nStrView unknownFileName) noexcept
+void natStackWalker::CaptureStack(std::size_t skipFrames, nStrView unknownSymbolName, nStrView unknownFileName) noexcept
 {
 #if WINVER <= _WIN32_WINNT_WS03
 	if (skipFrames > 63)
@@ -56,12 +42,12 @@ void natStackWalker::CaptureStack(size_t skipFrames, nStrView unknownSymbolName,
 #endif
 
 	m_StackSymbols.clear();
-	auto hProcess = GetCurrentProcess();
-	PVOID pStack[CaptureFrames]{ nullptr };
-	auto frames = CaptureStackBackTrace(static_cast<DWORD>(skipFrames), static_cast<DWORD>(CaptureFrames - skipFrames), pStack, nullptr);
+	const auto hProcess = GetCurrentProcess();
+	PVOID pStack[CaptureFrames]{};
+	const auto frames = CaptureStackBackTrace(static_cast<DWORD>(skipFrames), static_cast<DWORD>(CaptureFrames - skipFrames), pStack, nullptr);
 	union
 	{
-		nByte dummy[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
+		nByte Dummy[sizeof(SYMBOL_INFO) + MAX_SYM_NAME];
 		SYMBOL_INFO SymbolInfo;
 	} symbol{};
 	symbol.SymbolInfo.SizeOfStruct = sizeof(SYMBOL_INFO);
@@ -71,7 +57,7 @@ void natStackWalker::CaptureStack(size_t skipFrames, nStrView unknownSymbolName,
 	DWORD displacement;
 
 	m_StackSymbols.reserve(frames);
-	for (size_t i = 0; i < frames; ++i)
+	for (std::size_t i = 0; i < frames; ++i)
 	{
 		Symbol currentSymbol{ pStack[i] };
 		if (!SymFromAddr(hProcess, reinterpret_cast<DWORD64>(pStack[i]), nullptr, &symbol.SymbolInfo))
@@ -107,12 +93,12 @@ void natStackWalker::Clear() noexcept
 	m_StackSymbols.clear();
 }
 
-size_t natStackWalker::GetFrameCount() const noexcept
+std::size_t natStackWalker::GetFrameCount() const noexcept
 {
 	return m_StackSymbols.size();
 }
 
-natStackWalker::Symbol const& natStackWalker::GetSymbol(size_t frame) const
+natStackWalker::Symbol const& natStackWalker::GetSymbol(std::size_t frame) const
 {
 	if (frame >= m_StackSymbols.size())
 	{
@@ -122,10 +108,6 @@ natStackWalker::Symbol const& natStackWalker::GetSymbol(size_t frame) const
 	return m_StackSymbols[frame];
 }
 
-nBool natStackWalker::HasInitialized() noexcept
-{
-	return s_Initialized.load(std::memory_order_acquire);
-}
 #else
 
 #include <cstdlib>
@@ -138,10 +120,10 @@ natStackWalker::~natStackWalker()
 {
 }
 
-void natStackWalker::CaptureStack(size_t captureFrames, nStrView unknownSymbolInfo) noexcept
+void natStackWalker::CaptureStack(std::size_t captureFrames, nStrView unknownSymbolInfo) noexcept
 {
 	std::vector<AddressType> addresses(captureFrames);
-	const auto size = static_cast<size_t>(backtrace(addresses.data(), static_cast<int>(captureFrames)));
+	const auto size = static_cast<std::size_t>(backtrace(addresses.data(), static_cast<int>(captureFrames)));
 	addresses.resize(size);
 	const auto symbolInfo = backtrace_symbols(addresses.data(), static_cast<int>(size));
 	const auto scope = make_scope([symbolInfo]
@@ -149,7 +131,7 @@ void natStackWalker::CaptureStack(size_t captureFrames, nStrView unknownSymbolIn
 		std::free(symbolInfo);
 	});
 
-	for (size_t i = 0; i < size; ++i)
+	for (std::size_t i = 0; i < size; ++i)
 	{
 		const auto symInfo = symbolInfo[i];
 		Symbol currentSymbol { addresses[i], symInfo ? nStrView{ symInfo } : unknownSymbolInfo.empty() ? "Unknown"_nv : unknownSymbolInfo };
@@ -162,12 +144,12 @@ void natStackWalker::Clear() noexcept
 	m_StackSymbols.clear();
 }
 
-size_t natStackWalker::GetFrameCount() const noexcept
+std::size_t natStackWalker::GetFrameCount() const noexcept
 {
 	return m_StackSymbols.size();
 }
 
-const natStackWalker::Symbol &natStackWalker::GetSymbol(size_t frame) const
+const natStackWalker::Symbol &natStackWalker::GetSymbol(std::size_t frame) const
 {
 	if (frame >= m_StackSymbols.size())
 	{

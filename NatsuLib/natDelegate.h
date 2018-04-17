@@ -13,17 +13,6 @@ namespace NatsuLib
 	{
 	public:
 		Delegate() noexcept = default;
-		Delegate(Delegate const& other) noexcept
-			: m_Functor(other.m_Functor)
-		{
-		}
-		Delegate(Delegate&& other) noexcept
-			: m_Functor(std::move(other.m_Functor))
-		{
-		}
-
-		Delegate& operator=(Delegate const& other) = default;
-		Delegate& operator=(Delegate && other) = default;
 
 		template <typename CallableObj, std::enable_if_t<NonSelf<CallableObj, Delegate>::value, int> = 0>
 		constexpr Delegate(CallableObj&& callableObj) noexcept
@@ -35,7 +24,7 @@ namespace NatsuLib
 		constexpr Delegate(CallableObj&& callableObj, ThisObj&& thisObj) noexcept
 			: m_Functor([callableObj, &thisObj](Args... args)
 			{
-				return (thisObj.*callableObj)(std::forward<Args>(args)...);
+				return (thisObj.*callableObj)(static_cast<Args>(args)...);
 			})
 		{
 		}
@@ -47,7 +36,7 @@ namespace NatsuLib
 				nat_Throw(natException, "Null delegate."_nv);
 			}
 
-			return m_Functor(std::forward<Args>(args)...);
+			return m_Functor(static_cast<Args>(args)...);
 		}
 
 		explicit operator bool() const noexcept

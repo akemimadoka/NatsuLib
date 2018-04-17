@@ -12,12 +12,12 @@ namespace NatsuLib
 {
 	namespace detail_
 	{
-		inline void SwapEndian(nData data, size_t size)
+		inline void SwapEndian(nData data, std::size_t size)
 		{
 			using std::swap;
 			const auto maxI = size - 1;
 			const auto swapCount = size / 2;
-			for (size_t i = 0; i < swapCount; ++i)
+			for (std::size_t i = 0; i < swapCount; ++i)
 			{
 				swap(data[i], data[maxI - i]);
 			}
