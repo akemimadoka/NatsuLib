@@ -6,8 +6,8 @@
 #include "natType.h"
 #include <cassert>
 
-#include <mutex>
 #include <atomic>
+
 #include <memory>
 #include <functional>
 
@@ -26,7 +26,7 @@ namespace NatsuLib
 		virtual ~natRefObj() = default;
 
 		///	@brief	获取当前的引用计数
-		virtual size_t GetRefCount() const volatile noexcept = 0;
+		virtual std::size_t GetRefCount() const volatile noexcept = 0;
 
 		///	@brief	尝试增加引用计数
 		///	@return	是否成功增加了引用计数
@@ -83,7 +83,7 @@ namespace NatsuLib
 				return GetRefCount() == 1;
 			}
 
-			virtual size_t GetRefCount() const volatile noexcept
+			virtual std::size_t GetRefCount() const volatile noexcept
 			{
 				return m_RefCount.load(std::memory_order_relaxed);
 			}
@@ -115,28 +115,28 @@ namespace NatsuLib
 			}
 
 			template <typename... Args>
-			constexpr RefCountBase(Args&&... args) //noexcept(std::is_nothrow_constructible_v<BaseClass, decltype(args)...>)
+			constexpr RefCountBase(Args&&... args) noexcept(std::is_nothrow_constructible_v<BaseClass, Args&&...>)
 				: BaseClass(std::forward<Args>(args)...), m_RefCount(1)
 			{
 			}
 
-			constexpr RefCountBase(RefCountBase const& other) //noexcept(std::is_nothrow_copy_constructible_v<BaseClass>)
+			constexpr RefCountBase(RefCountBase const& other) noexcept(std::is_nothrow_copy_constructible_v<BaseClass>)
 				: BaseClass(static_cast<BaseClass const&>(other)), m_RefCount(1)
 			{
 			}
 
-			RefCountBase& operator=(RefCountBase const& other) //noexcept(std::is_nothrow_copy_assignable_v<BaseClass>)
+			RefCountBase& operator=(RefCountBase const& other) noexcept(std::is_nothrow_copy_assignable_v<BaseClass>)
 			{
 				static_cast<BaseClass&>(*this) = static_cast<BaseClass const&>(other);
 				return *this;
 			}
 
-			constexpr RefCountBase(RefCountBase&& other) //noexcept(std::is_nothrow_move_constructible_v<BaseClass>)
+			constexpr RefCountBase(RefCountBase&& other) noexcept(std::is_nothrow_move_constructible_v<BaseClass>)
 				: BaseClass(static_cast<BaseClass&&>(other)), m_RefCount(1)
 			{
 			}
 
-			RefCountBase& operator=(RefCountBase&& other) //noexcept(std::is_nothrow_move_assignable_v<BaseClass>)
+			RefCountBase& operator=(RefCountBase&& other) noexcept(std::is_nothrow_move_assignable_v<BaseClass>)
 			{
 				static_cast<BaseClass&>(*this) = static_cast<BaseClass&&>(other);
 				return *this;
@@ -148,7 +148,7 @@ namespace NatsuLib
 			}
 
 		private:
-			mutable std::atomic<size_t> m_RefCount;
+			mutable std::atomic<std::size_t> m_RefCount;
 		};
 
 		template <typename Owner>
@@ -163,28 +163,26 @@ namespace NatsuLib
 
 			nBool IsOwnerAlive() const
 			{
-				const std::lock_guard<std::mutex> lock{ m_Mutex };
-				const auto owner = m_Owner;
+				const auto owner = m_Owner.load(std::memory_order_consume);
 				return owner && static_cast<const volatile RefCountBase*>(owner)->GetRefCount() > 0;
 			}
 
 			void ClearOwner()
 			{
-				const std::lock_guard<std::mutex> lock{ m_Mutex };
-				m_Owner = nullptr;
+				m_Owner.store(nullptr, std::memory_order_release);
 			}
 
 			template <typename T>
 			natRefPointer<T> LockOwner() const
 			{
-				const std::lock_guard<std::mutex> lock{ m_Mutex };
-				const auto other = static_cast_or_dynamic_cast<std::add_pointer_t<T>>(m_Owner);
+				const auto owner = m_Owner.load(std::memory_order_consume);
+				const auto other = static_cast_or_dynamic_cast<std::add_pointer_t<T>>(owner);
 				if (!other)
 				{
 					return {};
 				}
 
-				if (!static_cast<std::add_pointer_t<std::add_cv_t<Owner>>>(m_Owner)->TryAddRef())
+				if (!static_cast<std::add_pointer_t<std::add_cv_t<Owner>>>(owner)->TryAddRef())
 				{
 					return {};
 				}
@@ -193,8 +191,7 @@ namespace NatsuLib
 			}
 
 		private:
-			mutable std::mutex m_Mutex;
-			std::add_pointer_t<Owner> m_Owner;
+			std::atomic<Owner*> m_Owner;
 		};
 
 		struct SpecifySelfDeleter_t
@@ -224,7 +221,7 @@ namespace NatsuLib
 		typedef detail_::RefCountBase<B> RefCountBase;
 
 		template <typename TRefObj, typename... Args>
-		friend natRefPointer<TRefObj> make_ref(Args&&... args);
+		friend std::enable_if_t<std::is_constructible_v<TRefObj, Args&&...>, natRefPointer<TRefObj>> make_ref(Args&&... args);
 
 		struct DefaultDeleter
 		{
@@ -237,7 +234,7 @@ namespace NatsuLib
 	protected:
 		typedef natRefObjImpl RefObjImpl;
 
-		void* operator new(size_t size)
+		void* operator new(std::size_t size)
 		{
 			return ::operator new(size);
 		}
@@ -255,18 +252,18 @@ namespace NatsuLib
 		typedef natWeakRefPointer<T> WeakRefPointer;
 
 		template <typename... Args>
-		constexpr natRefObjImpl(Args&&... args) //noexcept(std::is_nothrow_constructible_v<natRefObjImpl, SpecifySelfDeleter_t, SelfDeleter, decltype(args)...>)
-			: natRefObjImpl(SpecifySelfDeleter, {}, std::forward<Args>(args)...)
-		{
-		}
-
-		template <typename... Args>
-		constexpr natRefObjImpl(SpecifySelfDeleter_t, SelfDeleter deleter, Args&&... args) //noexcept(std::is_nothrow_constructible_v<RefCountBase, decltype(args)...>)
+		constexpr natRefObjImpl(SpecifySelfDeleter_t, SelfDeleter deleter, Args&&... args) noexcept(std::is_nothrow_constructible_v<RefCountBase, Args&&...>)
 			: RefCountBase(std::forward<Args>(args)...), m_View{ nullptr }, m_Deleter{ std::move(deleter) }
 		{
 #ifdef TraceRefObj
 			OutputDebugString(natUtil::FormatString("Type %s created at (%p)\n"_nv, nStringView{ typeid(*this).name() }, this).c_str());
 #endif
+		}
+
+		template <typename... Args>
+		constexpr natRefObjImpl(Args&&... args) noexcept(std::is_nothrow_constructible_v<RefCountBase, Args&&...>)
+			: natRefObjImpl(SpecifySelfDeleter, {}, std::forward<Args>(args)...)
+		{
 		}
 
 		constexpr natRefObjImpl(natRefObjImpl const& other) noexcept(std::is_nothrow_copy_constructible_v<RefCountBase>)
@@ -659,7 +656,7 @@ namespace NatsuLib
 			return m_pPointer;
 		}
 
-		size_t GetRefCount() const noexcept
+		std::size_t GetRefCount() const noexcept
 		{
 			const auto ptr = m_pPointer;
 			if (!ptr)
@@ -681,7 +678,7 @@ namespace NatsuLib
 	};
 
 	template <typename TRefObj, typename... Args>
-	natRefPointer<TRefObj> make_ref(Args&&... args)
+	std::enable_if_t<std::is_constructible_v<TRefObj, Args&&...>, natRefPointer<TRefObj>> make_ref(Args&&... args)
 	{
 		const auto pRefObj = new TRefObj(std::forward<Args>(args)...);
 		pRefObj->SetDeleter();
@@ -781,7 +778,7 @@ namespace NatsuLib
 			return !view->IsOwnerAlive();
 		}
 
-		size_t WeakCount() const noexcept
+		std::size_t WeakCount() const noexcept
 		{
 			const auto view = m_View;
 			if (!view)
@@ -889,7 +886,7 @@ namespace NatsuLib
 		}
 
 		// Workaround
-		size_t GetHashCode() const noexcept
+		std::size_t GetHashCode() const noexcept
 		{
 			return std::hash<WeakRefView*>{}(m_View);
 		}
@@ -936,7 +933,7 @@ namespace std
 	template <typename T>
 	struct hash<NatsuLib::natRefPointer<T>>
 	{
-		size_t operator()(NatsuLib::natRefPointer<T> const& ptr) const
+		std::size_t operator()(NatsuLib::natRefPointer<T> const& ptr) const
 		{
 			return hash<T*>{}(ptr.Get());
 		}
@@ -945,7 +942,7 @@ namespace std
 	template <typename T>
 	struct hash<NatsuLib::natWeakRefPointer<T>>
 	{
-		size_t operator()(NatsuLib::natWeakRefPointer<T> const& ptr) const
+		std::size_t operator()(NatsuLib::natWeakRefPointer<T> const& ptr) const
 		{
 			return ptr.GetHashCode();
 		}

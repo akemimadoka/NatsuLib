@@ -879,6 +879,11 @@ namespace NatsuLib
 		{
 		}
 
+		explicit String(std::size_t count)
+			: m_Storage{ count }
+		{
+		}
+
 		explicit String(CharType Char, std::size_t count = 1)
 			: String{}
 		{

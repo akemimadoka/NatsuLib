@@ -1,9 +1,13 @@
 #pragma once
 
-#define EnableStackWalker 1
+#ifndef EnableStackWalker
+#	define EnableStackWalker 1
+#endif
 
-#ifdef EnableStackWalker
+#if EnableStackWalker && !defined(EnableExceptionStackTrace)
 #	define EnableExceptionStackTrace 1
 #endif
 
-#define UseFastInverseSqrt 1
+#ifndef UseFastInverseSqrt
+#	define UseFastInverseSqrt 1
+#endif

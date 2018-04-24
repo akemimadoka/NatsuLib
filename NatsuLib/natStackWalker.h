@@ -3,7 +3,7 @@
 #include "natType.h"
 #include "natString.h"
 
-#ifdef EnableStackWalker
+#if EnableStackWalker
 #ifdef _WIN32
 #include <Windows.h>
 #pragma warning (push)
