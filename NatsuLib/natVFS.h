@@ -14,9 +14,6 @@ namespace NatsuLib
 	class Uri final
 	{
 	public:
-		// 似乎没用？
-		static const nStrView SchemeDelimiter;
-
 		explicit Uri(nString uri);
 
 		Uri(Uri const& other);

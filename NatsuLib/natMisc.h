@@ -302,7 +302,7 @@ namespace NatsuLib
 		T m_CallableObj;
 		std::tuple<Args &&...> m_Args;
 	};
-	
+
 	template <typename T, typename ...Args>
 	constexpr auto make_scope(T CallableObj, Args&&... args)
 	{
@@ -386,7 +386,7 @@ namespace NatsuLib
 					m_Value.Init(other.m_Value.Get());
 				}
 			}
-			
+
 			return *this;
 		}
 
@@ -410,7 +410,7 @@ namespace NatsuLib
 					m_Value.Init(std::move(other.m_Value.Get()));
 				}
 			}
-			
+
 			return *this;
 		}
 

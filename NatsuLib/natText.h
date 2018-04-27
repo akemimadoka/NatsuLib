@@ -127,7 +127,7 @@ namespace NatsuLib
 			while (true)
 			{
 				std::tie(result, moveStep) = detail_::EncodingCodePoint<encoding>::Decode(str.Slice(static_cast<std::ptrdiff_t>(currentPos), -1), codePoint);
-				
+
 				if (result != EncodingResult::Accept || !Write(codePoint))
 				{
 					break;

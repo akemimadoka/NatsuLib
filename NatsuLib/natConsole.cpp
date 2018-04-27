@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "natConsole.h"
 
 using namespace NatsuLib;
@@ -20,7 +20,7 @@ namespace NatsuLib
 				nat_Throw(natWinException, "GetStdHandle failed."_nv);
 			}
 
-			// ÀÁµÃ¼ì²é
+			// æ‡’å¾—æ£€æŸ¥
 			const auto errorHandle = GetStdHandle(STD_ERROR_HANDLE);
 			const auto inputHandle = GetStdHandle(STD_INPUT_HANDLE);
 
@@ -71,7 +71,7 @@ nString natConsole::GetTitle() const
 	{
 		nat_Throw(natWinException, "GetConsoleTitle failed."_nv);
 	}
-	
+
 	return
 #ifdef _UNICODE
 		WideStringView{ titleBuffer, result };
@@ -162,7 +162,7 @@ void natConsole::ResetColor()
 #ifdef _WIN32
 	if (!m_DefaultColor)
 	{
-		// Ä¬ÈÏÑÕÉ«Î´±»»º´æ»òÕßÎ´±»ÐÞ¸Ä¹ý
+		// é»˜è®¤é¢œè‰²æœªè¢«ç¼“å­˜æˆ–è€…æœªè¢«ä¿®æ”¹è¿‡
 		return;
 	}
 

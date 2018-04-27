@@ -520,7 +520,7 @@ natZipArchive::natZipArchive(natRefPointer<natStream> stream, StringType encodin
 	default:
 		assert(!"Invalid mode value.");
 	}
-	
+
 	internalOpen();
 }
 
@@ -1347,7 +1347,7 @@ std::pair<nBool, size_t> natZipArchive::readStreamBackward(natRefPointer<natStre
 		pStream->SetPosition(NatSeek::Cur, -bufSize);
 		return { false, static_cast<size_t>(bufSize - 1) };
 	}
-	
+
 	const auto readBytes = pStream->GetPosition();
 	pStream->SetPosition(NatSeek::Beg, 0);
 	pStream->ReadBytes(buffer, readBytes);

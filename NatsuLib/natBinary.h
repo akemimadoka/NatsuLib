@@ -48,7 +48,7 @@ namespace NatsuLib
 		{
 			T ret;
 			ReadPod(ret);
-			
+
 			return ret;
 		}
 

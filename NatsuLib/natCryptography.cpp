@@ -577,7 +577,7 @@ void natCryptoStream::FlushFinalBlock()
 			m_InternalStream->WriteBytes(m_OutputBuffer.data(), m_OutputBufferSize);
 			m_OutputBufferSize = 0;
 		}
-		
+
 		m_InternalStream->WriteBytes(finalBytes.data(), finalBytes.size());
 	}
 

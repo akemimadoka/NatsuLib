@@ -495,7 +495,7 @@ namespace NatsuLib
 		{
 			return m_Wrapper->Size();
 		}
-		
+
 		size_type max_size() const
 		{
 			return m_Wrapper->MaxSize();

@@ -79,7 +79,7 @@ namespace NatsuLib
 				copy(prev(cend(m_Buffer), reserved), cend(m_Buffer), begin(m_Buffer));
 			}
 			m_Buffer.resize(size);
-			
+
 			const auto readBytes = m_InternalStream->ReadBytes(m_Buffer.data() + reserved, size - reserved);
 			m_CurrentPos = 0;
 			m_EndPos = static_cast<size_t>(reserved + readBytes);

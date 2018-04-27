@@ -160,7 +160,7 @@ std::tuple<EncodingResult, char32_t, const char16_t*> NatsuLib::DecodeUtf16(cons
 			codePoint = unit;
 		}
 	} while (false);
-	
+
 	assert(codePoint < 0x110000 && codePoint - 0xD800 >= 0x800 && "Incorrect codepoint.");
 	return { result, static_cast<char32_t>(codePoint), current };
 }
@@ -196,7 +196,7 @@ std::tuple<EncodingResult, char32_t, const char32_t*> NatsuLib::DecodeUtf32(cons
 			DECODE_ERROR(Reject, result, codePoint);
 		}
 	} while (false);
-	
+
 	assert(codePoint < 0x110000 && codePoint - 0xD800 >= 0x800 && "Incorrect codepoint.");
 	return { result, static_cast<char32_t>(codePoint), current };
 }

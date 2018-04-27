@@ -394,7 +394,7 @@ namespace NatsuLib
 					{
 						visit_at(argsTuple, tmpIndex, [&ss](auto&& item) { ss << item; });
 					}
-					
+
 					break;
 				}
 				default:

@@ -1672,7 +1672,7 @@ natMemoryStream& natMemoryStream::operator=(natMemoryStream const& other)
 	{
 		allocateAndInvalidateOldData(other.m_Size);
 	}
-	
+
 	if (other.m_pData)
 	{
 		memmove(m_pData, other.m_pData, static_cast<size_t>(other.m_Size));

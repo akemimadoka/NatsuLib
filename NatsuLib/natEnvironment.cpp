@@ -61,7 +61,7 @@ nString Environment::GetEnvironmentVar(nStrView name)
 	{
 		nat_Throw(natWinException, "GetEnvironmentVariable failed."_nv);
 	}
-	
+
 	return retBuffer;
 #else
 	return std::getenv(name.data());
@@ -77,7 +77,7 @@ void Environment::SetEnvironmentVar(nStrView name, nStrView value)
 	AnsiString
 #endif
 		nameBuffer{ name }, valueBuffer{ value };
-	
+
 	if (!SetEnvironmentVariable(nameBuffer.data(), valueBuffer.data()))
 	{
 		nat_Throw(natWinException, "SetEnvironmentVariable failed."_nv);

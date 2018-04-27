@@ -1,6 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////
+ï»¿////////////////////////////////////////////////////////////////////////////////
 ///	@file	natStream.h
-///	@brief	NatsuLibÁ÷
+///	@brief	NatsuLibæµ
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "natRefObj.h"
@@ -15,17 +15,17 @@
 namespace NatsuLib
 {
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	Ñ°Ö·²Î¿¼Î»ÖÃ
+	///	@brief	å¯»å€å‚è€ƒä½ç½®
 	////////////////////////////////////////////////////////////////////////////////
 	enum class NatSeek
 	{
-		Beg,	///< @brief	Á÷¿ªÍ·
-		Cur,	///< @brief	µ±Ç°Á÷Î»ÖÃ
-		End		///< @brief	Á÷½áÎ²
+		Beg,	///< @brief	æµå¼€å¤´
+		Cur,	///< @brief	å½“å‰æµä½ç½®
+		End		///< @brief	æµç»“å°¾
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	Á÷
+	///	@brief	æµ
 	////////////////////////////////////////////////////////////////////////////////
 	struct natStream
 		: natRefObj
@@ -37,100 +37,100 @@ namespace NatsuLib
 
 		virtual ~natStream();
 
-		///	@brief		Á÷ÊÇ·ñ¿ÉĞ´
+		///	@brief		æµæ˜¯å¦å¯å†™
 		virtual nBool CanWrite() const = 0;
 
-		///	@brief		Á÷ÊÇ·ñ¿É¶Á
+		///	@brief		æµæ˜¯å¦å¯è¯»
 		virtual nBool CanRead() const = 0;
 
-		///	@brief		Á÷ÊÇ·ñ¿ÉÖØĞÂ·ÖÅä´óĞ¡
+		///	@brief		æµæ˜¯å¦å¯é‡æ–°åˆ†é…å¤§å°
 		virtual nBool CanResize() const = 0;
 
-		///	@brief		Á÷ÊÇ·ñ¿ÉÑ°Ö·
+		///	@brief		æµæ˜¯å¦å¯å¯»å€
 		virtual nBool CanSeek() const = 0;
 
-		///	@brief		Á÷ÊÇ·ñÒÑµ½´ï½áÎ²
+		///	@brief		æµæ˜¯å¦å·²åˆ°è¾¾ç»“å°¾
 		virtual nBool IsEndOfStream() const = 0;
 
-		///	@brief		»ñµÃÁ÷µÄ´óĞ¡
+		///	@brief		è·å¾—æµçš„å¤§å°
 		virtual nLen GetSize() const = 0;
 
-		///	@brief		ÖØĞÂ·ÖÅäÁ÷µÄ´óĞ¡
-		///	@note		ÖØĞÂ·ÖÅä³É¹¦ÒÔºóÖ¸ÕëÎ»ÓÚÁ÷µÄ¿ªÍ·
+		///	@brief		é‡æ–°åˆ†é…æµçš„å¤§å°
+		///	@note		é‡æ–°åˆ†é…æˆåŠŸä»¥åæŒ‡é’ˆä½äºæµçš„å¼€å¤´
 		virtual void SetSize(nLen Size) = 0;
 
-		///	@brief		»ñµÃ¶ÁĞ´Ö¸ÕëµÄÎ»ÖÃ
+		///	@brief		è·å¾—è¯»å†™æŒ‡é’ˆçš„ä½ç½®
 		virtual nLen GetPosition() const = 0;
 
-		///	@brief		ÉèÖÃ¶ÁĞ´Ö¸ÕëµÄÎ»ÖÃ
-		///	@param[in]	Origin	Ñ°Ö·²Î¿¼Î»ÖÃ
-		///	@param[in]	Offset	Æ«ÒÆ
+		///	@brief		è®¾ç½®è¯»å†™æŒ‡é’ˆçš„ä½ç½®
+		///	@param[in]	Origin	å¯»å€å‚è€ƒä½ç½®
+		///	@param[in]	Offset	åç§»
 		virtual void SetPosition(NatSeek Origin, nLong Offset) = 0;
 
-		///	@brief		´Ó¿ªÍ·ÉèÖÃ¶ÁĞ´Ö¸ÕëµÄÎ»ÖÃ
-		///	@param[in]	Offset	Æ«ÒÆ
+		///	@brief		ä»å¼€å¤´è®¾ç½®è¯»å†™æŒ‡é’ˆçš„ä½ç½®
+		///	@param[in]	Offset	åç§»
 		virtual void SetPositionFromBegin(nLen Offset);
 
-		/// @brief		´ÓÁ÷ÖĞ¶ÁÈ¡Ò»¸ö×Ö½Ú
+		/// @brief		ä»æµä¸­è¯»å–ä¸€ä¸ªå­—èŠ‚
 		virtual nByte ReadByte();
 
-		///	@brief		¶ÁÈ¡×Ö½ÚÊı¾İ
-		///	@param[out]	pData	Êı¾İ»º³åÇø
-		///	@param[in]	Length	¶ÁÈ¡µÄ³¤¶È
-		///	@return		Êµ¼Ê¶ÁÈ¡³¤¶È
+		///	@brief		è¯»å–å­—èŠ‚æ•°æ®
+		///	@param[out]	pData	æ•°æ®ç¼“å†²åŒº
+		///	@param[in]	Length	è¯»å–çš„é•¿åº¦
+		///	@return		å®é™…è¯»å–é•¿åº¦
 		virtual nLen ReadBytes(nData pData, nLen Length) = 0;
 
-		///	@brief		Ç¿ÖÆ¶ÁÈ¡×Ö½ÚÊı¾İ
-		///	@param[out]	pData	Êı¾İ»º³åÇø
-		///	@param[in]	Length	¶ÁÈ¡µÄ³¤¶È
-		///	@note		ÖØ¸´¶ÁÈ¡²Ù×÷Ö±µ½³É¹¦¶ÁÈ¡µÄ×Ö½ÚÊı²»Ğ¡ÓÚLengthÎªÖ¹£¬×¢Òâ±¾·½·¨¿ÉÄÜÔì³ÉËÀÑ­»·
+		///	@brief		å¼ºåˆ¶è¯»å–å­—èŠ‚æ•°æ®
+		///	@param[out]	pData	æ•°æ®ç¼“å†²åŒº
+		///	@param[in]	Length	è¯»å–çš„é•¿åº¦
+		///	@note		é‡å¤è¯»å–æ“ä½œç›´åˆ°æˆåŠŸè¯»å–çš„å­—èŠ‚æ•°ä¸å°äºLengthä¸ºæ­¢ï¼Œæ³¨æ„æœ¬æ–¹æ³•å¯èƒ½é€ æˆæ­»å¾ªç¯
 		virtual void ForceReadBytes(nData pData, nLen Length);
 
-		/// @brief		Òì²½¶ÁÈ¡×Ö½ÚÊı¾İ
-		/// @param[out]	pData	Êı¾İ»º³åÇø
-		/// @param[in]	Length	¶ÁÈ¡µÄ³¤¶È
-		/// @return		Êµ¼Ê¶ÁÈ¡³¤¶È
+		/// @brief		å¼‚æ­¥è¯»å–å­—èŠ‚æ•°æ®
+		/// @param[out]	pData	æ•°æ®ç¼“å†²åŒº
+		/// @param[in]	Length	è¯»å–çš„é•¿åº¦
+		/// @return		å®é™…è¯»å–é•¿åº¦
 		virtual std::future<nLen> ReadBytesAsync(nData pData, nLen Length);
 
-		/// @brief		ÏòÁ÷ÖĞĞ´ÈëÒ»¸ö×Ö½Ú
+		/// @brief		å‘æµä¸­å†™å…¥ä¸€ä¸ªå­—èŠ‚
 		virtual void WriteByte(nByte byte);
 
-		///	@brief		Ğ´Èë×Ö½ÚÊı¾İ
-		///	@param[in]	pData	Êı¾İ»º³åÇø
-		///	@param[in]	Length	Ğ´ÈëµÄ³¤¶È
-		///	@return		Êµ¼ÊĞ´Èë³¤¶È
-		///	@note		¶ÔÓÚÎŞ·¨·´À¡ÒÑĞ´Èë×Ö½ÚÊıµÄÁ÷±¾·½·¨·µ»ØµÄÖµÎŞÒâÒå
+		///	@brief		å†™å…¥å­—èŠ‚æ•°æ®
+		///	@param[in]	pData	æ•°æ®ç¼“å†²åŒº
+		///	@param[in]	Length	å†™å…¥çš„é•¿åº¦
+		///	@return		å®é™…å†™å…¥é•¿åº¦
+		///	@note		å¯¹äºæ— æ³•åé¦ˆå·²å†™å…¥å­—èŠ‚æ•°çš„æµæœ¬æ–¹æ³•è¿”å›çš„å€¼æ— æ„ä¹‰
 		virtual nLen WriteBytes(ncData pData, nLen Length) = 0;
 
-		///	@brief		Ç¿ÖÆĞ´Èë×Ö½ÚÊı¾İ
-		///	@param[in]	pData	Êı¾İ»º³åÇø
-		///	@param[in]	Length	Ğ´ÈëµÄ³¤¶È
-		///	@note		ÖØ¸´Ğ´Èë²Ù×÷Ö±µ½³É¹¦Ğ´ÈëµÄ×Ö½ÚÊı²»Ğ¡ÓÚLengthÎªÖ¹£¬×¢Òâ±¾·½·¨¿ÉÄÜÔì³ÉËÀÑ­»·
-		///	@warning	²¢·Ç¶ÔÓÚËùÓĞÁ÷¶¼ÊÊÓÃ£¬¶ÔÓÚÎŞ·¨·´À¡ÒÑĞ´Èë×Ö½ÚÊıµÄÁ÷½ûÖ¹Ê¹ÓÃ±¾·½·¨
+		///	@brief		å¼ºåˆ¶å†™å…¥å­—èŠ‚æ•°æ®
+		///	@param[in]	pData	æ•°æ®ç¼“å†²åŒº
+		///	@param[in]	Length	å†™å…¥çš„é•¿åº¦
+		///	@note		é‡å¤å†™å…¥æ“ä½œç›´åˆ°æˆåŠŸå†™å…¥çš„å­—èŠ‚æ•°ä¸å°äºLengthä¸ºæ­¢ï¼Œæ³¨æ„æœ¬æ–¹æ³•å¯èƒ½é€ æˆæ­»å¾ªç¯
+		///	@warning	å¹¶éå¯¹äºæ‰€æœ‰æµéƒ½é€‚ç”¨ï¼Œå¯¹äºæ— æ³•åé¦ˆå·²å†™å…¥å­—èŠ‚æ•°çš„æµç¦æ­¢ä½¿ç”¨æœ¬æ–¹æ³•
 		virtual void ForceWriteBytes(ncData pData, nLen Length);
 
-		///	@brief		Òì²½Ğ´Èë×Ö½ÚÊı¾İ
-		///	@param[in]	pData	Êı¾İ»º³åÇø
-		///	@param[in]	Length	Ğ´ÈëµÄ³¤¶È
-		///	@return		Êµ¼ÊĞ´Èë³¤¶È
+		///	@brief		å¼‚æ­¥å†™å…¥å­—èŠ‚æ•°æ®
+		///	@param[in]	pData	æ•°æ®ç¼“å†²åŒº
+		///	@param[in]	Length	å†™å…¥çš„é•¿åº¦
+		///	@return		å®é™…å†™å…¥é•¿åº¦
 		virtual std::future<nLen> WriteBytesAsync(ncData pData, nLen Length);
 
-		///	@brief		½«Á÷ÖĞµÄÄÚÈİ¸´ÖÆµ½ÁíÒ»Á÷
-		///	@param[in]	other	Òª¸´ÖÆµ½µÄÁ÷
-		///	@return		×ÜÊµ¼Ê¶ÁÈ¡³¤¶È
-		///	@note		¶ÁÈ¡³¤¶È²»ÒâÎ¶×Å³É¹¦Ğ´Èëµ½ÁíÒ»Á÷µÄ³¤¶È
+		///	@brief		å°†æµä¸­çš„å†…å®¹å¤åˆ¶åˆ°å¦ä¸€æµ
+		///	@param[in]	other	è¦å¤åˆ¶åˆ°çš„æµ
+		///	@return		æ€»å®é™…è¯»å–é•¿åº¦
+		///	@note		è¯»å–é•¿åº¦ä¸æ„å‘³ç€æˆåŠŸå†™å…¥åˆ°å¦ä¸€æµçš„é•¿åº¦
 		virtual nLen CopyTo(natRefPointer<natStream> const& other);
 
-		///	@brief		Ë¢ĞÂÁ÷
-		///	@note		½ö¶ÔÓĞ»º´æ»úÖÆµÄÁ÷ÓĞĞ§ÇÒÓĞÒâÒå
+		///	@brief		åˆ·æ–°æµ
+		///	@note		ä»…å¯¹æœ‰ç¼“å­˜æœºåˆ¶çš„æµæœ‰æ•ˆä¸”æœ‰æ„ä¹‰
 		virtual void Flush() = 0;
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	°ü×°Á÷
-	///	@note	°ü×°Á÷¾ßÓĞÒ»¸öÄÚ²¿Á÷£¬Ä¬ÈÏ³ıÁËCopyToÒÔÍâµÄËùÓĞ²Ù×÷Ö±½Ó×ª·¢µ½ÄÚ²¿Á÷\n
-	///			¿ÉÍ¨¹ı¼Ì³Ğ´ËÀàÍê³É¶ÔÊı¾İµÄÌØÊâ´¦Àí\n
-	///			×¢ÒâÎö¹¹Ê±±¾ÀàµÄÎö¹¹º¯Êı»áÏÈÖ´ĞĞ£¬Ö®ºó²Å»áÊÍ·ÅÄÚ²¿Á÷
+	///	@brief	åŒ…è£…æµ
+	///	@note	åŒ…è£…æµå…·æœ‰ä¸€ä¸ªå†…éƒ¨æµï¼Œé»˜è®¤é™¤äº†CopyToä»¥å¤–çš„æ‰€æœ‰æ“ä½œç›´æ¥è½¬å‘åˆ°å†…éƒ¨æµ\n
+	///			å¯é€šè¿‡ç»§æ‰¿æ­¤ç±»å®Œæˆå¯¹æ•°æ®çš„ç‰¹æ®Šå¤„ç†\n
+	///			æ³¨æ„ææ„æ—¶æœ¬ç±»çš„ææ„å‡½æ•°ä¼šå…ˆæ‰§è¡Œï¼Œä¹‹åæ‰ä¼šé‡Šæ”¾å†…éƒ¨æµ
 	////////////////////////////////////////////////////////////////////////////////
 	class natWrappedStream
 		: public natRefObjImpl<natWrappedStream, natStream>
@@ -139,17 +139,17 @@ namespace NatsuLib
 		explicit natWrappedStream(natRefPointer<natStream> stream);
 		~natWrappedStream();
 
-		///	@brief	»ñµÃÄÚ²¿Á÷
+		///	@brief	è·å¾—å†…éƒ¨æµ
 		virtual natRefPointer<natStream> GetUnderlyingStream() const noexcept;
 
-		///	@brief	Á¬ĞøÃ¶¾ÙÄÚ²¿Á÷£¬Ö±µ½ÄÚ²¿Á÷²»ÊÇnatWrappedStream»òÕßenumerator·µ»ØtrueÎªÖ¹
-		///	@param	enumerator	Ã¶¾Ùº¯Êı£¬·µ»Øtrue»áÁ¢¼´Í£Ö¹Ã¶¾Ù
-		///	@note	´æÔÚĞÎ³É»·µÄ¿ÉÄÜ£¬´ËÊ±±¾·½·¨¿ÉÄÜ»á½øÈëËÀÑ­»·
-		///	@return	Ã¶¾ÙÊÇ·ñÓÉÓÚenumerator·µ»Øtrue¶øÖĞÖ¹
+		///	@brief	è¿ç»­æšä¸¾å†…éƒ¨æµï¼Œç›´åˆ°å†…éƒ¨æµä¸æ˜¯natWrappedStreamæˆ–è€…enumeratorè¿”å›trueä¸ºæ­¢
+		///	@param	enumerator	æšä¸¾å‡½æ•°ï¼Œè¿”å›trueä¼šç«‹å³åœæ­¢æšä¸¾
+		///	@note	å­˜åœ¨å½¢æˆç¯çš„å¯èƒ½ï¼Œæ­¤æ—¶æœ¬æ–¹æ³•å¯èƒ½ä¼šè¿›å…¥æ­»å¾ªç¯
+		///	@return	æšä¸¾æ˜¯å¦ç”±äºenumeratorè¿”å›trueè€Œä¸­æ­¢
 		nBool EnumUnderlyingStream(std::function<nBool(natWrappedStream&)> const& enumerator) const;
 
-		///	@brief	Á¬Ğø»ñµÃÄÚ²¿Á÷£¬Èç¹ûÄÚ²¿Á÷µÄÀàĞÍÊÇTÔò·µ»ØËü£¬Èç¹ûÎŞ·¨»ñµÃÕâ¸öÀàĞÍµÄÄÚ²¿Á÷Ôò·µ»Ønullptr
-		///	@tparam	T	Òª»ñµÃµÄÄÚ²¿Á÷µÄÀàĞÍ
+		///	@brief	è¿ç»­è·å¾—å†…éƒ¨æµï¼Œå¦‚æœå†…éƒ¨æµçš„ç±»å‹æ˜¯Tåˆ™è¿”å›å®ƒï¼Œå¦‚æœæ— æ³•è·å¾—è¿™ä¸ªç±»å‹çš„å†…éƒ¨æµåˆ™è¿”å›nullptr
+		///	@tparam	T	è¦è·å¾—çš„å†…éƒ¨æµçš„ç±»å‹
 		template <typename T>
 		std::enable_if_t<std::is_base_of<natStream, T>::value, natRefPointer<T>> GetUnderlyingStreamAs() const noexcept
 		{
@@ -158,7 +158,7 @@ namespace NatsuLib
 
 		natRefPointer<natStream> GetUnderlyingStreamAs(std::type_info const& typeinfo) const noexcept;
 
-		///	@brief	Á¬Ğø»ñµÃÄÚ²¿µÄÁ÷£¬Èç¹ûÁ÷²»ÊÇnatWrappedStreamÔò·µ»ØËü
+		///	@brief	è¿ç»­è·å¾—å†…éƒ¨çš„æµï¼Œå¦‚æœæµä¸æ˜¯natWrappedStreamåˆ™è¿”å›å®ƒ
 		natRefPointer<natStream> GetUltimateUnderlyingStream() const noexcept;
 
 		nBool CanWrite() const override;
@@ -179,8 +179,8 @@ namespace NatsuLib
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	ÊÍ·Å»Øµ÷Á÷
-	///	@note	ÓÃÓÚÔÚÊÍ·ÅÊ±½øĞĞÌØÊâ´¦ÀíµÄÁ÷£¬ÆäËû²Ù×÷Ö±½Ó×ª·¢µ½ÄÚ²¿Á÷
+	///	@brief	é‡Šæ”¾å›è°ƒæµ
+	///	@note	ç”¨äºåœ¨é‡Šæ”¾æ—¶è¿›è¡Œç‰¹æ®Šå¤„ç†çš„æµï¼Œå…¶ä»–æ“ä½œç›´æ¥è½¬å‘åˆ°å†…éƒ¨æµ
 	////////////////////////////////////////////////////////////////////////////////
 	class DisposeCallbackStream final
 		: public natRefObjImpl<DisposeCallbackStream, natWrappedStream>
@@ -189,10 +189,10 @@ namespace NatsuLib
 		explicit DisposeCallbackStream(natRefPointer<natStream> internalStream, std::function<void(DisposeCallbackStream&)> disposeCallback = {});
 		~DisposeCallbackStream();
 
-		///	@brief	ÊÇ·ñÓĞÊÍ·Å»Øµ÷
+		///	@brief	æ˜¯å¦æœ‰é‡Šæ”¾å›è°ƒ
 		nBool HasDisposeCallback() const noexcept;
 
-		///	@brief	Ö±½Óµ÷ÓÃ»Øµ÷£¬Ö®ºó²»»áÔÙ±»µ÷ÓÃ
+		///	@brief	ç›´æ¥è°ƒç”¨å›è°ƒï¼Œä¹‹åä¸ä¼šå†è¢«è°ƒç”¨
 		void CallDisposeCallback();
 
 	private:
@@ -200,7 +200,7 @@ namespace NatsuLib
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	ÄÚ´æÁ÷
+	///	@brief	å†…å­˜æµ
 	////////////////////////////////////////////////////////////////////////////////
 	class natMemoryStream
 		: public natRefObjImpl<natMemoryStream, natStream>
@@ -221,11 +221,11 @@ namespace NatsuLib
 		nBool CanSeek() const override;
 		nBool IsEndOfStream() const override;
 
-		///	@brief	»ñµÃÊµ¼ÊÁ÷ÄÚÊı¾İ´óĞ¡£¬²¢·Ç×ÜÈİÁ¿
+		///	@brief	è·å¾—å®é™…æµå†…æ•°æ®å¤§å°ï¼Œå¹¶éæ€»å®¹é‡
 		nLen GetSize() const override;
 
-		///	@brief	ÉèÖÃÁ÷µÄ´óĞ¡
-		///	@note	ÎŞ·¨Í¨¹ıÉèÖÃ½ÏĞ¡µÄ´óĞ¡À´½Ø¶ÏÊı¾İ£¬Í¨¹ıSetSizeÖ»ÄÜÔö³¤ÈİÁ¿¶øÎŞ·¨ËõĞ¡
+		///	@brief	è®¾ç½®æµçš„å¤§å°
+		///	@note	æ— æ³•é€šè¿‡è®¾ç½®è¾ƒå°çš„å¤§å°æ¥æˆªæ–­æ•°æ®ï¼Œé€šè¿‡SetSizeåªèƒ½å¢é•¿å®¹é‡è€Œæ— æ³•ç¼©å°
 		void SetSize(nLen Size) override;
 
 		nLen GetPosition() const override;
@@ -261,8 +261,8 @@ namespace NatsuLib
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	Íâ²¿ÄÚ´æÁ÷
-	///	@note	ÓÃÓÚÊ¹ÓÃÁ÷µÄ·½Ê½²Ù×÷Íâ²¿µÄÄÚ´æ
+	///	@brief	å¤–éƒ¨å†…å­˜æµ
+	///	@note	ç”¨äºä½¿ç”¨æµçš„æ–¹å¼æ“ä½œå¤–éƒ¨çš„å†…å­˜
 	////////////////////////////////////////////////////////////////////////////////
 	class natExternMemoryStream
 		: public natRefObjImpl<natExternMemoryStream, natStream>
@@ -310,7 +310,7 @@ namespace NatsuLib
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	NatsuLibÎÄ¼şÁ÷ÊµÏÖ
+	///	@brief	NatsuLibæ–‡ä»¶æµå®ç°
 	////////////////////////////////////////////////////////////////////////////////
 	class natFileStream
 		: public natRefObjImpl<natFileStream, natStream>, public nonmovable
@@ -376,8 +376,8 @@ namespace NatsuLib
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	×ÓÁ÷
-	///	@remark	ÓÃÓÚ²Ù×÷ÁíÒ»¸öÁ÷µÄÒ»²¿·Ö
+	///	@brief	å­æµ
+	///	@remark	ç”¨äºæ“ä½œå¦ä¸€ä¸ªæµçš„ä¸€éƒ¨åˆ†
 	////////////////////////////////////////////////////////////////////////////////
 	class natSubStream
 		: public natRefObjImpl<natSubStream, natWrappedStream>
@@ -411,8 +411,8 @@ namespace NatsuLib
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	±ê×¼Á÷
-	///	@remark	ÓÃÓÚ²Ù×÷±ê×¼ÊäÈëÊä³ö
+	///	@brief	æ ‡å‡†æµ
+	///	@remark	ç”¨äºæ“ä½œæ ‡å‡†è¾“å…¥è¾“å‡º
 	////////////////////////////////////////////////////////////////////////////////
 	class natStdStream
 		: public natRefObjImpl<natStdStream, natStream>, public nonmovable
@@ -573,7 +573,7 @@ namespace NatsuLib
 		struct StlOStreamTraits<T, std::enable_if_t<std::is_base_of<std::basic_ostream<typename T::char_type, typename T::traits_type>, T>::value>>
 		{
 			static constexpr nBool IsOStream = true;
-			
+
 			static void Write(T& stream, ncData data, nLen length)
 			{
 				stream.write(reinterpret_cast<const typename T::char_type*>(data), static_cast<std::streamsize>(length) / sizeof(typename T::char_type));
@@ -610,7 +610,7 @@ namespace NatsuLib
 				return static_cast<nLen>(stream.tellp());
 			}
 		};
-		
+
 		template <typename T>
 		struct StlStreamTraits
 		{

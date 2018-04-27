@@ -798,7 +798,7 @@ namespace NatsuLib
 
 			Iter1_t m_Current1, m_End1;
 			Iter2_t m_Current2, m_End2;
-			
+
 		public:
 			typedef typename std::iterator_traits<Iter1_t>::iterator_category iterator_category1;
 			typedef typename std::iterator_traits<Iter1_t>::value_type value_type1;
@@ -899,7 +899,7 @@ namespace NatsuLib
 			BufferVector m_Buffer;
 			Iter_t m_OriginBegin, m_OriginEnd;
 			RealIter m_Current, m_End;
-			
+
 		public:
 			ReverseIterator(Iter_t begin, Iter_t end) noexcept(std::is_nothrow_constructible_v<BufferVector, Iter_t, Iter_t> && std::is_nothrow_move_constructible_v<Iter_t>)
 				: m_Buffer(begin, end), m_OriginBegin(std::move(begin)), m_OriginEnd(std::move(end)), m_Current(std::rbegin(m_Buffer)), m_End(std::rend(m_Buffer))

@@ -34,8 +34,6 @@ namespace
 	}
 }
 
-const nStrView Uri::SchemeDelimiter{ "://" };
-
 Uri::Uri(nString uri)
 	: m_UriInfo{ std::move(uri) }
 {
@@ -191,18 +189,16 @@ void Uri::ParseUri()
 		case State::Scheme:
 			if (*pRead == ':')
 			{
+				// 有的 scheme 允许不带 //，当鉴权部分（用户名及密码）不存在时路径部分不允许以 // 开头，这是为了避免歧义
+				// 并不是说不能出现 //，而是说 // 将不被视为路径的一部分，因此我们可以直接跳过
 				if (pEnd - pRead >= 3 && *(pRead + 1) == '/' && *(pRead + 2) == '/')
 				{
 					m_UriInfo.Scheme = nStrView{ pLastBegin, pRead };
 					pLastBegin = pRead + 3;
 					pRead += 2; // 循环会再后移一位
-					state = State::User;
 				}
-				else
-				{
-					pRead = pEnd - 1; // 立即结束循环
-					state = State::Reject;
-				}
+
+				state = State::User;
 			}
 			break;
 		case State::User:
@@ -240,7 +236,6 @@ void Uri::ParseUri()
 				break;
 			case '/':
 				// 读取的是Port而不是Password，之前读取的是Host而不是User
-				// **你被骗了！**
 				m_UriInfo.Host = user;
 				if (!TryParseNumber(pLastBegin, pRead, port))
 				{

@@ -254,7 +254,7 @@ void natThreadPool::WorkerThread::RequestTerminate()
 	}
 
 	m_ShouldTerminate.store(true, std::memory_order_release);
-	
+
 	if (m_Idle)
 	{
 		if (m_First)
@@ -296,7 +296,7 @@ natThread::ResultType natThreadPool::WorkerThread::ThreadJob()
 			}
 		}
 	}
-	
+
 	return NatErr_OK;
 }
 

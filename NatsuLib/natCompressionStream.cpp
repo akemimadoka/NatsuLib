@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "natCompressionStream.h"
 #include <zlib.h>
 #include <zutil.h>
@@ -9,7 +9,7 @@ namespace NatsuLib
 {
 	namespace detail_
 	{
-		// ÊµÏÖÌáÊ¾£ºÎŞÏß³Ì°²È«±£Ö¤
+		// å®ç°æç¤ºï¼šæ— çº¿ç¨‹å®‰å…¨ä¿è¯
 		struct DeflateStreamImpl
 		{
 			static_assert(std::is_same<Bytef, nByte>::value, "DeflateStreamImpl assumed Bytef and nByte are same type.");
@@ -17,7 +17,7 @@ namespace NatsuLib
 			enum
 			{
 				DefaultWindowBitsWithHeader = 15,
-				DefaultWindowBitsWithoutHeader = -15,	// Ê¹ÓÃ¸ºÊıÒÔÂÔ¹ıÍ·²¿
+				DefaultWindowBitsWithoutHeader = -15,	// ä½¿ç”¨è´Ÿæ•°ä»¥ç•¥è¿‡å¤´éƒ¨
 			};
 
 			DeflateStreamImpl(int level, int method, int windowBits, int memLevel, int strategy)
@@ -57,7 +57,7 @@ namespace NatsuLib
 				assert(ZStream.avail_in == 0 && "Some data left in previous input.");
 
 				constexpr auto max = std::numeric_limits<uInt>::max();
-				// ÊµÏÖÌáÊ¾£º¼Ù¶¨nByteÓëBytefÏàÍ¬
+				// å®ç°æç¤ºï¼šå‡å®šnByteä¸Bytefç›¸åŒ
 				ZStream.next_in = const_cast<z_const Bytef*>(inputBuffer);
 				if (bufferLength > static_cast<size_t>(max))
 				{
@@ -74,7 +74,7 @@ namespace NatsuLib
 			void SetOutput(nData outputBuffer, size_t bufferLength) noexcept
 			{
 				constexpr auto max = std::numeric_limits<uInt>::max();
-				// ÊµÏÖÌáÊ¾£º¼Ù¶¨nByteÓëBytefÏàÍ¬
+				// å®ç°æç¤ºï¼šå‡å®šnByteä¸Bytefç›¸åŒ
 				ZStream.next_out = outputBuffer;
 				if (bufferLength > static_cast<size_t>(max))
 				{
@@ -139,7 +139,7 @@ natDeflateStream::natDeflateStream(natRefPointer<natStream> stream, CompressionL
 	{
 		nat_Throw(natErrException, NatErr_InvalidArg, "stream should be writable."_nv);
 	}
-	
+
 	int compressionLevelNum;
 	switch (compressionLevel)
 	{
@@ -229,9 +229,9 @@ nLen natDeflateStream::ReadBytes(nData pData, nLen Length)
 
 	while (true)
 	{
-		// Êä³öÖ®Ç°¿ÉÄÜÎ´Êä³öµÄÄÚÈİ
+		// è¾“å‡ºä¹‹å‰å¯èƒ½æœªè¾“å‡ºçš„å†…å®¹
 		m_Impl->SetOutput(pWrite, static_cast<size_t>(dataRemain));
-		const auto ret = m_Impl->DoNext(true);	// ÊµÏÖÌáÊ¾£ººöÂÔ´Ë´¦¿ÉÄÜµÄ²¿·Ö´íÎó
+		const auto ret = m_Impl->DoNext(true);	// å®ç°æç¤ºï¼šå¿½ç•¥æ­¤å¤„å¯èƒ½çš„éƒ¨åˆ†é”™è¯¯
 		if (ret == Z_DATA_ERROR)
 		{
 			nat_Throw(InvalidData, "Invalid data with zlib message ({0})."_nv, U8StringView{ m_Impl->ZStream.msg });
@@ -260,10 +260,10 @@ nLen natDeflateStream::ReadBytes(nData pData, nLen Length)
 		{
 			break;
 		}
-		
+
 		assert(readBytes <= sizeof m_Buffer);
 
-		// ÊµÏÖÌáÊ¾£º¼ì²éÁËÊäÈëÒÑ¾­È«²¿´¦ÀíÍê±ÏÁËÂğ£¿
+		// å®ç°æç¤ºï¼šæ£€æŸ¥äº†è¾“å…¥å·²ç»å…¨éƒ¨å¤„ç†å®Œæ¯•äº†å—ï¼Ÿ
 		m_Impl->SetInput(m_Buffer, static_cast<size_t>(readBytes));
 	}
 
@@ -311,7 +311,7 @@ void natDeflateStream::Flush(nLen& flushLength)
 			}
 			else
 			{
-				break; // ÊµÏÖÌáÊ¾£ººöÂÔ´íÎó
+				break; // å®ç°æç¤ºï¼šå¿½ç•¥é”™è¯¯
 			}
 		}
 	}
@@ -344,7 +344,7 @@ nLen natDeflateStream::Finish()
 	}
 	else
 	{
-		// ¶ªÆúËùÓĞÊı¾İ
+		// ä¸¢å¼ƒæ‰€æœ‰æ•°æ®
 		int ret;
 		do
 		{
@@ -377,7 +377,7 @@ nLen natDeflateStream::writeAll(nBool finish)
 
 			const auto availableDataSize = m_Impl->ZStream.total_out - totalOutBefore;
 			const auto currentWrittenBytes = m_InternalStream->WriteBytes(m_Buffer, availableDataSize);
-			// ÊµÏÖÌáÊ¾£ºÊÇ·ñĞèÒª¼ì²é£¿
+			// å®ç°æç¤ºï¼šæ˜¯å¦éœ€è¦æ£€æŸ¥ï¼Ÿ
 			if (currentWrittenBytes < availableDataSize)
 			{
 				nat_Throw(natErrException, NatErr_InternalErr, "Partial data written({0}/{1} requested)."_nv, currentWrittenBytes, availableDataSize);
@@ -390,7 +390,7 @@ nLen natDeflateStream::writeAll(nBool finish)
 			}
 		} while (ret != Z_OK && ret != Z_STREAM_END);
 	}
-	
+
 	return totalWrittenBytes;
 }
 
