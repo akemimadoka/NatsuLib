@@ -49,7 +49,7 @@ typedef	nInt				nResult;	///< @brief	预定义返回值
 										///	30 - 16 位	： 保留\n
 										///	15 - 0  位	： 错误描述
 
-static_assert(std::numeric_limits<nLen>::max() >= std::numeric_limits<std::size_t>::max(), "");
+static_assert(std::numeric_limits<nLen>::max() >= std::numeric_limits<std::size_t>::max());
 
 template <typename T>
 using nUnsafePtr = std::add_pointer_t<T>;
@@ -89,7 +89,7 @@ using nUnsafePtr = std::add_pointer_t<T>;
 ///	@brief		常见错误
 ///	@{
 
-enum /*[[nodiscard]]*/ NatErr : nResult
+enum [[nodiscard]] NatErr : nResult
 {
 	NatErr_Interrupted	=	1,		///< @brief	正常中断
 
@@ -136,25 +136,25 @@ namespace NatsuLib
 	namespace detail_
 	{
 		template <typename T, typename Enable = void>
-		struct CanAddRef
+		struct CanIncRef
 			: std::false_type
 		{
 		};
 
 		template <typename T>
-		struct CanAddRef<T, std::void_t<decltype(std::declval<const volatile T>().AddRef())>>
+		struct CanIncRef<T, std::void_t<decltype(std::declval<const volatile T>().IncRef())>>
 			: std::true_type
 		{
 		};
 
 		template <typename T, typename Enable = void>
-		struct CanRelease
+		struct CanDecRef
 			: std::false_type
 		{
 		};
 
 		template <typename T>
-		struct CanRelease<T, std::void_t<decltype(std::declval<const volatile T>().Release())>>
+		struct CanDecRef<T, std::void_t<decltype(std::declval<const volatile T>().DecRef())>>
 			: std::true_type
 		{
 		};
@@ -162,17 +162,14 @@ namespace NatsuLib
 }
 
 ///	@brief	安全释放
+///	@remark	非线程安全，释放后 ptr 会被设置为 nullptr
 template <typename T>
-void SafeRelease(T* volatile & ptr)
+void SafeRelease(T*& ptr)
 {
-	const auto ptrToRelease = ptr;
-	if (ptrToRelease != nullptr)
+	if (ptr != nullptr)
 	{
-		ptrToRelease->Release();
-		if (ptr == ptrToRelease)
-		{
-			ptr = nullptr;	// 可能非线程安全？
-		}
+		ptr->DecRef();
+		ptr = nullptr;
 	}
 }
 

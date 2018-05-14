@@ -18,9 +18,7 @@
 
 namespace NatsuLib
 {
-	////////////////////////////////////////////////////////////////////////////////
 	///	@brief	引用计数接口
-	////////////////////////////////////////////////////////////////////////////////
 	struct natRefObj
 	{
 		virtual ~natRefObj() = default;
@@ -30,14 +28,14 @@ namespace NatsuLib
 
 		///	@brief	尝试增加引用计数
 		///	@return	是否成功增加了引用计数
-		virtual nBool TryAddRef() const volatile = 0;
+		virtual nBool TryIncRef() const volatile = 0;
 
 		///	@brief	增加引用计数
-		virtual void AddRef() const volatile = 0;
+		virtual void IncRef() const volatile = 0;
 
 		///	@brief	减少引用计数
 		///	@return	引用计数是否已为0
-		virtual nBool Release() const volatile = 0;
+		virtual nBool DecRef() const volatile = 0;
 	};
 
 	template <typename T>
@@ -88,7 +86,7 @@ namespace NatsuLib
 				return m_RefCount.load(std::memory_order_relaxed);
 			}
 
-			virtual nBool TryAddRef() const volatile
+			virtual nBool TryIncRef() const volatile
 			{
 				auto oldValue = m_RefCount.load(std::memory_order_relaxed);
 				assert(static_cast<std::ptrdiff_t>(oldValue) >= 0);
@@ -102,13 +100,13 @@ namespace NatsuLib
 				return true;
 			}
 
-			virtual void AddRef() const volatile
+			virtual void IncRef() const volatile
 			{
 				assert(static_cast<std::ptrdiff_t>(m_RefCount.load(std::memory_order_relaxed)) > 0);
 				m_RefCount.fetch_add(1, std::memory_order_relaxed);
 			}
 
-			virtual nBool Release() const volatile
+			virtual nBool DecRef() const volatile
 			{
 				assert(static_cast<std::ptrdiff_t>(m_RefCount.load(std::memory_order_relaxed)) > 0);
 				return m_RefCount.fetch_sub(1, std::memory_order_relaxed) == 1;
@@ -182,7 +180,7 @@ namespace NatsuLib
 					return {};
 				}
 
-				if (!static_cast<std::add_pointer_t<std::add_cv_t<Owner>>>(owner)->TryAddRef())
+				if (!static_cast<std::add_pointer_t<std::add_cv_t<Owner>>>(owner)->TryIncRef())
 				{
 					return {};
 				}
@@ -205,10 +203,8 @@ namespace NatsuLib
 	using detail_::SpecifySelfDeleter_t;
 	using detail_::SpecifySelfDeleter;
 
-	////////////////////////////////////////////////////////////////////////////////
 	///	@brief	引用计数实现
 	///	@note	使用模板防止菱形继承
-	////////////////////////////////////////////////////////////////////////////////
 	template <typename T, typename B = natRefObj>
 	class natRefObjImpl
 		: public detail_::RefCountBase<B>
@@ -296,7 +292,7 @@ namespace NatsuLib
 			const auto view = m_View.load(std::memory_order_consume);
 			if (view)
 			{
-				if (static_cast<const volatile detail_::RefCountBase<natRefObj>*>(view)->Release())
+				if (static_cast<const volatile detail_::RefCountBase<natRefObj>*>(view)->DecRef())
 				{
 					delete view;
 				}
@@ -307,9 +303,9 @@ namespace NatsuLib
 			}
 		}
 
-		nBool Release() const volatile override
+		nBool DecRef() const volatile override
 		{
-			const auto result = RefCountBase::Release();
+			const auto result = RefCountBase::DecRef();
 			const SelfDeleter& deleter = const_cast<const SelfDeleter&>(m_Deleter);
 			if (result && deleter)
 			{
@@ -418,10 +414,8 @@ namespace NatsuLib
 		SelfDeleter m_Deleter;
 	};
 
-	////////////////////////////////////////////////////////////////////////////////
 	///	@brief	强引用指针实现
 	///	@note	仅能用于引用计数对象
-	////////////////////////////////////////////////////////////////////////////////
 	template <typename T>
 	class natRefPointer final
 	{
@@ -440,7 +434,7 @@ namespace NatsuLib
 		{
 			if (m_pPointer)
 			{
-				static_cast<const volatile natRefObj*>(m_pPointer)->AddRef();
+				static_cast<const volatile natRefObj*>(m_pPointer)->IncRef();
 			}
 		}
 
@@ -449,7 +443,7 @@ namespace NatsuLib
 		{
 			if (m_pPointer)
 			{
-				static_cast<const volatile natRefObj*>(m_pPointer)->AddRef();
+				static_cast<const volatile natRefObj*>(m_pPointer)->IncRef();
 			}
 		}
 
@@ -465,7 +459,7 @@ namespace NatsuLib
 		{
 			if (m_pPointer)
 			{
-				static_cast<const volatile natRefObj*>(m_pPointer)->AddRef();
+				static_cast<const volatile natRefObj*>(m_pPointer)->IncRef();
 			}
 		}
 
@@ -486,7 +480,7 @@ namespace NatsuLib
 		{
 			if (m_pPointer)
 			{
-				static_cast<void>(static_cast<const volatile natRefObj*>(m_pPointer)->Release());
+				static_cast<void>(static_cast<const volatile natRefObj*>(m_pPointer)->DecRef());
 			}
 		}
 
@@ -616,7 +610,7 @@ namespace NatsuLib
 		{
 			if (m_pPointer)
 			{
-				static_cast<void>(static_cast<const volatile natRefObj*>(m_pPointer)->Release());
+				static_cast<void>(static_cast<const volatile natRefObj*>(m_pPointer)->DecRef());
 				m_pPointer = nullptr;
 			}
 
@@ -683,14 +677,12 @@ namespace NatsuLib
 		const auto pRefObj = new TRefObj(std::forward<Args>(args)...);
 		pRefObj->SetDeleter();
 		natRefPointer<TRefObj> ret(pRefObj);
-		pRefObj->Release();
+		pRefObj->DecRef();
 		return ret;
 	}
 
-	////////////////////////////////////////////////////////////////////////////////
 	///	@brief	弱引用指针实现
 	///	@note	仅能用于引用计数对象
-	////////////////////////////////////////////////////////////////////////////////
 	template <typename T>
 	class natWeakRefPointer
 	{
@@ -706,7 +698,7 @@ namespace NatsuLib
 				return nullptr;
 			}
 			const auto view = item->createWeakRefView();
-			view->AddRef();
+			view->IncRef();
 			return view;
 		}
 
@@ -904,7 +896,7 @@ namespace NatsuLib
 			const auto view = m_View;
 			if (view)
 			{
-				static_cast<const volatile natRefObj*>(m_View)->AddRef();
+				static_cast<const volatile natRefObj*>(m_View)->IncRef();
 			}
 			return view;
 		}
