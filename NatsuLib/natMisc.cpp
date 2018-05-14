@@ -6,10 +6,15 @@ using namespace NatsuLib;
 
 void detail_::NotConstructed()
 {
-	nat_Throw(natException, "Storage has not constructed."_nv);
+	nat_Throw(natErrException, NatErr::NatErr_IllegalState, u8"Storage has not constructed."_nv);
 }
 
 void detail_::ValueNotAvailable()
 {
-	nat_Throw(natException, "There is no available value."_nv);
+	nat_Throw(natErrException, NatErr::NatErr_IllegalState, u8"There is no available value."_nv);
+}
+
+void detail_::AlreadyInitialized()
+{
+	nat_Throw(natErrException, NatErr::NatErr_IllegalState, u8"Value has been already initialized"_nv);
 }

@@ -595,7 +595,7 @@ namespace NatsuLib
 		}
 
 	private:
-		Callable && m_CallableObj;
+		Callable&& m_CallableObj;
 		std::tuple<Args&&...> m_ArgsTuple;
 	};
 
@@ -604,6 +604,117 @@ namespace NatsuLib
 	{
 		return Currier<Callable&&>{ std::forward<Callable>(callableObj), std::tuple<>{} };
 	}
+
+	namespace detail_
+	{
+		[[noreturn]] void AlreadyInitialized();
+
+		class LazyInitDefaultChecker
+		{
+		public:
+			LazyInitDefaultChecker() noexcept
+				: m_HasInitialized{ false }
+			{
+			}
+
+			void SetInitialized() noexcept
+			{
+				m_HasInitialized = true;
+			}
+
+			nBool HasInitialized() const noexcept
+			{
+				return m_HasInitialized;
+			}
+
+			void MayCheckNotInitialized() const
+			{
+				if (!m_HasInitialized)
+				{
+					NotConstructed();
+				}
+			}
+
+			void MayCheckAlreadyInitialized() const
+			{
+				if (m_HasInitialized)
+				{
+					AlreadyInitialized();
+				}
+			}
+
+		private:
+			nBool m_HasInitialized;
+		};
+
+		struct LazyInitNoopChecker
+		{
+			static constexpr void SetInitialized() noexcept
+			{
+			}
+
+			static constexpr nBool HasInitialized() noexcept
+			{
+				return true;
+			}
+
+			static constexpr void MayCheckNotInitialized() noexcept
+			{
+			}
+
+			static constexpr void MayCheckAlreadyInitialized() noexcept
+			{
+			}
+		};
+	}
+
+	template <typename T, typename Checker = detail_::LazyInitDefaultChecker>
+	class LazyInit
+		: Checker
+	{
+	public:
+		LazyInit() noexcept
+		{
+		}
+
+		~LazyInit()
+		// 在 MSVC 下存在 bug，详见 https://stackoverflow.com/questions/41402348/c2694-on-destructor-when-base-class-members-destructor-has-non-empty-noexcept
+#ifndef _MSC_VER
+			noexcept(std::is_nothrow_destructible_v<T>)
+#endif
+		{
+			if (static_cast<Checker*>(this)->HasInitialized())
+			{
+				Get().~T();
+			}
+		}
+
+		template <typename... Args>
+		std::enable_if_t<std::is_constructible_v<T, Args&&...>> Init(Args&&... args) noexcept(noexcept(std::declval<Checker*>()->MayCheckAlreadyInitialized()) &&
+																									   std::is_nothrow_constructible_v<T, Args&&...>)
+		{
+			static_cast<Checker*>(this)->MayCheckAlreadyInitialized();
+			new (static_cast<void*>(&m_Storage)) T(std::forward<Args>(args)...);
+			static_cast<Checker*>(this)->SetInitialized();
+		}
+
+		T const& Get() const noexcept(noexcept(std::declval<Checker*>()->MayCheckNotInitialized()))
+		{
+			static_cast<const Checker*>(this)->MayCheckNotInitialized();
+			return reinterpret_cast<T const&>(m_Storage);
+		}
+
+		T& Get() noexcept(noexcept(std::declval<const LazyInit*>()->Get()))
+		{
+			return const_cast<T&>(static_cast<const LazyInit*>(this)->Get());
+		}
+
+	private:
+		std::aligned_storage_t<sizeof(T), alignof(T)> m_Storage;
+	};
+
+	template <typename T>
+	using UncheckedLazyInit = LazyInit<T, detail_::LazyInitNoopChecker>;
 
 	////////////////////////////////////////////////////////////////////////////////
 	///	@brief	范围
