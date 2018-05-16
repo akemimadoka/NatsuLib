@@ -622,6 +622,11 @@ namespace NatsuLib
 				m_HasInitialized = true;
 			}
 
+			void ClearInitialized() noexcept
+			{
+				m_HasInitialized = false;
+			}
+
 			nBool HasInitialized() const noexcept
 			{
 				return m_HasInitialized;
@@ -653,6 +658,10 @@ namespace NatsuLib
 			{
 			}
 
+			static constexpr void ClearInitialized() noexcept
+			{
+			}
+
 			static constexpr nBool HasInitialized() noexcept
 			{
 				return true;
@@ -668,13 +677,80 @@ namespace NatsuLib
 		};
 	}
 
+	///	@brief	延迟初始化
+	///	@tparam	T		要延迟初始化的类型
+	///	@tparam	Checker	检查器，用于判断是否已经初始化
+	///	@note	虽然不推荐但是实质上能做与 Optional 相同的工作，但不提供 operator*、operator nBool 及 operator! \n
+	///			不建议在实际使用中用于替代 Optional，而尽量只用于延迟初始化的场景
 	template <typename T, typename Checker = detail_::LazyInitDefaultChecker>
 	class LazyInit
 		: Checker
 	{
 	public:
-		LazyInit() noexcept
+		constexpr LazyInit() noexcept = default;
+
+		template <typename... Args>
+		constexpr explicit LazyInit(std::in_place_t, Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args&&...>)
 		{
+			Init(std::forward<Args>(args)...);
+		}
+
+		LazyInit(LazyInit const& other) noexcept(std::is_nothrow_copy_constructible_v<T>)
+		{
+			if (static_cast<const Checker&>(other).HasInitialized())
+			{
+				Init(other.Get());
+			}
+		}
+
+		LazyInit(LazyInit && other) noexcept(std::is_nothrow_move_constructible_v<T>)
+		{
+			if (static_cast<const Checker&>(other).HasInitialized())
+			{
+				Init(std::move(other.Get()));
+			}
+		}
+
+		LazyInit& operator=(LazyInit const& other) noexcept(std::is_nothrow_copy_constructible_v<T> && std::is_nothrow_copy_assignable_v<T> && std::is_nothrow_destructible_v<T>)
+		{
+			if (static_cast<const Checker&>(other).HasInitialized())
+			{
+				if (static_cast<const Checker*>(this)->HasInitialized())
+				{
+					Get() = other.Get();
+				}
+				else
+				{
+					Init(other.Get());
+				}
+			}
+			else
+			{
+				Cleanup();
+			}
+
+			return *this;
+		}
+
+		LazyInit& operator=(LazyInit && other) noexcept(std::is_nothrow_move_constructible_v<T> && std::is_nothrow_move_assignable_v<T> && std::is_nothrow_destructible_v<T>)
+		{
+			if (static_cast<const Checker&>(other).HasInitialized())
+			{
+				if (static_cast<const Checker*>(this)->HasInitialized())
+				{
+					Get() = std::move(other.Get());
+				}
+				else
+				{
+					Init(std::move(other.Get()));
+				}
+			}
+			else
+			{
+				Cleanup();
+			}
+
+			return *this;
 		}
 
 		~LazyInit()
@@ -683,30 +759,41 @@ namespace NatsuLib
 			noexcept(std::is_nothrow_destructible_v<T>)
 #endif
 		{
-			if (static_cast<Checker*>(this)->HasInitialized())
-			{
-				Get().~T();
-			}
+			Cleanup();
 		}
 
 		template <typename... Args>
-		std::enable_if_t<std::is_constructible_v<T, Args&&...>> Init(Args&&... args) noexcept(noexcept(std::declval<Checker*>()->MayCheckAlreadyInitialized()) &&
-																									   std::is_nothrow_constructible_v<T, Args&&...>)
+		constexpr std::enable_if_t<std::is_constructible_v<T, Args&&...>> Init(Args&&... args) noexcept(noexcept(std::declval<Checker*>()->MayCheckAlreadyInitialized()) &&
+																										std::is_nothrow_constructible_v<T, Args&&...>)
 		{
 			static_cast<Checker*>(this)->MayCheckAlreadyInitialized();
 			new (static_cast<void*>(&m_Storage)) T(std::forward<Args>(args)...);
 			static_cast<Checker*>(this)->SetInitialized();
 		}
 
-		T const& Get() const noexcept(noexcept(std::declval<Checker*>()->MayCheckNotInitialized()))
+		constexpr T const& Get() const noexcept(noexcept(std::declval<Checker*>()->MayCheckNotInitialized()))
 		{
 			static_cast<const Checker*>(this)->MayCheckNotInitialized();
 			return reinterpret_cast<T const&>(m_Storage);
 		}
 
-		T& Get() noexcept(noexcept(std::declval<const LazyInit*>()->Get()))
+		constexpr T& Get() noexcept(noexcept(std::declval<const LazyInit*>()->Get()))
 		{
 			return const_cast<T&>(static_cast<const LazyInit*>(this)->Get());
+		}
+
+		constexpr void Cleanup() noexcept(std::is_nothrow_destructible_v<T>)
+		{
+			if (static_cast<const Checker*>(this)->HasInitialized())
+			{
+				Get().~T();
+				static_cast<Checker*>(this)->ClearInitialized();
+			}
+		}
+
+		constexpr nBool IsInitialized() const noexcept
+		{
+			return static_cast<const Checker*>(this)->HasInitialized();
 		}
 
 	private:

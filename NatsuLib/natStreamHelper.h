@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include <utility>
 #include "natStream.h"
 #include "natText.h"
 
@@ -21,8 +22,8 @@ namespace NatsuLib
 			DefaultBufferSize = 128,
 		};
 
-		explicit natStreamReader(natRefPointer<natStream> pStream, size_t bufferSize = DefaultBufferSize) noexcept
-			: m_InternalStream(pStream), m_BufferSize{ bufferSize }, m_CurrentPos{}, m_EndPos{}
+		explicit natStreamReader(natRefPointer<natStream> pStream, std::size_t bufferSize = DefaultBufferSize) noexcept
+			: m_InternalStream(std::move(pStream)), m_BufferSize{ bufferSize }, m_CurrentPos{}, m_EndPos{}
 		{
 		}
 
@@ -32,7 +33,7 @@ namespace NatsuLib
 
 		nBool Read(nuInt& codePoint) override
 		{
-			auto readChars = InternalPeek(codePoint);
+			const auto readChars = InternalPeek(codePoint);
 			if (readChars)
 			{
 				m_CurrentPos += readChars * sizeof(CharType);
@@ -61,11 +62,11 @@ namespace NatsuLib
 	private:
 		natRefPointer<natStream> m_InternalStream;
 		std::vector<nByte> m_Buffer;
-		size_t m_BufferSize;
-		size_t m_CurrentPos, m_EndPos;
+		std::size_t m_BufferSize;
+		std::size_t m_CurrentPos, m_EndPos;
 
 		// 清空缓冲区并重设位置，可选保留尾部的部分数据
-		void ReadBuffer(size_t size, size_t reserved = 0)
+		void ReadBuffer(std::size_t size, std::size_t reserved = 0)
 		{
 			if (!size)
 			{
@@ -82,10 +83,10 @@ namespace NatsuLib
 
 			const auto readBytes = m_InternalStream->ReadBytes(m_Buffer.data() + reserved, size - reserved);
 			m_CurrentPos = 0;
-			m_EndPos = static_cast<size_t>(reserved + readBytes);
+			m_EndPos = static_cast<std::size_t>(reserved + readBytes);
 		}
 
-		size_t InternalPeek(nuInt& codePoint)
+		std::size_t InternalPeek(nuInt& codePoint)
 		{
 			typedef typename StringEncodingTrait<encoding>::CharType CharType;
 			assert(m_CurrentPos <= m_EndPos);
@@ -104,7 +105,7 @@ namespace NatsuLib
 			}
 
 			EncodingResult result;
-			size_t readChars;
+			std::size_t readChars;
 			const ncData data = m_Buffer.data();
 			std::tie(result, readChars) = detail_::EncodingCodePoint<encoding>::Decode({ reinterpret_cast<const CharType*>(data + m_CurrentPos), reinterpret_cast<const CharType*>(data + std::min(m_EndPos, m_Buffer.size())) }, codePoint);
 			if (result == EncodingResult::Accept)
@@ -133,7 +134,7 @@ namespace NatsuLib
 	{
 	public:
 		explicit natStreamWriter(natRefPointer<natStream> pStream) noexcept
-			: m_InternalStream(pStream)
+			: m_InternalStream(std::move(pStream))
 		{
 		}
 
@@ -151,7 +152,7 @@ namespace NatsuLib
 			return false;
 		}
 
-		size_t Write(StringView<encoding> const& str) override
+		std::size_t Write(StringView<encoding> const& str) override
 		{
 			typedef typename StringEncodingTrait<encoding>::CharType CharType;
 			m_InternalStream->WriteBytes(reinterpret_cast<ncData>(str.cbegin()), str.size() * sizeof(CharType));

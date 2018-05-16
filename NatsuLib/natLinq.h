@@ -463,7 +463,6 @@ namespace NatsuLib
 			}
 		};
 
-		// TODO: 尝试从 CallableObj_t 的类型入手使 end 迭代器不需要拥有 callableObj，需要将 LinqEnumerable 改造成 begin end 迭代器可以是不同类型的
 		template <typename Iter_t, typename CallableObj_t>
 		class SelectIterator final
 		{
@@ -495,7 +494,6 @@ namespace NatsuLib
 				return *this;
 			}
 
-			// 因为解引用 end 迭代器是 ub，所以不判断是否有 value
 			decltype(auto) operator*() const noexcept(noexcept(m_CallableObj.value()(*m_Iterator)))
 			{
 				return m_CallableObj.value()(*m_Iterator);
@@ -510,7 +508,7 @@ namespace NatsuLib
 
 			nBool operator==(Self_t const& other) const noexcept(noexcept(m_Iterator == other.m_Iterator))
 			{
-				return m_Iterator == other.m_Iterator/* && m_CallableObj == other.m_CallableObj*/;
+				return m_Iterator == other.m_Iterator;
 			}
 
 			nBool operator!=(Self_t const& other) const noexcept(noexcept(std::declval<Self_t>() == other))
@@ -532,6 +530,7 @@ namespace NatsuLib
 
 			Iter_t m_Iterator, m_End;
 			std::optional<CallableObj_t> m_CallableObj;
+
 		public:
 			typedef Min<std::forward_iterator_tag, typename std::iterator_traits<Iter_t>::iterator_category> iterator_category;
 			typedef typename std::iterator_traits<Iter_t>::value_type value_type;
@@ -579,7 +578,7 @@ namespace NatsuLib
 
 			nBool operator==(Self_t const& other) const noexcept(noexcept(m_Iterator == other.m_Iterator))
 			{
-				return m_Iterator == other.m_Iterator && m_End == other.m_End/* && m_CallableObj == other.m_CallableObj*/;
+				return m_Iterator == other.m_Iterator && m_End == other.m_End;
 			}
 
 			nBool operator!=(Self_t const& other) const noexcept(noexcept(std::declval<Self_t>() == other))
@@ -740,6 +739,7 @@ namespace NatsuLib
 
 			Iter_t m_Iterator, m_End;
 			std::optional<CallableObj_t> m_CallableObj;
+
 		public:
 			typedef Min<std::forward_iterator_tag, typename std::iterator_traits<Iter_t>::iterator_category> iterator_category;
 			typedef typename std::iterator_traits<Iter_t>::value_type value_type;
@@ -1072,6 +1072,180 @@ namespace NatsuLib
 			{
 				return std::max(static_cast<difference_type>(m_Current1 - other.m_Current1),
 					static_cast<difference_type>(m_Current2 - other.m_Current2));
+			}
+		};
+
+		// 生成器迭代器，对 Generator 的要求：
+		//	MoveConstructible
+		//	Callable，且能无参数地调用，设返回类型为 OptionalType，对 OptionalType 的要求：
+		//		设 opt 为 OptionalType 的对象，以下表达式有效：
+		//			static_cast<nBool>(opt)
+		//			*opt
+		//		设 *opt 的类型为 ElementType，对 ElementType 的要求：
+		//			MoveConstructible
+		template <typename Generator>
+		class GeneratorIterator final
+		{
+		public:
+			typedef std::input_iterator_tag iterator_category;
+			typedef std::decay_t<decltype(*std::declval<Generator&>()())> value_type;
+			typedef std::ptrdiff_t difference_type;
+			typedef value_type reference;
+			typedef std::add_pointer_t<value_type> pointer;
+
+		private:
+			std::optional<Generator> m_Generator;
+			std::optional<value_type> m_LastValue;
+
+		public:
+			GeneratorIterator() noexcept = default;
+
+			// 若不被调用则不要求 Generator 是 CopyConstructible
+			template <typename = void>
+			explicit GeneratorIterator(Generator const& generator) noexcept(std::is_nothrow_copy_constructible_v<Generator> &&
+																			std::is_nothrow_invocable_v<Generator> &&
+																			std::is_nothrow_move_constructible_v<value_type>)
+				: m_Generator{ generator }
+			{
+				auto&& result = m_Generator.value()();
+				if (result)
+				{
+					m_LastValue.emplace(static_cast<decltype(*result)&&>(*result));
+				}
+				else
+				{
+					m_Generator.reset();
+				}
+			}
+
+			explicit GeneratorIterator(Generator && generator) noexcept(std::is_nothrow_move_constructible_v<Generator> &&
+																		std::is_nothrow_invocable_v<Generator> &&
+																		std::is_nothrow_move_constructible_v<value_type>)
+				: m_Generator{ std::move(generator) }
+			{
+				auto&& result = m_Generator.value()();
+				if (result)
+				{
+					m_LastValue.emplace(static_cast<decltype(*result)&&>(*result));
+				}
+				else
+				{
+					m_Generator.reset();
+				}
+			}
+
+			GeneratorIterator& operator++() & noexcept(std::is_nothrow_invocable_v<Generator> &&
+													   std::is_nothrow_destructible_v<value_type> &&
+													   std::is_nothrow_move_constructible_v<value_type>)
+			{
+				if (m_Generator.has_value())
+				{
+					auto&& result = m_Generator.value()();
+					if (result)
+					{
+						m_LastValue.emplace(static_cast<decltype(*result)&&>(*result));
+					}
+					else
+					{
+						m_Generator.reset();
+					}
+				}
+
+				return *this;
+			}
+
+			reference operator*() const noexcept(noexcept(m_LastValue.value()))
+			{
+				return m_LastValue.value();
+			}
+
+			reference operator*() noexcept(noexcept(m_LastValue.value()))
+			{
+				return m_LastValue.value();
+			}
+
+			nBool operator==(GeneratorIterator const& other) const noexcept
+			{
+				return m_Generator.has_value() == other.m_Generator.has_value();
+			}
+
+			nBool operator!=(GeneratorIterator const& other) const noexcept
+			{
+				return !(*this == other);
+			}
+		};
+
+		template <typename T>
+		class NumericIterator
+		{
+		public:
+			typedef std::forward_iterator_tag iterator_category;
+			typedef T value_type;
+			typedef std::ptrdiff_t difference_type;
+			typedef value_type reference;
+			typedef std::add_pointer_t<value_type> pointer;
+
+		private:
+			T m_Value;
+			T m_Step;
+
+		public:
+			explicit NumericIterator(T value) noexcept(std::is_nothrow_move_constructible_v<T>)
+				: m_Value{ std::move(value) }, m_Step{}
+			{
+			}
+
+			NumericIterator(T value, T step) noexcept(std::is_nothrow_move_constructible_v<T>)
+				: m_Value{ std::move(value) }, m_Step{ std::move(step) }
+			{
+			}
+
+			NumericIterator& operator++() & noexcept(noexcept(m_Value += m_Step))
+			{
+				m_Value += m_Step;
+				return *this;
+			}
+
+			NumericIterator operator++(int) & noexcept(noexcept(++std::declval<NumericIterator&>()))
+			{
+				auto old{ *this };
+				++*this;
+				return old;
+			}
+
+			reference operator*() const noexcept(std::is_nothrow_copy_constructible_v<T>)
+			{
+				return m_Value;
+			}
+
+			nBool operator==(NumericIterator const& other) const noexcept(noexcept(m_Value == other.m_Value))
+			{
+				return m_Value == other.m_Value;
+			}
+
+			nBool operator!=(NumericIterator const& other) const noexcept(noexcept(m_Value != other.m_Value))
+			{
+				return m_Value != other.m_Value;
+			}
+
+			nBool operator<(NumericIterator const& other) const noexcept(noexcept(m_Value < other.m_Value))
+			{
+				return m_Value < other.m_Value;
+			}
+
+			nBool operator<=(NumericIterator const& other) const noexcept(noexcept(m_Value <= other.m_Value))
+			{
+				return m_Value <= other.m_Value;
+			}
+
+			nBool operator>(NumericIterator const& other) const noexcept(noexcept(m_Value > other.m_Value))
+			{
+				return m_Value > other.m_Value;
+			}
+
+			nBool operator>=(NumericIterator const& other) const noexcept(noexcept(m_Value >= other.m_Value))
+			{
+				return m_Value >= other.m_Value;
 			}
 		};
 	}
@@ -1704,6 +1878,21 @@ namespace NatsuLib
 	auto from(Range<Iter_t> const& range)
 	{
 		return from(range.begin(), range.end());
+	}
+
+	template <typename Generator>
+	auto from_generator(Generator&& generator)
+	{
+		return LinqEnumerable<detail_::GeneratorIterator<Generator>>{ detail_::GeneratorIterator<Generator>{ std::forward<Generator>(generator) }, detail_::GeneratorIterator<Generator>{} };
+	}
+
+	// 在使用 != 来判断是否结束迭代的情况下，迭代 [begin, end) 的元素，默认步数是 1
+	template <typename T>
+	auto from_range(T begin, T end, T step = static_cast<T>(1))
+	{
+		// 这个检查对于使用 < 或者 <= 而不是 != 来判断是否结束迭代的情况下是不必要的，但是一般还是 != 常用，看情况提供是否检查的选项
+		assert((end - begin) % step == T{});
+		return LinqEnumerable<detail_::NumericIterator<T>>{ detail_::NumericIterator<T>{ std::move(begin), std::move(step) }, detail_::NumericIterator<T>{ std::move(end) } };
 	}
 }
 

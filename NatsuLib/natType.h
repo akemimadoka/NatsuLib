@@ -115,8 +115,9 @@ enum [[nodiscard]] NatErr : nResult
 
 ///	@brief		安全删除指针
 ///	@warning	避免使用本函数
+///	@remark		非线程安全，释放后 ptr 会被设置为 nullptr
 template <typename T>
-NATINLINE void SafeDel(T* volatile & ptr)
+NATINLINE void SafeDel(T*& ptr)
 {
 	delete ptr;
 	ptr = nullptr;
@@ -124,8 +125,9 @@ NATINLINE void SafeDel(T* volatile & ptr)
 
 ///	@brief		安全删除数组
 ///	@warning	避免使用本函数
+///	@remark		非线程安全，释放后 ptr 会被设置为 nullptr
 template <typename T>
-NATINLINE void SafeDelArr(T* volatile & ptr)
+NATINLINE void SafeDelArr(T*& ptr)
 {
 	delete[] ptr;
 	ptr = nullptr;

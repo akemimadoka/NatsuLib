@@ -25,6 +25,8 @@ namespace NatsuLib
 		Ansi,
 		Wide,
 #endif
+
+		UserDefined = 1000,	///< @remark 在此之后定义新的字符串类型
 	};
 
 	template <StringType>
@@ -799,12 +801,7 @@ namespace NatsuLib
 
 			const CharType* GetData() const noexcept
 			{
-				if (Capacity > ArrayMaxSize)
-				{
-					return Pointer;
-				}
-
-				return Array;
+				return Capacity > ArrayMaxSize ? Pointer : Array;
 			}
 
 			CharType* GetData() noexcept
@@ -823,12 +820,11 @@ namespace NatsuLib
 
 				const auto data = GetData();
 
-				for (auto i = Size; i < newSize; ++i)
+				for (auto i = Size; i <= newSize; ++i)
 				{
 					data[i] = CharType{};
 				}
 				Size = newSize;
-				data[Size] = CharType{};
 
 				assert(Capacity > Size);
 			}

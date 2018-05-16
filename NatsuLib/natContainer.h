@@ -262,8 +262,8 @@ namespace NatsuLib
 			: public natRefObjImpl<ContainerWrapper<C>, IContainerWrapper>
 		{
 		public:
-			static_assert(std::numeric_limits<size_type>::max() >= std::numeric_limits<typename C::size_type>::max(), "size_type is not large enough.");
-			static_assert(std::numeric_limits<difference_type>::max() >= std::numeric_limits<typename C::difference_type>::max(), "difference_type is not large enough.");
+			static_assert((std::numeric_limits<size_type>::max)() >= (std::numeric_limits<typename C::size_type>::max)(), "size_type is not large enough.");
+			static_assert((std::numeric_limits<difference_type>::max)() >= (std::numeric_limits<typename C::difference_type>::max)(), "difference_type is not large enough.");
 
 			ContainerWrapper(C& container)
 				: m_Container(container)

@@ -128,6 +128,26 @@ int main()
 				std::cout << item;
 			}
 			std::cout << std::endl;
+			for (auto&& item : from_generator([i = 0]() mutable -> int*
+			{
+				if (i < 5)
+				{
+					++i;
+					return &i;
+				}
+
+				return nullptr;
+			}))
+			{
+				std::cout << item;
+			}
+			std::cout << std::endl;
+
+			for (auto&& item : from_range(0, 4, 2))
+			{
+				std::cout << item;
+			}
+			std::cout << std::endl;
 		}
 
 		{
