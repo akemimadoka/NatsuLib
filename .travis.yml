@@ -3,18 +3,19 @@ sudo: required
 dist: trusty
 addons:
   apt:
+    update: true
     sources:
       - ubuntu-toolchain-r-test
       - llvm-toolchain-precise-3.6
       - kalakris-cmake
     packages:
-      - gcc-7
-      - g++-7
+      - gcc-8
+      - g++-8
       - cmake
 env: 
 compiler: gcc
 install:
-  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 60 --slave /usr/bin/g++ g++ /usr/bin/g++-7
+  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 60 --slave /usr/bin/g++ g++ /usr/bin/g++-8
 script:
   - cmake .
   - make
