@@ -8,7 +8,7 @@
 #include <cassert>
 #include <tuple>
 
-#define MAKE_ENUM_CLASS_BITMASK_TYPE(enumName) static_assert(std::is_enum<enumName>::value, "enumName is not a enum.");\
+#define MAKE_ENUM_CLASS_BITMASK_TYPE(enumName) static_assert(std::is_enum<enumName>::value, #enumName " is not a enum.");\
 	constexpr enumName operator|(enumName a, enumName b) noexcept\
 	{\
 		typedef std::underlying_type_t<enumName> underlying_type;\
