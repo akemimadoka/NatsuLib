@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "natBinary.h"
 
+#undef max
+#undef min
+
 using namespace NatsuLib;
 
 natBinaryReader::natBinaryReader(natRefPointer<natStream> stream, Environment::Endianness endianness) noexcept

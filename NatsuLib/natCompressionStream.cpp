@@ -3,6 +3,8 @@
 #include <zlib.h>
 #include <zutil.h>
 
+#undef max
+
 using namespace NatsuLib;
 
 namespace NatsuLib

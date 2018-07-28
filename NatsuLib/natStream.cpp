@@ -9,6 +9,9 @@
 #include <unistd.h>
 #endif
 
+#undef max
+#undef min
+
 using namespace NatsuLib;
 
 natStream::~natStream()

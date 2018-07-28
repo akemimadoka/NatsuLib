@@ -3,6 +3,8 @@
 #include "natEncoding.h"
 #include "natCryptography.h"
 
+#undef max
+
 using namespace NatsuLib;
 
 using CurrentUsingRuntimeEncoding = RuntimeEncoding<GetUsingStringType<nString>::value>;
