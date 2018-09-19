@@ -19,6 +19,7 @@ set(SOURCE_FILES
     natCompressionStream.cpp
     natCompressionStream.h
     natConcepts.h
+    natConcurrent.h
     natConfig.h
     natConsole.cpp
     natConsole.h

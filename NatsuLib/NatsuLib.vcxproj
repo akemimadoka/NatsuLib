@@ -186,6 +186,7 @@
     <ClInclude Include="natCompression.h" />
     <ClInclude Include="natCompressionStream.h" />
     <ClInclude Include="natConcepts.h" />
+    <ClInclude Include="natConcurrent.h" />
     <ClInclude Include="natConfig.h" />
     <ClInclude Include="natConsole.h" />
     <ClInclude Include="natContainer.h" />

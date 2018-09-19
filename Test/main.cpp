@@ -19,6 +19,7 @@
 #include <natProperty.h>
 #include <natContainer.h>
 #include <natInfixOperator.h>
+#include <natConcurrent.h>
 #include <forward_list>
 
 using namespace NatsuLib;
@@ -42,7 +43,8 @@ HasMemberTrait(foo);
 struct AddOp
 {
 	template <typename T, typename U>
-	static constexpr decltype(auto) Apply(T&& lhs, U&& rhs) noexcept(noexcept(std::forward<T>(lhs) + std::forward<U>(rhs)))
+	static constexpr decltype(auto) Apply(
+		T&& lhs, U&& rhs) noexcept(noexcept(std::forward<T>(lhs) + std::forward<U>(rhs)))
 	{
 		return std::forward<T>(lhs) + std::forward<U>(rhs);
 	}
@@ -53,7 +55,8 @@ constexpr InfixOp<AddOp> Add{};
 struct MulOp
 {
 	template <typename T, typename U>
-	static constexpr decltype(auto) Apply(T&& lhs, U&& rhs) noexcept(noexcept(std::forward<T>(lhs) * std::forward<U>(rhs)))
+	static constexpr decltype(auto) Apply(
+		T&& lhs, U&& rhs) noexcept(noexcept(std::forward<T>(lhs) * std::forward<U>(rhs)))
 	{
 		return std::forward<T>(lhs) * std::forward<U>(rhs);
 	}
@@ -100,6 +103,49 @@ int main()
 		}
 
 		{
+			Concurrent::Stack<int> stack;
+			std::atomic<bool> go{ false };
+
+			std::thread a{ [&]
+			{
+				while (!go.load(std::memory_order_acquire)) {}
+
+				for (std::size_t i = 0; i < 10; ++i)
+				{
+					stack.Push(i);
+
+					if (i % 2 == 0)
+					{
+						stack.Pop();
+					}
+				}
+			} };
+
+			std::thread b{ [&]
+			{
+				while (!go.load(std::memory_order_acquire)) {}
+
+				for (std::size_t i = 0; i < 10; ++i)
+				{
+					stack.Push(i);
+
+					if (i % 2 == 0)
+					{
+						stack.Pop();
+					}
+				}
+			} };
+
+			go.store(true, std::memory_order_release);
+
+			a.join();
+			b.join();
+
+			const auto isLockFree = stack.IsLockFree();
+			assert(!stack.IsEmpty());
+		}
+
+		{
 			"test 2333"_nv.Split(" 2"_nv, [&logger](nStrView const& str)
 			{
 				logger.LogMsg(str);
@@ -114,10 +160,11 @@ int main()
 		{
 			logger.LogMsg(Environment::GetEnvironmentVar("PATH"_nv));
 		}
-		
+
 		{
 			int arr[] = { 1, 2, 3, 4, 5 };
-			for (auto&& item : from(arr).reverse().select([](int i){ return i + 1; }).where([](int i){ return i > 3; }))
+			for (auto&& item : from(arr).reverse().select([](int i) { return i + 1; }).where(
+				[](int i) { return i > 3; }))
 			{
 				logger.LogMsg("%d"_nv, item);
 			}
@@ -129,6 +176,7 @@ int main()
 			}
 			std::cout << std::endl;
 			for (auto&& item : from_generator([i = 0]() mutable -> int*
+			
 			{
 				if (i < 5)
 				{
@@ -160,7 +208,8 @@ int main()
 				return 0u;
 			}, &logger);
 			auto&& result = ret.get();
-			logger.LogMsg("Work started at thread index {0}, id {1}."_nv, result.GetWorkThreadIndex(), pool.GetThreadId(result.GetWorkThreadIndex()));
+			logger.LogMsg("Work started at thread index {0}, id {1}."_nv, result.GetWorkThreadIndex(),
+			              pool.GetThreadId(result.GetWorkThreadIndex()));
 			logger.LogMsg("Work finished with result {0}."_nv, result.GetResult().get());
 			pool.WaitAllJobsFinish();
 		}
@@ -173,7 +222,10 @@ int main()
 			{
 				auto&& symbol = stackWalker.GetSymbol(i);
 #ifdef _WIN32
-				logger.LogMsg("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"_nv, symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+				logger.LogMsg("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"_nv,
+				              symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress),
+				              reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName,
+				              symbol.SourceFileName, symbol.SourceFileLine);
 #else
 				logger.LogMsg("0x%p : {1}"_nv, symbol.OriginalAddress, symbol.SymbolInfo);
 #endif
@@ -195,7 +247,9 @@ int main()
 			std::vector<nByte> buffer(static_cast<size_t>(fs->GetSize()));
 			logger.LogMsg("Read {0} bytes."_nv, fs->ReadBytesAsync(buffer.data(), buffer.size()).get());
 #ifdef _WIN32
-			natStreamReader<StringType::Utf8> reader{ make_ref<natExternMemoryStream>(buffer.data(), buffer.size(), true, false) };
+			natStreamReader<StringType::Utf8> reader{
+				make_ref<natExternMemoryStream>(buffer.data(), buffer.size(), true, false)
+			};
 			const auto str = reader.ReadToEnd();
 			logger.LogMsg(str);
 #endif
@@ -203,7 +257,8 @@ int main()
 
 		{
 			Uri a{ "http://test:2333@funamiyui.moe:80/blog/index.html?index=5#main"_nv };
-			logger.LogMsg("{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}"_nv, a.GetScheme(), a.GetUser(), a.GetPassword(), a.GetHost(), a.GetPort().value_or(80u), a.GetPath(), a.GetQuery(), a.GetFragment());
+			logger.LogMsg("{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}"_nv, a.GetScheme(), a.GetUser(), a.GetPassword(),
+			              a.GetHost(), a.GetPort().value_or(80u), a.GetPath(), a.GetQuery(), a.GetFragment());
 		}
 
 		{
@@ -230,7 +285,10 @@ int main()
 			nByte buffer[128]{};
 			size_t dataLength;
 			{
-				natDeflateStream str{ make_ref<natExternMemoryStream>(buffer, 128, true, true), natDeflateStream::CompressionLevel::Optimal };
+				natDeflateStream str{
+					make_ref<natExternMemoryStream>(buffer, 128, true, true),
+					natDeflateStream::CompressionLevel::Optimal
+				};
 				dataLength = str.WriteBytes(reinterpret_cast<ncData>("3"), 1);
 				dataLength += str.WriteBytes(reinterpret_cast<ncData>("2"), 1);
 				dataLength += str.Finish();
@@ -245,7 +303,9 @@ int main()
 
 		{
 			{
-				natZipArchive zip{ make_ref<natFileStream>("1.zip"_nv, true, false), natZipArchive::ZipArchiveMode::Read };
+				natZipArchive zip{
+					make_ref<natFileStream>("1.zip"_nv, true, false), natZipArchive::ZipArchiveMode::Read
+				};
 				const auto entry = zip.GetEntry("1/2.txt"_nv);
 				nByte data[128]{};
 				const auto stream = entry->Open();
@@ -331,8 +391,8 @@ int main()
 		}
 
 		{
-			std::vector<int> vec{ 1,2,3,4,5 };
-			const std::vector<int> constvec{ 1,2,3,4,5 };
+			std::vector<int> vec{ 1, 2, 3, 4, 5 };
+			const std::vector<int> constvec{ 1, 2, 3, 4, 5 };
 
 			Container<int> container{ vec };
 			logger.LogMsg(from(container).aggregate("Values from container:"_ns, [](nString const& prev, int cur)
@@ -340,14 +400,15 @@ int main()
 				return natUtil::FormatString("{0} {1}"_nv, prev, cur);
 			}));
 			Container<const int> constContainer{ constvec };
-			logger.LogMsg(from(constContainer).aggregate("Values from constContainer:"_ns, [](nString const& prev, int cur)
-			{
-				return natUtil::FormatString("{0} {1}"_nv, prev, cur);
-			}));
+			logger.LogMsg(from(constContainer).aggregate("Values from constContainer:"_ns,
+			                                             [](nString const& prev, int cur)
+			                                             {
+				                                             return natUtil::FormatString("{0} {1}"_nv, prev, cur);
+			                                             }));
 
 			try
 			{
-				std::forward_list<int> list{ 1,2,3,4,5 };
+				std::forward_list<int> list{ 1, 2, 3, 4, 5 };
 				Container<int> cont{ list };
 				const auto iter = cont.rbegin();
 			}
@@ -365,27 +426,35 @@ int main()
 #ifdef _WIN32
 	catch (natWinException& e)
 	{
-		logger.LogErr("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}\nErrno: {4}, Msg: {5}"_nv, e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc(), e.GetErrNo(), e.GetErrMsg());
+		logger.LogErr("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}\nErrno: {4}, Msg: {5}"_nv,
+		              e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc(), e.GetErrNo(), e.GetErrMsg());
 #ifdef EnableExceptionStackTrace
 		logger.LogErr("Call stack:"_nv);
 		for (size_t i = 0; i < e.GetStackWalker().GetFrameCount(); ++i)
 		{
 			auto&& symbol = e.GetStackWalker().GetSymbol(i);
-			logger.LogErr("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"_nv, symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+			logger.LogErr("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"_nv, symbol.OriginalAddress,
+			              reinterpret_cast<const void*>(symbol.SymbolAddress),
+			              reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName,
+			              symbol.SourceFileName, symbol.SourceFileLine);
 		}
 #endif
 	}
 #endif
 	catch (natErrException& e)
 	{
-		logger.LogErr("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}\nErrno: {4}, Msg: {5}"_nv, e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc(), e.GetErrNo(), e.GetErrMsg());
+		logger.LogErr("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}\nErrno: {4}, Msg: {5}"_nv,
+		              e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc(), e.GetErrNo(), e.GetErrMsg());
 #ifdef EnableExceptionStackTrace
 		logger.LogErr("Call stack:"_nv);
 		for (size_t i = 0; i < e.GetStackWalker().GetFrameCount(); ++i)
 		{
 			auto&& symbol = e.GetStackWalker().GetSymbol(i);
 #ifdef _WIN32
-			logger.LogErr("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"_nv, symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+			logger.LogErr("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"_nv, symbol.OriginalAddress,
+			              reinterpret_cast<const void*>(symbol.SymbolAddress),
+			              reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName,
+			              symbol.SourceFileName, symbol.SourceFileLine);
 #else
 			logger.LogErr("0x%p : {1}"_nv, symbol.OriginalAddress, symbol.SymbolInfo);
 #endif
@@ -394,14 +463,18 @@ int main()
 	}
 	catch (natException& e)
 	{
-		logger.LogErr("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}"_nv, e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc());
+		logger.LogErr("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}"_nv, e.GetSource(),
+		              e.GetFile(), e.GetLine(), e.GetDesc());
 #ifdef EnableExceptionStackTrace
 		logger.LogErr("Call stack:"_nv);
 		for (size_t i = 0; i < e.GetStackWalker().GetFrameCount(); ++i)
 		{
 			auto&& symbol = e.GetStackWalker().GetSymbol(i);
 #ifdef _WIN32
-			logger.LogErr("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"_nv, symbol.OriginalAddress, reinterpret_cast<const void*>(symbol.SymbolAddress), reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName, symbol.SourceFileName, symbol.SourceFileLine);
+			logger.LogErr("{3}: (0x%p) {4} at address 0x%p (file {5}:{6} at address 0x%p)"_nv, symbol.OriginalAddress,
+			              reinterpret_cast<const void*>(symbol.SymbolAddress),
+			              reinterpret_cast<const void*>(symbol.SourceFileAddress), i, symbol.SymbolName,
+			              symbol.SourceFileName, symbol.SourceFileLine);
 #else
 			logger.LogErr("0x%p : {1}"_nv, symbol.OriginalAddress, symbol.SymbolInfo);
 #endif

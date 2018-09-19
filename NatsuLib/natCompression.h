@@ -1,6 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////
+ï»¿////////////////////////////////////////////////////////////////////////////////
 ///	@file	natCompression.h
-///	@brief	Ñ¹Ëõ/½âÑ¹¹¤¾ßÀà
+///	@brief	å‹ç¼©/è§£å‹å·¥å…·ç±»
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 
@@ -19,8 +19,8 @@ namespace NatsuLib
 	DeclareException(EntryDecryptFailedException, natException, "Cannot decrypt entry with provided password."_nv);
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	ZipÑ¹ËõÎÄµµ
-	///	@note	²»»á½øĞĞ»º´æ£¬Èç¹ûÌá¹©µÄÁ÷²»·ûºÏÌõ¼şÇë×ÔĞĞ½øĞĞ»º´æ
+	///	@brief	Zipå‹ç¼©æ–‡æ¡£
+	///	@note	ä¸ä¼šè¿›è¡Œç¼“å­˜ï¼Œå¦‚æœæä¾›çš„æµä¸ç¬¦åˆæ¡ä»¶è¯·è‡ªè¡Œè¿›è¡Œç¼“å­˜
 	////////////////////////////////////////////////////////////////////////////////
 	class natZipArchive
 		: public natRefObjImpl<natZipArchive, natRefObj>
@@ -41,12 +41,12 @@ namespace NatsuLib
 
 		ZipArchiveMode GetOpenMode() const noexcept;
 
-		///	@brief	ÒÔÌØ¶¨µÄÈë¿ÚÃû´´½¨Èë¿Ú
+		///	@brief	ä»¥ç‰¹å®šçš„å…¥å£ååˆ›å»ºå…¥å£
 		natRefPointer<ZipEntry> CreateEntry(nStrView entryName);
-		///	@brief	»ñµÃËùÓĞÈë¿Ú
+		///	@brief	è·å¾—æ‰€æœ‰å…¥å£
 		Linq<const natRefPointer<ZipEntry>> GetEntries() const;
-		///	@brief	ÒÔÌØ¶¨µÄÈë¿ÚÃû²éÕÒÈë¿Ú
-		///	@note	ÈôÎ´ÕÒµ½»á·µ»Ønullptr£¬ÇëÎñ±Ø¶Ô·µ»ØÖµ½øĞĞ¼ì²é
+		///	@brief	ä»¥ç‰¹å®šçš„å…¥å£åæŸ¥æ‰¾å…¥å£
+		///	@note	è‹¥æœªæ‰¾åˆ°ä¼šè¿”å›nullptrï¼Œè¯·åŠ¡å¿…å¯¹è¿”å›å€¼è¿›è¡Œæ£€æŸ¥
 		natRefPointer<ZipEntry> GetEntry(nStrView entryName) const;
 
 	private:
@@ -86,7 +86,7 @@ namespace NatsuLib
 		void close();
 		void writeToFile();
 
-		// ÊµÏÖÌáÊ¾£ºËùÓĞZipBlock±ØĞë±£Ö¤ReadÀà·½·¨Íê³ÉºóËùÓĞ³ÉÔ±¶¼ÒÑ³õÊ¼»¯
+		// å®ç°æç¤ºï¼šæ‰€æœ‰ZipBlockå¿…é¡»ä¿è¯Readç±»æ–¹æ³•å®Œæˆåæ‰€æœ‰æˆå‘˜éƒ½å·²åˆå§‹åŒ–
 
 		struct ExtraField
 		{
@@ -157,7 +157,7 @@ namespace NatsuLib
 
 			static nBool TrySkip(natRefPointer<natBinaryReader> reader);
 
-			// ÊµÏÖÌáÊ¾£º»áĞŞ¸ÄheaderÖĞµÄFilenameLengthÎªÊµ¼ÊĞ´ÈëµÄÎÄ¼şÃû³¤¶È
+			// å®ç°æç¤ºï¼šä¼šä¿®æ”¹headerä¸­çš„FilenameLengthä¸ºå®é™…å†™å…¥çš„æ–‡ä»¶åé•¿åº¦
 			static nBool Write(natRefPointer<natBinaryWriter> writer, CentralDirectoryFileHeader& header, Optional<std::deque<ExtraField>> const& localFileHeaderFields, StringType encoding);
 			static void WriteCrcAndSizes(natRefPointer<natBinaryWriter> writer, CentralDirectoryFileHeader const& header, nBool usedZip64);
 		};
@@ -212,7 +212,7 @@ namespace NatsuLib
 			nuLong OffsetOfCentralDirectory;
 
 			void Read(natRefPointer<natBinaryReader> reader);
-			static void Write(natRefPointer<natBinaryWriter> writer, nuLong numberOfEntries, nuLong startOfCentralDirectory, nuLong sizeOfCentralDirectory);
+			static void Write(const natRefPointer<natBinaryWriter>& writer, nuLong numberOfEntries, nuLong startOfCentralDirectory, nuLong sizeOfCentralDirectory);
 		};
 
 		Zip64EndOfCentralDirectory m_Zip64EndOfCentralDirectory;
@@ -228,7 +228,7 @@ namespace NatsuLib
 
 	public:
 		////////////////////////////////////////////////////////////////////////////////
-		///	@brief	ZipÑ¹ËõÎÄµµÈë¿Ú
+		///	@brief	Zipå‹ç¼©æ–‡æ¡£å…¥å£
 		////////////////////////////////////////////////////////////////////////////////
 		class ZipEntry
 			: public natRefObjImpl<ZipEntry, natRefObj>
@@ -249,10 +249,10 @@ namespace NatsuLib
 			nuLong GetCompressedSize() const noexcept;
 			nuLong GetUncompressedSize() const noexcept;
 
-			///	@brief	É¾³ıÈë¿Ú
-			///	@note	Ö»ÄÜÔÚ¸üĞÂÄ£Ê½ÏÂÉ¾³ıÈë¿Ú£¬Èç¹ûÈë¿ÚÕıÔÚ±»Ğ´ÈëÉ¾³ı½«»áÊ§°Ü
+			///	@brief	åˆ é™¤å…¥å£
+			///	@note	åªèƒ½åœ¨æ›´æ–°æ¨¡å¼ä¸‹åˆ é™¤å…¥å£ï¼Œå¦‚æœå…¥å£æ­£åœ¨è¢«å†™å…¥åˆ é™¤å°†ä¼šå¤±è´¥
 			void Delete();
-			///	@brief	´ò¿ªÈë¿Ú²¢·µ»ØÁ÷
+			///	@brief	æ‰“å¼€å…¥å£å¹¶è¿”å›æµ
 			natRefPointer<natStream> Open();
 
 			void SetPassword();
@@ -271,15 +271,15 @@ namespace NatsuLib
 				ReducedWithCompressionFactor3	= 0x0004,
 				ReducedWithCompressionFactor4	= 0x0005,
 				Imploded						= 0x0006,
-				/* ±£Áô */
+				/* ä¿ç•™ */
 				Deflate							= 0x0008,
 				Deflate64						= 0x0009,
 				PKWareDCLImploded				= 0x000A,
-				/* ±£Áô */
+				/* ä¿ç•™ */
 				BZip2							= 0x000C,
-				/* ±£Áô */
+				/* ä¿ç•™ */
 				LZMA							= 0x000E,
-				/* ±£Áô */
+				/* ä¿ç•™ */
 				IBMTERSE						= 0x0012,
 				IBMLZ77z						= 0x0013,
 				PPMd							= 0x0062,
@@ -294,11 +294,11 @@ namespace NatsuLib
 				EnhancedDeflation		= 0x0010,
 				CompressedPatchedData	= 0x0020,
 				StrongEncryption		= 0x0040,
-				/* Î´Ê¹ÓÃ */
+				/* æœªä½¿ç”¨ */
 				UnicodeFileName			= 0x0800,
-				/* ±£Áô */
+				/* ä¿ç•™ */
 				MaskHeaderValues		= 0x2000,
-				/* ±£Áô */
+				/* ä¿ç•™ */
 			};
 
 			natZipArchive* m_Archive;
@@ -313,9 +313,9 @@ namespace NatsuLib
 			Optional<std::vector<nByte>> m_Password;
 			DecryptStatus m_DecryptStatus;
 
-			// »º´æĞ´ÈëµÄÊı¾İ
+			// ç¼“å­˜å†™å…¥çš„æ•°æ®
 			natRefPointer<natStream> m_UncompressedData;
-			// ÔÚ¸üĞÂÄ£Ê½ÇÒÈë¿ÚÎ´ÓÉÓÚĞ´Èë¶ø¼ÓÔØÊ±»º´æÔ­ÎÄ¼şÄÚÈİ£¬ÔÚĞ´ÈëÄ£Ê½ÎŞ×÷ÓÃ
+			// åœ¨æ›´æ–°æ¨¡å¼ä¸”å…¥å£æœªç”±äºå†™å…¥è€ŒåŠ è½½æ—¶ç¼“å­˜åŸæ–‡ä»¶å†…å®¹ï¼Œåœ¨å†™å…¥æ¨¡å¼æ— ä½œç”¨
 			Optional<std::vector<nByte>> m_CachedCompressedData;
 
 			natRefPointer<natCryptoStream> m_CryptoStream;
@@ -329,7 +329,7 @@ namespace NatsuLib
 
 			nLen getOffsetOfCompressedData();
 
-			// »ñµÃÎ´Ñ¹ËõÊı¾İ£¬½öÔÚ¸üĞÂÄ£Ê½Ê¹ÓÃ
+			// è·å¾—æœªå‹ç¼©æ•°æ®ï¼Œä»…åœ¨æ›´æ–°æ¨¡å¼ä½¿ç”¨
 			natRefPointer<natStream> const& getUncompressedData();
 
 			natRefPointer<natStream> createCompressor(natRefPointer<natStream> stream);
@@ -337,11 +337,11 @@ namespace NatsuLib
 			void loadExtraFieldAndCompressedData();
 			void writeLocalFileHeaderAndData();
 
-			// ¼ÙÉè´ËÊ±ÒÑ¾­ÉèÖÃÁËm_CentralDirectoryFileHeaderµÄCrc32ÎªÕıÈ·µÄÖµ
+			// å‡è®¾æ­¤æ—¶å·²ç»è®¾ç½®äº†m_CentralDirectoryFileHeaderçš„Crc32ä¸ºæ­£ç¡®çš„å€¼
 			void writeSecurityMetadata(natRefPointer<natStream> const& stream);
 
-			// ÏÈ¼ÆËãCrc32£¬ÔÙÑ¹Ëõ£¬×îºó¼ÓÃÜ
-			// ½âÃÜÊ±·´¹ıÀ´£¨µ±È»²»ĞèÒª¼ÆËãCrc32£©
+			// å…ˆè®¡ç®—Crc32ï¼Œå†å‹ç¼©ï¼Œæœ€ååŠ å¯†
+			// è§£å¯†æ—¶åè¿‡æ¥ï¼ˆå½“ç„¶ä¸éœ€è¦è®¡ç®—Crc32ï¼‰
 			class ZipEntryWriteStream final
 				: public natRefObjImpl<ZipEntryWriteStream, natWrappedStream>
 			{

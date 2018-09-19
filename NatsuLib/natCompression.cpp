@@ -1194,7 +1194,7 @@ void natZipArchive::Zip64EndOfCentralDirectory::Read(natRefPointer<natBinaryRead
 	OffsetOfCentralDirectory = reader->ReadPod<nuLong>();
 }
 
-void natZipArchive::Zip64EndOfCentralDirectory::Write(natRefPointer<natBinaryWriter> writer, nuLong numberOfEntries, nuLong startOfCentralDirectory, nuLong sizeOfCentralDirectory)
+void natZipArchive::Zip64EndOfCentralDirectory::Write(const natRefPointer<natBinaryWriter>& writer, nuLong numberOfEntries, nuLong startOfCentralDirectory, nuLong sizeOfCentralDirectory)
 {
 	constexpr auto signature = Signature;
 	constexpr auto sizeWithoutExtraData = SizeWithoutExtraData;

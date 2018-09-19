@@ -1183,6 +1183,97 @@ namespace NatsuLib
 	{
 		return Overload(std::forward<F>(f)...);
 	}
+
+	namespace Detail
+	{
+		template <std::size_t Tag, typename T, bool = std::is_class_v<T>>
+		struct CompressedPairHelper
+			: private T
+		{
+			using T::T;
+
+			constexpr T* GetData() noexcept
+			{
+				return static_cast<T*>(this);
+			}
+
+			constexpr const T* GetData() const noexcept
+			{
+				return static_cast<const T*>(this);
+			}
+		};
+
+		template <std::size_t Tag, typename T>
+		struct CompressedPairHelper<Tag, T, false>
+		{
+			template <typename... Args, std::enable_if_t<std::is_constructible_v<T, Args&&...>, int> = 0>
+			CompressedPairHelper(Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args&&...>)
+				: m_Data(std::forward<Args>(args)...)
+			{
+			}
+
+			constexpr T* GetData() noexcept
+			{
+				return std::addressof(m_Data);
+			}
+
+			constexpr const T* GetData() const noexcept
+			{
+				return std::addressof(m_Data);
+			}
+
+		private:
+			T m_Data;
+		};
+	}
+
+	template <typename T1, typename T2>
+	class CompressedPair
+		: Detail::CompressedPairHelper<0, T1>, Detail::CompressedPairHelper<1, T2>
+	{
+	public:
+		constexpr CompressedPair() = default;
+
+		template <typename U1, typename U2, std::enable_if_t<std::is_constructible_v<T1, U1&&> && std::is_constructible_v<T2, U2&&>, int> = 0>
+		constexpr CompressedPair(U1&& value1, U2&& value2) noexcept(std::is_nothrow_constructible_v<T1, U1&&> && std::is_nothrow_constructible_v<T2, U2&&>)
+			: Detail::CompressedPairHelper<0, T1>(std::forward<U1>(value1)), Detail::CompressedPairHelper<1, T2>(std::forward<U2>(value2))
+		{
+		}
+
+	private:
+		template <std::size_t... Index1, typename... Args1, std::size_t... Index2, typename... Args2>
+		constexpr CompressedPair(std::index_sequence<Index1...>, std::tuple<Args1...>& args1, std::index_sequence<Index2...>, std::tuple<Args2...>& args2) noexcept(std::is_nothrow_constructible_v<T1, Args1...> && std::is_nothrow_constructible_v<T2, Args2...>)
+			: Detail::CompressedPairHelper<0, T1>(std::forward<Args1>(std::get<Index1>(args1))...), Detail::CompressedPairHelper<1, T2>(std::forward<Args2>(std::get<Index2>(args2))...)
+		{
+		}
+
+	public:
+		template <typename... Args1, typename... Args2, std::enable_if_t<std::is_constructible_v<T1, Args1...> && std::is_constructible_v<T2, Args2...>, int> = 0>
+		constexpr CompressedPair(std::piecewise_construct_t, std::tuple<Args1...> args1, std::tuple<Args2...> args2) noexcept(std::is_nothrow_constructible_v<T1, Args1...> && std::is_nothrow_constructible_v<T2, Args2...>)
+			: CompressedPair(std::index_sequence_for<Args1...>{}, args1, std::index_sequence_for<Args2...>{}, args2)
+		{
+		}
+
+		constexpr T1& GetFirst() noexcept
+		{
+			return *static_cast<Detail::CompressedPairHelper<0, T1>*>(this)->GetData();
+		}
+
+		constexpr const T1& GetFirst() const noexcept
+		{
+			return *static_cast<const Detail::CompressedPairHelper<0, T1>*>(this)->GetData();
+		}
+
+		constexpr T2& GetSecond() noexcept
+		{
+			return *static_cast<Detail::CompressedPairHelper<1, T2>*>(this)->GetData();
+		}
+
+		constexpr const T2& GetSecond() const noexcept
+		{
+			return *static_cast<const Detail::CompressedPairHelper<1, T2>*>(this)->GetData();
+		}
+	};
 }
 
 namespace std
