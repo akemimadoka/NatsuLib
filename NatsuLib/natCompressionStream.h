@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "natConfig.h"
 #include "natStream.h"
 
@@ -10,8 +10,8 @@ namespace NatsuLib
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	Ñ¹ËõÁ÷
-	///	@remark	Ê¹ÓÃdeflateËã·¨¶ÔÊı¾İ½øĞĞÑ¹Ëõ
+	///	@brief	å‹ç¼©æµ
+	///	@remark	ä½¿ç”¨deflateç®—æ³•å¯¹æ•°æ®è¿›è¡Œå‹ç¼©
 	////////////////////////////////////////////////////////////////////////////////
 	class natDeflateStream
 		: public natRefObjImpl<natDeflateStream, natWrappedStream>, public nonmovable
@@ -59,7 +59,7 @@ namespace NatsuLib
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	Crc32Á÷
+	///	@brief	Crc32æµ
 	////////////////////////////////////////////////////////////////////////////////
 	class natCrc32Stream
 		: public natRefObjImpl<natCrc32Stream, natWrappedStream>
@@ -68,7 +68,7 @@ namespace NatsuLib
 		explicit natCrc32Stream(natRefPointer<natStream> stream);
 		~natCrc32Stream();
 
-		///	@brief	»ñµÃÒÑÊäÈëÊı¾İµÄCrc32
+		///	@brief	è·å¾—å·²è¾“å…¥æ•°æ®çš„Crc32
 		nuInt GetCrc32() const noexcept;
 
 		nBool CanWrite() const override;

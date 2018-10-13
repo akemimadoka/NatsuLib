@@ -96,7 +96,6 @@ namespace NatsuLib
 		std::enable_if_t<std::is_pod<T>::value> WritePod(T const& obj)
 		{
 			nLen writtenBytes;
-			auto pRead = reinterpret_cast<ncData>(&obj);
 			nByte buffer[sizeof(T)];
 			if (m_NeedSwapEndian)
 			{
@@ -105,10 +104,14 @@ namespace NatsuLib
 #else
 				const auto copyIterator = buffer;
 #endif
-				std::reverse_copy(pRead, pRead + sizeof(T), copyIterator);
-				pRead = buffer;
+				std::reverse_copy(buffer, buffer + sizeof(T), copyIterator);
 			}
-			if ((writtenBytes = m_Stream->WriteBytes(pRead, sizeof(T))) < sizeof(T))
+			else
+			{
+				std::memcpy(buffer, std::addressof(obj), sizeof(T));
+			}
+
+			if ((writtenBytes = m_Stream->WriteBytes(buffer, sizeof(T))) < sizeof(T))
 			{
 				nat_Throw(natException, "Only partial data ({0} bytes/{1} bytes requested) has been successfully written."_nv, writtenBytes, sizeof(T));
 			}

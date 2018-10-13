@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "natConfig.h"
 #include "natStream.h"
 #include "natMisc.h"
@@ -7,11 +7,11 @@
 namespace NatsuLib
 {
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	¼Ó½âÃÜÀàĞÍ
+	///	@brief	åŠ è§£å¯†ç±»å‹
 	////////////////////////////////////////////////////////////////////////////////
 	enum class CryptoType
 	{
-		None	= 0,	// ¹©¿ÉÄÜµÄÌØÊâ¼ÓÃÜÀàĞÍÊ¹ÓÃ
+		None	= 0,	// ä¾›å¯èƒ½çš„ç‰¹æ®ŠåŠ å¯†ç±»å‹ä½¿ç”¨
 
 		Crypt	= 1,
 		Decrypt	= 2,
@@ -22,48 +22,48 @@ namespace NatsuLib
 	MAKE_ENUM_CLASS_BITMASK_TYPE(CryptoType);
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	¼Ó½âÃÜ´¦ÀíÆ÷
+	///	@brief	åŠ è§£å¯†å¤„ç†å™¨
 	////////////////////////////////////////////////////////////////////////////////
 	struct ICryptoProcessor
 		: natRefObj
 	{
 		~ICryptoProcessor();
 
-		///	@brief	»ñµÃ¼Ó½âÃÜÀàĞÍ
+		///	@brief	è·å¾—åŠ è§£å¯†ç±»å‹
 		virtual CryptoType GetCryptoType() const noexcept = 0;
 
-		///	@brief	»ñµÃÊäÈë¿é´óĞ¡
-		///	@note	ÈÎºÎÊ±ºòµ÷ÓÃ´Ë·½·¨¶¼±ØĞë·µ»ØÏàÍ¬µÄÖµ
+		///	@brief	è·å¾—è¾“å…¥å—å¤§å°
+		///	@note	ä»»ä½•æ—¶å€™è°ƒç”¨æ­¤æ–¹æ³•éƒ½å¿…é¡»è¿”å›ç›¸åŒçš„å€¼
 		virtual nLen GetInputBlockSize() const noexcept = 0;
 
-		///	@brief	»ñµÃÊä³ö¿é´óĞ¡
-		///	@note	ÈÎºÎÊ±ºòµ÷ÓÃ´Ë·½·¨¶¼±ØĞë·µ»ØÏàÍ¬µÄÖµ
+		///	@brief	è·å¾—è¾“å‡ºå—å¤§å°
+		///	@note	ä»»ä½•æ—¶å€™è°ƒç”¨æ­¤æ–¹æ³•éƒ½å¿…é¡»è¿”å›ç›¸åŒçš„å€¼
 		virtual nLen GetOutputBlockSize() const noexcept = 0;
 
-		///	@brief	ÊÇ·ñ¿ÉÍ¬Ê±´¦Àí¶à¸ö¿é
+		///	@brief	æ˜¯å¦å¯åŒæ—¶å¤„ç†å¤šä¸ªå—
 		virtual nBool CanProcessMultiBlocks() const noexcept = 0;
 
-		///	@brief	ÊÇ·ñ¿ÉÒÔÖØÓÃ´¦ÀíÆ÷
-		///	@note	Ö¸µ÷ÓÃProcessFinalºó´¦ÀíÆ÷¿ÉÒÔÖØĞÂ³õÊ¼»¯²¢¼ÌĞøÏÂÒ»´Î´¦Àí
+		///	@brief	æ˜¯å¦å¯ä»¥é‡ç”¨å¤„ç†å™¨
+		///	@note	æŒ‡è°ƒç”¨ProcessFinalåå¤„ç†å™¨å¯ä»¥é‡æ–°åˆå§‹åŒ–å¹¶ç»§ç»­ä¸‹ä¸€æ¬¡å¤„ç†
 		virtual nBool CanReuseProcessor() const noexcept = 0;
 
-		///	@brief	´¦ÀíÏÂÒ»¶ÎÊı¾İ
-		///	@param	inputData	ÊäÈëÊı¾İ
-		///	@param	inputDataLength	ÊäÈëÊı¾İµÄ³¤¶È
-		///	@param	outputData	Êä³öÊı¾İ
-		///	@param	outputDataLength	Êä³öÊı¾İµÄ³¤¶È
-		///	@return	ÒÑ´¦ÀíµÄÊäÈëÊı¾İµÄ³¤¶ÈºÍÊä³öÊı¾İµÄ³¤¶È
+		///	@brief	å¤„ç†ä¸‹ä¸€æ®µæ•°æ®
+		///	@param	inputData	è¾“å…¥æ•°æ®
+		///	@param	inputDataLength	è¾“å…¥æ•°æ®çš„é•¿åº¦
+		///	@param	outputData	è¾“å‡ºæ•°æ®
+		///	@param	outputDataLength	è¾“å‡ºæ•°æ®çš„é•¿åº¦
+		///	@return	å·²å¤„ç†çš„è¾“å…¥æ•°æ®çš„é•¿åº¦å’Œè¾“å‡ºæ•°æ®çš„é•¿åº¦
 		virtual std::pair<nLen, nLen> Process(ncData inputData, nLen inputDataLength, nData outputData, nLen outputDataLength) = 0;
 
-		///	@brief	½áÊø´Ë´Î´¦ÀíÊı¾İ
-		///	@param	inputData	ÊäÈëÊı¾İ
-		///	@param	inputDataLength	ÊäÈëÊı¾İµÄ³¤¶È
-		///	@return	ÒÑ´¦ÀíµÄÊäÈëÊı¾İµÄ³¤¶ÈºÍÊä³öµÄÊı¾İ
+		///	@brief	ç»“æŸæ­¤æ¬¡å¤„ç†æ•°æ®
+		///	@param	inputData	è¾“å…¥æ•°æ®
+		///	@param	inputDataLength	è¾“å…¥æ•°æ®çš„é•¿åº¦
+		///	@return	å·²å¤„ç†çš„è¾“å…¥æ•°æ®çš„é•¿åº¦å’Œè¾“å‡ºçš„æ•°æ®
 		virtual std::pair<nLen, std::vector<nByte>> ProcessFinal(ncData inputData, nLen inputDataLength) = 0;
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	¼Ó½âÃÜËã·¨
+	///	@brief	åŠ è§£å¯†ç®—æ³•
 	////////////////////////////////////////////////////////////////////////////////
 	struct ICryptoAlgorithm
 		: natRefObj
@@ -75,7 +75,7 @@ namespace NatsuLib
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	PKzipWeak¼Ó½âÃÜËã·¨´¦ÀíÆ÷
+	///	@brief	PKzipWeakåŠ è§£å¯†ç®—æ³•å¤„ç†å™¨
 	////////////////////////////////////////////////////////////////////////////////
 	class PKzipWeakProcessor final
 		: public natRefObjImpl<PKzipWeakProcessor, ICryptoProcessor>
@@ -92,11 +92,11 @@ namespace NatsuLib
 		~PKzipWeakProcessor();
 
 		void InitCipher(ncData password, nLen passwordLength);
-		// ³õÊ¼»¯Í·²¿Ö®Ç°ĞèÒª³õÊ¼»¯Keys
-		// ½âÃÜÊ±ÔÚ´¦ÀíÖ®Ç°±ØĞë³õÊ¼»¯Í·²¿
+		// åˆå§‹åŒ–å¤´éƒ¨ä¹‹å‰éœ€è¦åˆå§‹åŒ–Keys
+		// è§£å¯†æ—¶åœ¨å¤„ç†ä¹‹å‰å¿…é¡»åˆå§‹åŒ–å¤´éƒ¨
 		void InitHeaderFrom(ncData buffer, nLen bufferLength);
 		void InitHeaderFrom(natRefPointer<natStream> const& stream);
-		// ÔÚ´¦ÀíÒÑ¾­½áÊøºó²Å¿Éµ÷ÓÃ£¬»áÊ¹HeaderÊ§Ğ§
+		// åœ¨å¤„ç†å·²ç»ç»“æŸåæ‰å¯è°ƒç”¨ï¼Œä¼šä½¿Headerå¤±æ•ˆ
 		nBool GetHeader(nData buffer, nLen bufferLength);
 		nBool CheckHeaderWithCrc32(nuInt crc32) const;
 		void GenerateHeaderWithCrc32(nuInt crc32);
@@ -109,7 +109,7 @@ namespace NatsuLib
 
 		std::pair<nLen, nLen> Process(ncData inputData, nLen inputDataLength, nData outputData, nLen outputDataLength) override;
 
-		// ½áÊø±¾´Î´¦Àí£¬Ê¹KeysÊ§Ğ§
+		// ç»“æŸæœ¬æ¬¡å¤„ç†ï¼Œä½¿Keyså¤±æ•ˆ
 		std::pair<nLen, std::vector<nByte>> ProcessFinal(ncData inputData, nLen inputDataLength) override;
 
 	private:
@@ -130,7 +130,7 @@ namespace NatsuLib
 	};
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	¼Ó½âÃÜÁ÷
+	///	@brief	åŠ è§£å¯†æµ
 	////////////////////////////////////////////////////////////////////////////////
 	class natCryptoStream
 		: public natRefObjImpl<natCryptoStream, natWrappedStream>
