@@ -1580,7 +1580,7 @@ nLen natMemoryStream::WriteBytes(ncData pData, nLen Length)
 	{
 		if (m_AutoResize)
 		{
-			Reserve(static_cast<nLen>(detail_::Grow(static_cast<size_t>(Length))));
+			Reserve(static_cast<nLen>(detail_::Grow(static_cast<size_t>(m_Size + Length))));
 			tWriteBytes = Length;
 		}
 		else
