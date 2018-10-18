@@ -151,11 +151,12 @@ natDeflateStream::natDeflateStream(natRefPointer<natStream> stream, CompressionL
 	case CompressionLevel::Fastest:
 		compressionLevelNum = Z_BEST_SPEED;
 		break;
+	default:
+		assert(!"Invalid compressionLevel.");
+		[[fallthrough]];
 	case CompressionLevel::NoCompression:
 		compressionLevelNum = Z_NO_COMPRESSION;
 		break;
-	default:
-		assert(!"Invalid compressionLevel.");
 	}
 
 	const auto windowBits = useHeader ? detail_::DeflateStreamImpl::DefaultWindowBitsWithHeader : detail_::DeflateStreamImpl::DefaultWindowBitsWithoutHeader;
