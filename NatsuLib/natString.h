@@ -1212,16 +1212,30 @@ namespace NatsuLib
 #ifdef _WIN32
 		operator std::string() const
 		{
-			String<StringType::Ansi> ansiStr;
-			detail_::TransCoder<stringType>{}(ansiStr, *this);
-			return { ansiStr.data(), ansiStr.size() };
+			if constexpr (stringType != StringType::Ansi)
+			{
+				String<StringType::Ansi> ansiStr;
+				detail_::TransCoder<stringType>{}(ansiStr, *this);
+				return { ansiStr.data(), ansiStr.size() };
+			}
+			else
+			{
+				return { data(), size() };
+			}
 		}
 
 		operator std::wstring() const
 		{
-			String<StringType::Wide> wideStr;
-			detail_::TransCoder<stringType>{}(wideStr, *this);
-			return { wideStr.data(), wideStr.size() };
+			if constexpr (stringType != StringType::Wide)
+			{
+				String<StringType::Wide> wideStr;
+				detail_::TransCoder<stringType>{}(wideStr, *this);
+				return { wideStr.data(), wideStr.size() };
+			}
+			else
+			{
+				return { data(), size() };
+			}
 		}
 #endif
 

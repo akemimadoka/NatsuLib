@@ -1182,7 +1182,7 @@ nLen natFileStream::ReadBytes(nData pData, nLen Length)
 		nat_Throw(natErrException, NatErr_InvalidArg, "pData cannot be nullptr."_nv);
 	}
 
-	const auto ret = read(m_hFile, pData, static_cast<size_t>(Length));
+	const auto ret = read(m_hFile, pData, static_cast<std::size_t>(Length));
 	if (ret < 0)
 	{
 		nat_Throw(natErrException, NatErr_InternalErr, "read failed (errno = {0})."_nv, errno);
@@ -1215,7 +1215,7 @@ nLen natFileStream::WriteBytes(ncData pData, nLen Length)
 		nat_Throw(natErrException, NatErr_InvalidArg, "pData cannot be nullptr."_nv);
 	}
 
-	const auto ret = write(m_hFile, pData, static_cast<size_t>(Length));
+	const auto ret = write(m_hFile, pData, static_cast<std::size_t>(Length));
 	// ret may be 0 and this may mean an error occured, but we ignore this situation
 	if (ret < 0)
 	{
@@ -1414,10 +1414,11 @@ natMemoryStream::natMemoryStream(ncData pData, nLen Length, nBool bReadable, nBo
 	: m_pData(nullptr), m_CurPos(0u), m_bReadable(bReadable), m_bWritable(bWritable), m_AutoResize(autoResize)
 {
 	Reserve(Length);
-	m_Size = Length;
+
 	if (pData)
 	{
-		memmove(m_pData, pData, static_cast<size_t>(Length));
+		std::memmove(m_pData, pData, static_cast<std::size_t>(Length));
+		m_Size = Length;
 	}
 }
 
@@ -1460,12 +1461,12 @@ nBool natMemoryStream::CanSeek() const
 
 nBool natMemoryStream::IsEndOfStream() const
 {
-	return m_CurPos >= m_Capacity;
+	return m_CurPos >= m_Size;
 }
 
 nLen natMemoryStream::GetSize() const
 {
-	return m_Capacity;
+	return m_Size;
 }
 
 void natMemoryStream::SetSize(nLen Size)
@@ -1485,19 +1486,19 @@ void natMemoryStream::SetPosition(NatSeek Origin, nLong Offset)
 	switch (Origin)
 	{
 	case NatSeek::Beg:
-		if (Offset < 0 || m_Capacity < static_cast<nLen>(Offset))
+		if (Offset < 0 || m_Size < static_cast<nLen>(Offset))
 			nat_Throw(natErrException, NatErr_OutOfRange, "Out of range."_nv);
 		m_CurPos = Offset;
 		break;
 	case NatSeek::Cur:
-		if ((Offset < 0 && m_CurPos < static_cast<nLen>(-Offset)) || m_Capacity > static_cast<nLen>(m_CurPos + Offset))
+		if ((Offset < 0 && m_CurPos < static_cast<nLen>(-Offset)) || m_Size > static_cast<nLen>(m_CurPos + Offset))
 			nat_Throw(natErrException, NatErr_OutOfRange, "Out of range."_nv);
 		m_CurPos += Offset;
 		break;
 	case NatSeek::End:
-		if (Offset > 0 || m_Capacity < static_cast<nLen>(-Offset))
+		if (Offset > 0 || m_Size < static_cast<nLen>(-Offset))
 			nat_Throw(natErrException, NatErr_OutOfRange, "Out of range."_nv);
-		m_CurPos = m_Capacity + Offset;
+		m_CurPos = m_Size + Offset;
 		break;
 	default:
 		nat_Throw(natErrException, NatErr_OutOfRange, "Out of range."_nv);
@@ -1533,7 +1534,7 @@ nLen natMemoryStream::ReadBytes(nData pData, nLen Length)
 	natRefScopeGuard<natCriticalSection> guard(m_CriSection);
 
 	tReadBytes = std::min(Length, m_Size - m_CurPos);
-	memmove(pData, m_pData + m_CurPos, static_cast<size_t>(tReadBytes));
+	std::memmove(pData, m_pData + m_CurPos, static_cast<std::size_t>(tReadBytes));
 	m_CurPos += tReadBytes;
 
 	return tReadBytes;
@@ -1580,7 +1581,7 @@ nLen natMemoryStream::WriteBytes(ncData pData, nLen Length)
 	{
 		if (m_AutoResize)
 		{
-			Reserve(static_cast<nLen>(detail_::Grow(static_cast<size_t>(m_Size + Length))));
+			Reserve(static_cast<nLen>(detail_::Grow(static_cast<std::size_t>(m_Size + Length))));
 			tWriteBytes = Length;
 		}
 		else
@@ -1593,7 +1594,7 @@ nLen natMemoryStream::WriteBytes(ncData pData, nLen Length)
 		tWriteBytes = Length;
 	}
 
-	std::memmove(m_pData + m_CurPos, pData, static_cast<size_t>(tWriteBytes));
+	std::memmove(m_pData + m_CurPos, pData, static_cast<std::size_t>(tWriteBytes));
 	m_CurPos += tWriteBytes;
 	m_Size = std::max(m_CurPos, m_Size);
 
@@ -1631,7 +1632,7 @@ void natMemoryStream::Reserve(nLen newCapacity)
 		return;
 	}
 
-	auto pNewStorage = new nByte[static_cast<size_t>(newCapacity)];
+	auto pNewStorage = new nByte[static_cast<std::size_t>(newCapacity)];
 	const auto deleter = make_scope([&pNewStorage]
 	{
 		delete[] pNewStorage;
@@ -1639,7 +1640,7 @@ void natMemoryStream::Reserve(nLen newCapacity)
 
 	if (m_Size > 0 && m_pData)
 	{
-		memmove(pNewStorage, m_pData, static_cast<size_t>(m_Size));
+		std::memmove(pNewStorage, m_pData, static_cast<std::size_t>(m_Size));
 	}
 
 	swap(m_pData, pNewStorage);
@@ -1678,7 +1679,7 @@ natMemoryStream& natMemoryStream::operator=(natMemoryStream const& other)
 
 	if (other.m_pData)
 	{
-		memmove(m_pData, other.m_pData, static_cast<size_t>(other.m_Size));
+		std::memmove(m_pData, other.m_pData, static_cast<std::size_t>(other.m_Size));
 	}
 
 	m_Size = other.m_Size;
@@ -1722,7 +1723,7 @@ void natMemoryStream::allocateAndInvalidateOldData(nLen newCapacity)
 		return;
 	}*/
 
-	auto pNewStorage = new nByte[static_cast<size_t>(newCapacity)];
+	auto pNewStorage = new nByte[static_cast<std::size_t>(newCapacity)];
 	swap(m_pData, pNewStorage); // 假设swap总是noexcept的
 	m_Size = m_CurPos = 0;
 	m_Capacity = newCapacity;
@@ -1839,7 +1840,7 @@ nLen natExternMemoryStream::ReadBytes(nData pData, nLen Length)
 	}
 
 	const auto readBytes = std::min(Length, m_Size - m_CurrentPos);
-	memmove(pData, m_ExternData + m_CurrentPos, static_cast<size_t>(readBytes));
+	std::memmove(pData, m_ExternData + m_CurrentPos, static_cast<std::size_t>(readBytes));
 	m_CurrentPos += readBytes;
 	return readBytes;
 }
@@ -1870,7 +1871,7 @@ nLen natExternMemoryStream::WriteBytes(ncData pData, nLen Length)
 	}
 
 	const auto writtenBytes = std::min(Length, m_Size - m_CurrentPos);
-	memmove(m_ExternData + m_CurrentPos, pData, static_cast<size_t>(writtenBytes));
+	std::memmove(m_ExternData + m_CurrentPos, pData, static_cast<std::size_t>(writtenBytes));
 	m_CurrentPos += writtenBytes;
 	return writtenBytes;
 }
