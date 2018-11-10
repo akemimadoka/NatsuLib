@@ -4,16 +4,97 @@
 #include "natMisc.h"
 #include <atomic>
 
+#if NATSULIB_USE_TAGGED_POINTER
+#include <memory>
+#endif
+
 namespace NatsuLib::Concurrent
 {
 	namespace Detail
 	{
-		template <typename T, typename TagType = unsigned>
-		class TaggedPointer
+#if NATSULIB_USE_TAGGED_POINTER
+		// T 需要是对齐大于 1 且是 2 的倍数的对象，这样才有可利用的位，在特定的系统上可能有额外未利用的位，暂时不考虑
+		template <typename T, std::size_t Alignment = alignof(T)>
+		class ModCountedPointer
 		{
 		public:
-			constexpr TaggedPointer() = default;
-			constexpr TaggedPointer(T* pointer, TagType tag)
+			static_assert(Alignment > 1 && !(Alignment & (Alignment - 1)), "Tagged pointer required alignment of T should be bigger than 1 and be power of 2.");
+
+			static constexpr std::uintptr_t PointerMask = std::numeric_limits<std::uintptr_t>::max() << (Alignment - 1);
+			static constexpr std::uintptr_t ModCountMask = ~PointerMask;
+
+			constexpr ModCountedPointer() = default;
+
+			ModCountedPointer(T* pointer, std::uintptr_t modCount)
+			{
+#if NATSULIB_RESPECT_GC_SUPPORT
+				std::declare_reachable(pointer);
+#endif
+				const auto pointerValue = reinterpret_cast<std::uintptr_t>(pointer);
+				assert(!(pointerValue & ModCountMask));
+				m_Pointer = pointerValue | (modCount & ModCountMask);
+			}
+
+			~ModCountedPointer()
+			{
+				std::undeclare_reachable(GetPointer());
+			}
+
+
+			T* GetPointer() const noexcept
+			{
+				return reinterpret_cast<T*>(m_Pointer & PointerMask);
+			}
+
+			void SetPointer(T* pointer)
+			{
+#if NATSULIB_RESPECT_GC_SUPPORT
+				std::declare_reachable(pointer);
+#endif
+				const auto pointerValue = reinterpret_cast<std::uintptr_t>(pointer);
+				assert(!(pointerValue & ModCountMask));
+				const auto oldPointerValue = GetPointer();
+				m_Pointer = pointerValue | GetModCount();
+#if NATSULIB_RESPECT_GC_SUPPORT
+				std::undeclare_reachable(oldPointerValue);
+#endif
+			}
+
+			constexpr std::uintptr_t GetModCount() const noexcept
+			{
+				return m_Pointer & ModCountMask;
+			}
+
+			constexpr void SetModCount(std::uintptr_t modCount) noexcept
+			{
+				m_Pointer = GetPointer() | (modCount & ModCountMask);
+			}
+
+			constexpr explicit operator bool() const noexcept
+			{
+				return static_cast<bool>(GetPointer());
+			}
+
+			constexpr T* operator->() const noexcept
+			{
+				return GetPointer();
+			}
+
+			constexpr T& operator*() const noexcept
+			{
+				return *GetPointer();
+			}
+
+		private:
+			std::uintptr_t m_Pointer;
+		};
+#else
+		template <typename T, typename TagType = unsigned>
+		class ModCountedPointer
+		{
+		public:
+			constexpr ModCountedPointer() = default;
+			constexpr ModCountedPointer(T* pointer, TagType tag)
 				: m_Pointer{ pointer }, m_Tag{ tag }
 			{
 			}
@@ -57,27 +138,50 @@ namespace NatsuLib::Concurrent
 			T* m_Pointer;
 			TagType m_Tag;
 		};
-
+#endif
 		template <typename T>
-		struct StackNode
+		struct ForwardNode
 		{
 			T Data;
-			StackNode* Next;
+			ForwardNode* Next;
 
 			template <typename... Args>
-			explicit StackNode(StackNode* next, Args&&... args)
+			constexpr explicit ForwardNode(ForwardNode* next, Args&&... args)
 				: Data(std::forward<Args>(args)...), Next(next)
 			{
+			}
+		};
+
+		template <typename T>
+		struct QueueNode
+		{
+			UncheckedLazyInit<T> Data;
+			std::atomic<ModCountedPointer<QueueNode>> Next;
+
+			constexpr explicit QueueNode(QueueNode* next)
+				: Next{ next }
+			{
+			}
+
+			template <typename... Args>
+			constexpr explicit QueueNode(QueueNode* next, Args&&... args)
+				: Data{ std::in_place, std::forward<Args>(args)... }, Next{ next }
+			{
+			}
+
+			constexpr bool IsDummyNode() const noexcept
+			{
+				return !Next;
 			}
 		};
 	}
 
 	template <typename T, typename Allocator = std::allocator<T>>
 	class Stack
-		: CompressedPair<std::atomic<Detail::TaggedPointer<Detail::StackNode<T>>>, typename std::allocator_traits<Allocator>::template rebind_alloc<Detail::StackNode<T>>>
+		: CompressedPair<std::atomic<Detail::ModCountedPointer<Detail::ForwardNode<T>>>, typename std::allocator_traits<Allocator>::template rebind_alloc<Detail::ForwardNode<T>>>
 	{
-		using NodePtr = Detail::TaggedPointer<Detail::StackNode<T>>;
-		using NodeAllocator = typename std::allocator_traits<Allocator>::template rebind_alloc<Detail::StackNode<T>>;
+		using NodePtr = Detail::ModCountedPointer<Detail::ForwardNode<T>>;
+		using NodeAllocator = typename std::allocator_traits<Allocator>::template rebind_alloc<Detail::ForwardNode<T>>;
 		using BasePair = CompressedPair<std::atomic<NodePtr>, NodeAllocator>;
 
 	public:

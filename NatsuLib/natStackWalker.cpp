@@ -1,7 +1,7 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "natStackWalker.h"
 
-#ifdef EnableStackWalker
+#ifdef NATSULIB_ENABLE_STACK_WALKER
 
 #include "natMisc.h"
 #include "natException.h"

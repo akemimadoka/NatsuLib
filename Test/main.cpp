@@ -213,7 +213,7 @@ int main()
 			logger.LogMsg("Work finished with result {0}."_nv, result.GetResult().get());
 			pool.WaitAllJobsFinish();
 		}
-#ifdef EnableStackWalker
+#ifdef NATSULIB_ENABLE_STACK_WALKER
 		{
 			natStackWalker stackWalker;
 			stackWalker.CaptureStack();
@@ -428,7 +428,7 @@ int main()
 	{
 		logger.LogErr("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}\nErrno: {4}, Msg: {5}"_nv,
 		              e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc(), e.GetErrNo(), e.GetErrMsg());
-#ifdef EnableExceptionStackTrace
+#ifdef NATSULIB_ENABLE_EXCEPTION_STACK_TRACE
 		logger.LogErr("Call stack:"_nv);
 		for (size_t i = 0; i < e.GetStackWalker().GetFrameCount(); ++i)
 		{
@@ -445,7 +445,7 @@ int main()
 	{
 		logger.LogErr("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}\nErrno: {4}, Msg: {5}"_nv,
 		              e.GetSource(), e.GetFile(), e.GetLine(), e.GetDesc(), e.GetErrNo(), e.GetErrMsg());
-#ifdef EnableExceptionStackTrace
+#ifdef NATSULIB_ENABLE_EXCEPTION_STACK_TRACE
 		logger.LogErr("Call stack:"_nv);
 		for (size_t i = 0; i < e.GetStackWalker().GetFrameCount(); ++i)
 		{
@@ -465,7 +465,7 @@ int main()
 	{
 		logger.LogErr("Exception caught from {0}, file \"{1}\" line {2},\nDescription: {3}"_nv, e.GetSource(),
 		              e.GetFile(), e.GetLine(), e.GetDesc());
-#ifdef EnableExceptionStackTrace
+#ifdef NATSULIB_ENABLE_EXCEPTION_STACK_TRACE
 		logger.LogErr("Call stack:"_nv);
 		for (size_t i = 0; i < e.GetStackWalker().GetFrameCount(); ++i)
 		{

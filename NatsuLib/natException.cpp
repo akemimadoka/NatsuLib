@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "natException.h"
 #include "natMisc.h"
 
@@ -43,7 +43,7 @@ std::exception_ptr natException::GetNestedException() const noexcept
 	return m_NestedException;
 }
 
-#ifdef EnableExceptionStackTrace
+#ifdef NATSULIB_ENABLE_EXCEPTION_STACK_TRACE
 natStackWalker const& natException::GetStackWalker() const noexcept
 {
 	return m_StackWalker;

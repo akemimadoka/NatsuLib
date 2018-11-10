@@ -9,7 +9,7 @@
 #ifdef _WIN32
 #include <Windows.h>
 #endif
-#ifdef EnableExceptionStackTrace
+#ifdef NATSULIB_ENABLE_EXCEPTION_STACK_TRACE
 #include "natStackWalker.h"
 #endif
 
@@ -49,11 +49,8 @@ namespace NatsuLib
 		template <typename... Args>
 		natException(std::exception_ptr nestedException, nStrView Src, nStrView File, nuInt Line, nStrView Desc, Args&&... args) noexcept
 			: Storage{ std::move(nestedException), std::chrono::system_clock::now(), File, Line, Src, natUtil::FormatString(Desc, std::forward<Args>(args)...) }
-#ifdef EnableExceptionStackTrace
-			, m_StackWalker()
-#endif
 		{
-#ifdef EnableExceptionStackTrace
+#ifdef NATSULIB_ENABLE_EXCEPTION_STACK_TRACE
 			m_StackWalker.CaptureStack();
 #endif
 		}
@@ -73,7 +70,7 @@ namespace NatsuLib
 		nStrView GetDesc() const noexcept;
 		std::exception_ptr GetNestedException() const noexcept;
 
-#ifdef EnableExceptionStackTrace
+#ifdef NATSULIB_ENABLE_EXCEPTION_STACK_TRACE
 		natStackWalker const& GetStackWalker() const noexcept;
 #endif
 
@@ -83,7 +80,7 @@ namespace NatsuLib
 		ncStr what() const noexcept override;
 
 	protected:
-#ifdef EnableExceptionStackTrace
+#ifdef NATSULIB_ENABLE_EXCEPTION_STACK_TRACE
 		natStackWalker m_StackWalker;
 #endif
 	};

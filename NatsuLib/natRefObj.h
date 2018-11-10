@@ -24,18 +24,18 @@ namespace NatsuLib
 		virtual ~natRefObj() = default;
 
 		///	@brief	获取当前的引用计数
-		virtual std::size_t GetRefCount() const volatile noexcept = 0;
+		virtual std::size_t GetRefCount() const noexcept = 0;
 
 		///	@brief	尝试增加引用计数
 		///	@return	是否成功增加了引用计数
-		virtual nBool TryIncRef() const volatile = 0;
+		virtual nBool TryIncRef() const = 0;
 
 		///	@brief	增加引用计数
-		virtual void IncRef() const volatile = 0;
+		virtual void IncRef() const = 0;
 
 		///	@brief	减少引用计数
 		///	@return	引用计数是否已为0
-		virtual nBool DecRef() const volatile = 0;
+		virtual nBool DecRef() const = 0;
 	};
 
 	template <typename T>
@@ -46,7 +46,7 @@ namespace NatsuLib
 
 	namespace detail_
 	{
-		template <typename Dst, typename Src, typename = Dst>
+		template <typename Dst, typename Src, typename = void>
 		struct static_cast_or_dynamic_cast_helper
 		{
 			static Dst Do(Src& src)
@@ -76,17 +76,17 @@ namespace NatsuLib
 			: public BaseClass
 		{
 		public:
-			nBool IsUnique() const volatile noexcept
+			nBool IsUnique() const noexcept
 			{
 				return GetRefCount() == 1;
 			}
 
-			virtual std::size_t GetRefCount() const volatile noexcept
+			virtual std::size_t GetRefCount() const noexcept
 			{
 				return m_RefCount.load(std::memory_order_relaxed);
 			}
 
-			virtual nBool TryIncRef() const volatile
+			virtual nBool TryIncRef() const
 			{
 				auto oldValue = m_RefCount.load(std::memory_order_relaxed);
 				assert(static_cast<std::ptrdiff_t>(oldValue) >= 0);
@@ -100,16 +100,18 @@ namespace NatsuLib
 				return true;
 			}
 
-			virtual void IncRef() const volatile
+			virtual void IncRef() const
 			{
 				assert(static_cast<std::ptrdiff_t>(m_RefCount.load(std::memory_order_relaxed)) > 0);
 				m_RefCount.fetch_add(1, std::memory_order_relaxed);
 			}
 
-			virtual nBool DecRef() const volatile
+			virtual nBool DecRef() const
 			{
 				assert(static_cast<std::ptrdiff_t>(m_RefCount.load(std::memory_order_relaxed)) > 0);
-				return m_RefCount.fetch_sub(1, std::memory_order_relaxed) == 1;
+				const auto shouldRelease = m_RefCount.fetch_sub(1, std::memory_order_release) == 1;
+				std::atomic_thread_fence(std::memory_order_acquire);
+				return shouldRelease;
 			}
 
 			template <typename... Args>
@@ -140,6 +142,7 @@ namespace NatsuLib
 				return *this;
 			}
 
+		protected:
 			~RefCountBase()
 			{
 				assert(RefCountBase::GetRefCount() <= 1);
@@ -162,7 +165,7 @@ namespace NatsuLib
 			nBool IsOwnerAlive() const
 			{
 				const auto owner = m_Owner.load(std::memory_order_consume);
-				return owner && static_cast<const volatile RefCountBase*>(owner)->GetRefCount() > 0;
+				return owner && static_cast<const RefCountBase*>(owner)->GetRefCount() > 0;
 			}
 
 			void ClearOwner()
@@ -292,7 +295,7 @@ namespace NatsuLib
 			const auto view = m_View.load(std::memory_order_consume);
 			if (view)
 			{
-				if (static_cast<const volatile detail_::RefCountBase<natRefObj>*>(view)->DecRef())
+				if (static_cast<const detail_::RefCountBase<natRefObj>*>(view)->DecRef())
 				{
 					delete view;
 				}
@@ -303,7 +306,7 @@ namespace NatsuLib
 			}
 		}
 
-		nBool DecRef() const volatile override
+		nBool DecRef() const override
 		{
 			const auto result = RefCountBase::DecRef();
 			const SelfDeleter& deleter = const_cast<const SelfDeleter&>(m_Deleter);
@@ -332,15 +335,15 @@ namespace NatsuLib
 		}
 
 		template <typename U = T>
-		natRefPointer<volatile U> ForkRef() volatile noexcept
+		natRefPointer<volatile U> ForkRef() noexcept
 		{
 			return forkRefImpl<volatile U>(this);
 		}
 
 		template <typename U = T>
-		natRefPointer<const volatile U> ForkRef() const volatile noexcept
+		natRefPointer<const U> ForkRef() const noexcept
 		{
-			return forkRefImpl<const volatile U>(this);
+			return forkRefImpl<const U>(this);
 		}
 
 		template <typename U = T>
@@ -356,15 +359,15 @@ namespace NatsuLib
 		}
 
 		template <typename U = T>
-		natWeakRefPointer<volatile U> ForkWeakRef() volatile noexcept
+		natWeakRefPointer<volatile U> ForkWeakRef() noexcept
 		{
 			return forkWeakRefImpl<volatile U>(this);
 		}
 
 		template <typename U = T>
-		natWeakRefPointer<const volatile U> ForkWeakRef() const volatile noexcept
+		natWeakRefPointer<const U> ForkWeakRef() const noexcept
 		{
-			return forkWeakRefImpl<const volatile U>(this);
+			return forkWeakRefImpl<const U>(this);
 		}
 
 	private:
@@ -392,7 +395,7 @@ namespace NatsuLib
 			return natWeakRefPointer<CVU>{ other };
 		}
 
-		WeakRefView* createWeakRefView() const volatile
+		WeakRefView* createWeakRefView() const
 		{
 			auto view = m_View.load(std::memory_order_consume);
 			if (!view)
@@ -434,7 +437,7 @@ namespace NatsuLib
 		{
 			if (m_pPointer)
 			{
-				static_cast<const volatile natRefObj*>(m_pPointer)->IncRef();
+				static_cast<const natRefObj*>(m_pPointer)->IncRef();
 			}
 		}
 
@@ -443,7 +446,7 @@ namespace NatsuLib
 		{
 			if (m_pPointer)
 			{
-				static_cast<const volatile natRefObj*>(m_pPointer)->IncRef();
+				static_cast<const natRefObj*>(m_pPointer)->IncRef();
 			}
 		}
 
@@ -459,7 +462,7 @@ namespace NatsuLib
 		{
 			if (m_pPointer)
 			{
-				static_cast<const volatile natRefObj*>(m_pPointer)->IncRef();
+				static_cast<const natRefObj*>(m_pPointer)->IncRef();
 			}
 		}
 
@@ -480,7 +483,7 @@ namespace NatsuLib
 		{
 			if (m_pPointer)
 			{
-				static_cast<void>(static_cast<const volatile natRefObj*>(m_pPointer)->DecRef());
+				static_cast<void>(static_cast<const natRefObj*>(m_pPointer)->DecRef());
 			}
 		}
 
@@ -610,7 +613,7 @@ namespace NatsuLib
 		{
 			if (m_pPointer)
 			{
-				static_cast<void>(static_cast<const volatile natRefObj*>(m_pPointer)->DecRef());
+				static_cast<void>(static_cast<const natRefObj*>(m_pPointer)->DecRef());
 				m_pPointer = nullptr;
 			}
 
@@ -657,7 +660,7 @@ namespace NatsuLib
 			{
 				return 0;
 			}
-			return static_cast<const volatile natRefObj*>(ptr)->GetRefCount();
+			return static_cast<const natRefObj*>(ptr)->GetRefCount();
 		}
 
 		void swap(natRefPointer& other) noexcept
@@ -691,7 +694,7 @@ namespace NatsuLib
 
 		typedef detail_::WeakRefView<natRefObj> WeakRefView;
 
-		static WeakRefView* GetViewFrom(const volatile T* item)
+		static WeakRefView* GetViewFrom(const T* item)
 		{
 			if (!item)
 			{
@@ -896,7 +899,7 @@ namespace NatsuLib
 			const auto view = m_View;
 			if (view)
 			{
-				static_cast<const volatile natRefObj*>(m_View)->IncRef();
+				static_cast<const natRefObj*>(m_View)->IncRef();
 			}
 			return view;
 		}

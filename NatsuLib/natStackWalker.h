@@ -1,9 +1,9 @@
-#pragma once
+﻿#pragma once
 #include "natConfig.h"
 #include "natType.h"
 #include "natString.h"
 
-#if EnableStackWalker
+#if NATSULIB_ENABLE_STACK_WALKER
 #ifdef _WIN32
 #include <Windows.h>
 #pragma warning (push)

@@ -1,13 +1,21 @@
-#pragma once
+﻿#pragma once
 
-#ifndef EnableStackWalker
-#	define EnableStackWalker 1
+#ifndef NATSULIB_ENABLE_STACK_WALKER
+#	define NATSULIB_ENABLE_STACK_WALKER 1
 #endif
 
-#if EnableStackWalker && !defined(EnableExceptionStackTrace)
-#	define EnableExceptionStackTrace 1
+#if NATSULIB_ENABLE_STACK_WALKER && !defined(NATSULIB_ENABLE_EXCEPTION_STACK_TRACE)
+#	define NATSULIB_ENABLE_EXCEPTION_STACK_TRACE 1
 #endif
 
-#ifndef UseFastInverseSqrt
-#	define UseFastInverseSqrt 1
+#ifndef NATSULIB_USE_FAST_INVERSE_SQRT
+#	define NATSULIB_USE_FAST_INVERSE_SQRT 1
+#endif
+
+#ifndef NATSULIB_USE_TAGGED_POINTER
+#	define NATSULIB_USE_TAGGED_POINTER 0
+#endif
+
+#if NATSULIB_USE_TAGGED_POINTER && !defined(NATSULIB_RESPECT_GC_SUPPORT)
+#	define NATSULIB_RESPECT_GC_SUPPORT 0
 #endif

@@ -1,6 +1,6 @@
-////////////////////////////////////////////////////////////////////////////////
+ï»¿////////////////////////////////////////////////////////////////////////////////
 ///	@file	natTransform.h
-///	@brief	NatsuLib±ä»»Ïà¹Ø
+///	@brief	NatsuLibå˜æ¢ç›¸å…³
 ////////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "natConfig.h"
@@ -11,12 +11,12 @@
 namespace NatsuLib
 {
 	////////////////////////////////////////////////////////////////////////////////
-	///	@addtogroup	NatsuLibÊıÑ§
-	///	@brief		NatsuLibÊıÑ§²¿·Ö
+	///	@addtogroup	NatsuLibæ•°å­¦
+	///	@brief		NatsuLibæ•°å­¦éƒ¨åˆ†
 	///	@{
 
 	////////////////////////////////////////////////////////////////////////////////
-	///	@brief	NatsuLib±ä»»
+	///	@brief	NatsuLibå˜æ¢
 	////////////////////////////////////////////////////////////////////////////////
 	namespace natTransform
 	{
@@ -34,14 +34,14 @@ namespace NatsuLib
 			static constexpr nDouble RadtoDeg = 180.0 / PI;
 		};
 
-		///	@brief	½Ç¶È×ª»¡¶È
+		///	@brief	è§’åº¦è½¬å¼§åº¦
 		template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
 		constexpr T DegtoRad(T num) noexcept
 		{
 			return static_cast<T>(num * Constants::DegtoRad);
 		}
 
-		///	@brief	»¡¶È×ª½Ç¶È
+		///	@brief	å¼§åº¦è½¬è§’åº¦
 		template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
 		constexpr T RadtoDeg(T num) noexcept
 		{
@@ -102,7 +102,7 @@ namespace NatsuLib
 			return static_cast<T>(1) / v.call(sqrt);
 		}
 
-#if UseFastInverseSqrt
+#if NATSULIB_USE_FAST_INVERSE_SQRT
 		template <template <typename> class vectype, std::enable_if_t<IsVec<vectype<nFloat>>::value, bool> = true>
 		vectype<nFloat> inversesqrt(vectype<nFloat> const& v) noexcept
 		{
