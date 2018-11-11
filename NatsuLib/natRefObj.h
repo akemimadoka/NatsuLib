@@ -335,33 +335,9 @@ namespace NatsuLib
 		}
 
 		template <typename U = T>
-		natRefPointer<volatile U> ForkRef() noexcept
-		{
-			return forkRefImpl<volatile U>(this);
-		}
-
-		template <typename U = T>
-		natRefPointer<const U> ForkRef() const noexcept
-		{
-			return forkRefImpl<const U>(this);
-		}
-
-		template <typename U = T>
 		natWeakRefPointer<U> ForkWeakRef() noexcept
 		{
 			return forkWeakRefImpl<U>(this);
-		}
-
-		template <typename U = T>
-		natWeakRefPointer<const U> ForkWeakRef() const noexcept
-		{
-			return forkWeakRefImpl<const U>(this);
-		}
-
-		template <typename U = T>
-		natWeakRefPointer<volatile U> ForkWeakRef() noexcept
-		{
-			return forkWeakRefImpl<volatile U>(this);
 		}
 
 		template <typename U = T>
