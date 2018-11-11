@@ -1491,9 +1491,20 @@ void natMemoryStream::SetPosition(NatSeek Origin, nLong Offset)
 		m_CurPos = Offset;
 		break;
 	case NatSeek::Cur:
-		if ((Offset < 0 && m_CurPos < static_cast<nLen>(-Offset)) || m_Size > static_cast<nLen>(m_CurPos + Offset))
-			nat_Throw(natErrException, NatErr_OutOfRange, "Out of range."_nv);
+		if ((Offset < 0 && m_CurPos < static_cast<nLen>(-Offset)) || m_Size < static_cast<nLen>(m_CurPos + Offset))
+		{
+			if (m_AutoResize && (Offset > 0 && m_Size < static_cast<nLen>(m_CurPos + Offset)))
+			{
+				SetSize(m_CurPos + Offset);
+			}
+			else
+			{
+				nat_Throw(natErrException, NatErr_OutOfRange, "Out of range."_nv);
+			}
+		}
+
 		m_CurPos += Offset;
+
 		break;
 	case NatSeek::End:
 		if (Offset > 0 || m_Size < static_cast<nLen>(-Offset))
