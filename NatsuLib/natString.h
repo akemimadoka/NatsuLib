@@ -41,7 +41,7 @@ namespace NatsuLib
 			MaxCharSize = 4,	///< @brief	对于此编码，一个有效字符可能占用的最大CharType数
 		};
 
-		static std::size_t GetCharCount(CharType Char) noexcept
+		static constexpr std::size_t GetCharCount(CharType Char) noexcept
 		{
 			const auto unsignedChar = static_cast<std::make_unsigned_t<CharType>>(Char);
 			if (unsignedChar < 0x80)
@@ -78,7 +78,7 @@ namespace NatsuLib
 			MaxCharSize = 1,
 		};
 
-		static std::size_t GetCharCount(CharType /*Char*/) noexcept
+		static constexpr std::size_t GetCharCount(CharType /*Char*/) noexcept
 		{
 			return 1;
 		}
@@ -93,7 +93,7 @@ namespace NatsuLib
 			MaxCharSize = 1,
 		};
 
-		static std::size_t GetCharCount(CharType /*Char*/) noexcept
+		static constexpr std::size_t GetCharCount(CharType /*Char*/) noexcept
 		{
 			return 1;
 		}
@@ -109,7 +109,7 @@ namespace NatsuLib
 			MaxCharSize = 4,
 		};
 
-		static std::size_t GetCharCount(CharType Char) noexcept
+		static constexpr std::size_t GetCharCount(CharType Char) noexcept
 		{
 			return StringEncodingTrait<StringType::Utf8>::GetCharCount(Char);
 		}
@@ -124,7 +124,7 @@ namespace NatsuLib
 			MaxCharSize = 1,
 		};
 
-		static std::size_t GetCharCount(CharType /*Char*/) noexcept
+		static constexpr std::size_t GetCharCount(CharType /*Char*/) noexcept
 		{
 			return 1;
 		}
@@ -140,7 +140,7 @@ namespace NatsuLib
 		};
 
 		template <typename CharType>
-		const CharType* GetEndOfString(const CharType* begin) noexcept
+		constexpr const CharType* GetEndOfString(const CharType* begin) noexcept
 		{
 			assert(begin && "begin should not be a nullptr.");
 
@@ -288,7 +288,7 @@ namespace NatsuLib
 		{
 		}
 
-		StringView(CharIterator begin) noexcept
+		constexpr StringView(CharIterator begin) noexcept
 			: StringView(begin, detail_::GetEndOfString(begin))
 		{
 		}
@@ -305,7 +305,7 @@ namespace NatsuLib
 			return m_StrBegin == m_StrEnd;
 		}
 
-		void Clear() noexcept
+		constexpr void Clear() noexcept
 		{
 			m_StrBegin = m_StrEnd;
 		}
@@ -330,22 +330,22 @@ namespace NatsuLib
 			return m_StrEnd;
 		}
 
-		const_reverse_iterator rbegin() const noexcept
+		constexpr const_reverse_iterator rbegin() const noexcept
 		{
 			return const_reverse_iterator{ std::prev(m_StrEnd) };
 		}
 
-		const_reverse_iterator rend() const noexcept
+		constexpr const_reverse_iterator rend() const noexcept
 		{
 			return const_reverse_iterator{ std::prev(m_StrBegin) };
 		}
 
-		const_reverse_iterator crbegin() const noexcept
+		constexpr const_reverse_iterator crbegin() const noexcept
 		{
 			return const_reverse_iterator{ std::prev(m_StrEnd) };
 		}
 
-		const_reverse_iterator crend() const noexcept
+		constexpr const_reverse_iterator crend() const noexcept
 		{
 			return const_reverse_iterator{ std::prev(m_StrBegin) };
 		}
@@ -370,7 +370,7 @@ namespace NatsuLib
 			return UncheckGet(pos);
 		}
 
-		nBool operator==(StringView const& other) const noexcept
+		constexpr nBool operator==(StringView const& other) const noexcept
 		{
 			if (GetSize() != other.GetSize())
 			{
@@ -380,7 +380,7 @@ namespace NatsuLib
 			return Compare(other) == 0;
 		}
 
-		nBool operator!=(StringView const& other) const noexcept
+		constexpr nBool operator!=(StringView const& other) const noexcept
 		{
 			if (GetSize() != other.GetSize())
 			{
@@ -390,22 +390,22 @@ namespace NatsuLib
 			return Compare(other) != 0;
 		}
 
-		nBool operator<(StringView const& other) const noexcept
+		constexpr nBool operator<(StringView const& other) const noexcept
 		{
 			return Compare(other) < 0;
 		}
 
-		nBool operator>(StringView const& other) const noexcept
+		constexpr nBool operator>(StringView const& other) const noexcept
 		{
 			return Compare(other) > 0;
 		}
 
-		nBool operator<=(StringView const& other) const noexcept
+		constexpr nBool operator<=(StringView const& other) const noexcept
 		{
 			return Compare(other) <= 0;
 		}
 
-		nBool operator>=(StringView const& other) const noexcept
+		constexpr nBool operator>=(StringView const& other) const noexcept
 		{
 			return Compare(other) >= 0;
 		}
@@ -415,19 +415,19 @@ namespace NatsuLib
 			return m_StrEnd - m_StrBegin;
 		}
 
-		std::size_t GetCharCount() const noexcept
+		constexpr std::size_t GetCharCount() const noexcept
 		{
 			return detail_::GetCharCount<stringType>(m_StrBegin, m_StrEnd - m_StrBegin);
 		}
 
-		void Swap(StringView& other) noexcept
+		constexpr void Swap(StringView& other) noexcept
 		{
 			using std::swap;
 			swap(m_StrBegin, other.m_StrBegin);
 			swap(m_StrEnd, other.m_StrEnd);
 		}
 
-		const CharType& Get(std::size_t index) const
+		constexpr const CharType& Get(std::size_t index) const
 		{
 			if (index >= GetSize())
 			{
@@ -444,7 +444,7 @@ namespace NatsuLib
 			return begin()[pos];
 		}
 
-		nInt Compare(StringView const& other) const noexcept
+		constexpr nInt Compare(StringView const& other) const noexcept
 		{
 			typedef std::make_unsigned_t<CharType> UChar;
 
@@ -477,7 +477,7 @@ namespace NatsuLib
 		///	@param[in]	pattern		分割字符
 		///	@param[in]	callableObject	可被调用的对象，接受参数为StringView
 		template <typename CallableObject>
-		void Split(StringView const& pattern, CallableObject callableObject) const noexcept
+		constexpr void Split(StringView const& pattern, CallableObject callableObject) const noexcept
 		{
 			std::size_t pos{};
 			const auto strLen = size();
@@ -530,7 +530,7 @@ namespace NatsuLib
 			Assign(begin, detail_::GetEndOfString(begin));
 		}
 
-		std::size_t Find(StringView const& pattern, std::ptrdiff_t nBegin = 0) const noexcept
+		constexpr std::size_t Find(StringView const& pattern, std::ptrdiff_t nBegin = 0) const noexcept
 		{
 			const auto length = GetSize();
 			const auto realBegin = ApplyOffset(nBegin, length);
@@ -551,7 +551,7 @@ namespace NatsuLib
 			return pos + realBegin;
 		}
 
-		std::size_t FindBackward(StringView const& pattern, std::ptrdiff_t nEnd = -1) const noexcept
+		constexpr std::size_t FindBackward(StringView const& pattern, std::ptrdiff_t nEnd = -1) const noexcept
 		{
 			const auto length = GetSize();
 			const auto realEnd = ApplyOffset(nEnd, length);
@@ -572,7 +572,7 @@ namespace NatsuLib
 			return realEnd - pos - patternLength;
 		}
 
-		std::size_t FindCharRepeat(CharType findChar, std::size_t repeatCount, std::ptrdiff_t nBegin = 0) const noexcept
+		constexpr std::size_t FindCharRepeat(CharType findChar, std::size_t repeatCount, std::ptrdiff_t nBegin = 0) const noexcept
 		{
 			const auto length = GetSize();
 			const auto realBegin = ApplyOffset(nBegin, length);
@@ -592,7 +592,7 @@ namespace NatsuLib
 			return pos + realBegin;
 		}
 
-		std::size_t FindCharRepeatBackward(CharType findChar, std::size_t repeatCount, std::ptrdiff_t nEnd = 0) const noexcept
+		constexpr std::size_t FindCharRepeatBackward(CharType findChar, std::size_t repeatCount, std::ptrdiff_t nEnd = 0) const noexcept
 		{
 			const auto length = GetSize();
 			const auto realEnd = ApplyOffset(nEnd, length);
@@ -612,17 +612,17 @@ namespace NatsuLib
 			return realEnd - pos - repeatCount;
 		}
 
-		std::size_t Find(CharType findChar, std::ptrdiff_t nBegin = 0) const noexcept
+		constexpr std::size_t Find(CharType findChar, std::ptrdiff_t nBegin = 0) const noexcept
 		{
 			return FindCharRepeat(findChar, 1, nBegin);
 		}
 
-		std::size_t FindBackward(CharType findChar, std::ptrdiff_t nEnd = -1) const noexcept
+		constexpr std::size_t FindBackward(CharType findChar, std::ptrdiff_t nEnd = -1) const noexcept
 		{
 			return FindCharRepeatBackward(findChar, 1, nEnd);
 		}
 
-		nBool StartWith(CharType findChar, std::size_t repeatCount = 1) const noexcept
+		constexpr nBool StartWith(CharType findChar, std::size_t repeatCount = 1) const noexcept
 		{
 			if (!repeatCount || repeatCount > size())
 			{
@@ -640,12 +640,12 @@ namespace NatsuLib
 			return true;
 		}
 
-		nBool StartWith(StringView const& other) const noexcept
+		constexpr nBool StartWith(StringView const& other) const noexcept
 		{
 			return size() >= other.size() && Slice(0, other.size()) == other;
 		}
 
-		nBool EndWith(CharType findChar, std::size_t repeatCount = 1) const noexcept
+		constexpr nBool EndWith(CharType findChar, std::size_t repeatCount = 1) const noexcept
 		{
 			if (!repeatCount || repeatCount > size())
 			{
@@ -664,7 +664,7 @@ namespace NatsuLib
 			return true;
 		}
 
-		nBool EndWith(StringView const& other) const noexcept
+		constexpr nBool EndWith(StringView const& other) const noexcept
 		{
 			return size() >= other.size() && Slice(size() - other.size(), other.size()) == other;
 		}
