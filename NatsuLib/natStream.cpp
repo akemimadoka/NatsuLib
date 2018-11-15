@@ -1411,7 +1411,7 @@ void natStdStream::Flush()
 #endif
 
 natMemoryStream::natMemoryStream(ncData pData, nLen Length, nBool bReadable, nBool bWritable, nBool autoResize)
-	: m_pData(nullptr), m_CurPos(0u), m_bReadable(bReadable), m_bWritable(bWritable), m_AutoResize(autoResize)
+	: m_pData(nullptr), m_Size(), m_CurPos(), m_bReadable(bReadable), m_bWritable(bWritable), m_AutoResize(autoResize)
 {
 	Reserve(Length);
 
