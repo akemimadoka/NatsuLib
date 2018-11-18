@@ -46,29 +46,18 @@ namespace NatsuLib
 
 	namespace detail_
 	{
-		template <typename Dst, typename Src, typename = void>
-		struct static_cast_or_dynamic_cast_helper
-		{
-			static Dst Do(Src& src)
-			{
-				return dynamic_cast<Dst>(static_cast<Src&&>(src));
-			}
-		};
-
-		// decltype(static_cast<Dst>(std::declval<Src>())) 似乎在MSVC上存在问题？暂时使用替代方案
 		template <typename Dst, typename Src>
-		struct static_cast_or_dynamic_cast_helper<Dst, Src, std::enable_if_t<std::is_same<Src, Dst>::value || !std::is_base_of<Src, Dst>::value>>
+		constexpr std::enable_if_t<std::is_pointer_v<Dst> && std::is_pointer_v<Src>, Dst> static_cast_or_dynamic_cast(Src src) noexcept
 		{
-			static constexpr Dst Do(Src& src) noexcept
+			if constexpr (!std::is_same_v<std::remove_cv_t<std::remove_pointer_t<Src>>, std::remove_cv_t<std::remove_pointer_t<Dst>>> &&
+						  std::is_base_of_v<std::remove_cv_t<std::remove_pointer_t<Src>>, std::remove_cv_t<std::remove_pointer_t<Dst>>>)
 			{
-				return static_cast<Dst>(static_cast<Src&&>(src));
+				return dynamic_cast<Dst>(src);
 			}
-		};
-
-		template <typename Dst, typename Src>
-		constexpr Dst static_cast_or_dynamic_cast(Src&& src)
-		{
-			return static_cast_or_dynamic_cast_helper<Dst, Src>::Do(src);
+			else
+			{
+				return static_cast<Dst>(src);
+			}
 		}
 
 		template <typename BaseClass = natRefObj>
@@ -183,7 +172,7 @@ namespace NatsuLib
 					return {};
 				}
 
-				if (!static_cast<std::add_pointer_t<std::add_cv_t<Owner>>>(owner)->TryIncRef())
+				if (!static_cast<std::add_pointer_t<std::add_const_t<Owner>>>(owner)->TryIncRef())
 				{
 					return {};
 				}
